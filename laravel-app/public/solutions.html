@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Solutions - ARTSCI Security</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="modern-design.css">
+  <style>
+    /* ============================================
+       SOLUTIONS PAGE SPECIFIC STYLES
+       ============================================ */
+
+    .solutions-hero {
+      margin-top: 60px;
+      padding: 60px 24px;
+      background: linear-gradient(135deg, var(--primary-blue), #0285C2);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .solutions-hero h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .solutions-hero p {
+      font-size: 16px;
+      opacity: 0.95;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .solution-nav {
+      position: sticky;
+      top: 60px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    .solution-nav-menu {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .solution-nav-menu::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .solution-nav-menu::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .solution-nav-menu::-webkit-scrollbar-thumb {
+      background: var(--primary-blue);
+      border-radius: 2px;
+    }
+
+    .solution-nav-item {
+      padding: 12px 20px;
+      white-space: nowrap;
+      font-weight: 600;
+      color: var(--gray-medium);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: var(--transition);
+      font-size: 14px;
+    }
+
+    .solution-nav-item:hover,
+    .solution-nav-item.active {
+      color: var(--primary-blue);
+      border-bottom-color: var(--primary-blue);
+    }
+
+    .solution-section {
+      scroll-margin-top: 180px;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    .solution-section-header {
+      padding: 60px 24px 40px;
+      background: linear-gradient(135deg, #f5f9ff 0%, #fffbf0 100%);
+      border-bottom: 2px solid var(--border-color);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .solution-section-header h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 900;
+      color: var(--dark);
+      margin-bottom: 12px;
+    }
+
+    .solution-section-header p {
+      font-size: 16px;
+      color: var(--gray-medium);
+      max-width: 700px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      padding: 60px 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    .product-card {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .product-card:hover {
+      border-color: var(--primary-blue);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-8px);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 240px;
+      overflow: hidden;
+      background: var(--gray-light);
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+
+    .product-info {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .product-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .product-description {
+      font-size: 13px;
+      color: var(--gray-medium);
+      margin-bottom: 12px;
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+
+    .product-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .product-specs span {
+      font-size: 11px;
+      background: rgba(3, 169, 244, 0.1);
+      color: var(--primary-blue);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .product-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 12px;
+    }
+
+    .product-card .btn {
+      width: 100%;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .add-to-cart {
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .add-to-cart::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s, height 0.5s;
+    }
+
+    .add-to-cart:hover {
+      background: #0285C2;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(3, 169, 244, 0.3);
+    }
+
+    .add-to-cart:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    /* Cart notification */
+    .cart-notification {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: var(--success);
+      color: var(--white);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+      z-index: 200;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .cart-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* CTA Section */
+    .cta-premium {
+      background: linear-gradient(135deg, var(--primary-blue), #0285C2);
+      color: var(--white);
+      padding: 60px 24px;
+      text-align: center;
+    }
+
+    .cta-content h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .cta-content p {
+      font-size: 16px;
+      margin-bottom: 30px;
+      opacity: 0.95;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN - SOLUTIONS PAGE
+       ============================================ */
+
+    @media (max-width: 1024px) {
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 40px 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .solutions-hero {
+        padding: 40px 24px;
+      }
+
+      .solutions-hero h1 {
+        font-size: 28px;
+      }
+
+      .solution-nav-menu {
+        gap: 0;
+        padding: 0;
+      }
+
+      .solution-nav-item {
+        padding: 12px 16px;
+        font-size: 12px;
+      }
+
+      .solution-section-header {
+        padding: 40px 24px;
+      }
+
+      .solution-section-header h2 {
+        font-size: 24px;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        padding: 40px 0;
+      }
+
+      .product-image {
+        height: 200px;
+      }
+
+      .product-info {
+        padding: 16px;
+      }
+
+      .product-name {
+        font-size: 14px;
+      }
+
+      .product-price {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .solutions-hero {
+        padding: 30px 16px;
+        margin-top: 80px;
+      }
+
+      .solutions-hero h1 {
+        font-size: 24px;
+      }
+
+      .solutions-hero p {
+        font-size: 14px;
+      }
+
+      .solution-nav {
+        top: 60px;
+      }
+
+      .solution-nav-item {
+        padding: 10px 12px;
+        font-size: 11px;
+      }
+
+      .solution-section-header {
+        padding: 30px 16px;
+      }
+
+      .solution-section-header h2 {
+        font-size: 20px;
+      }
+
+      .solution-section-header p {
+        font-size: 14px;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 30px 0;
+      }
+
+      .product-image {
+        height: 180px;
+      }
+
+      .product-info {
+        padding: 14px;
+      }
+
+      .product-name {
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .product-description {
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .product-specs {
+        margin-bottom: 10px;
+        gap: 6px;
+      }
+
+      .product-specs span {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+
+      .product-price {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .product-card .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
+      .cart-notification {
+        left: 20px;
+        right: 20px;
+        top: 70px;
+      }
+
+      .cta-content h2 {
+        font-size: 24px;
+      }
+
+      .cta-actions {
+        flex-direction: column;
+      }
+
+      .cta-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="logo.png" alt="ARTSCI" class="logo-img">
+        <span class="brand-name">ARTSCI</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#cctv">CCTV</a></li>
+        <li><a href="#solar">Solar</a></li>
+        <li><a href="#access">Access</a></li>
+        <li><a href="index.html#contact" class="cta-nav">Get Started</a></li>
+      </ul>
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Solutions Hero -->
+  <section class="solutions-hero">
+    <div class="container">
+      <h1>Enterprise Solutions</h1>
+      <p>Comprehensive security and power systems tailored to your enterprise infrastructure</p>
+    </div>
+  </section>
+
+  <!-- Solutions Navigation -->
+  <nav class="solution-nav">
+    <div class="solution-nav-menu">
+      <a href="#cctv" class="solution-nav-item active">CCTV</a>
+      <a href="#solar" class="solution-nav-item">Solar Power</a>
+      <a href="#access" class="solution-nav-item">Access Control</a>
+      <a href="#perimeter" class="solution-nav-item">Perimeter Security</a>
+      <a href="#automation" class="solution-nav-item">Smart Automation</a>
+      <a href="#integration" class="solution-nav-item">Full Integration</a>
+    </div>
+  </nav>
+
+  <!-- CCTV Section - Product Catalog -->
+  <section class="solution-section" id="cctv">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>📹 CCTV Surveillance Systems</h2>
+        <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Basic CCTV">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Basic CCTV System</h3>
+            <p class="product-description">4-camera HD system with local storage and basic monitoring</p>
+            <div class="product-specs">
+              <span>4x HD Cameras</span>
+              <span>2TB Storage</span>
+              <span>Basic App</span>
+            </div>
+            <div class="product-price">₦250,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Professional CCTV">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Professional CCTV System</h3>
+            <p class="product-description">8-camera 4K system with AI detection and cloud storage</p>
+            <div class="product-specs">
+              <span>8x 4K Cameras</span>
+              <span>Cloud Storage</span>
+              <span>AI Detection</span>
+            </div>
+            <div class="product-price">₦550,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="Enterprise CCTV">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Enterprise CCTV System</h3>
+            <p class="product-description">16-camera 4K system with facial recognition and analytics</p>
+            <div class="product-specs">
+              <span>16x 4K Cameras</span>
+              <span>Facial Recognition</span>
+              <span>Analytics Suite</span>
+            </div>
+            <div class="product-price">₦1,200,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="Thermal CCTV">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Thermal CCTV System</h3>
+            <p class="product-description">Thermal imaging with night vision and temperature monitoring</p>
+            <div class="product-specs">
+              <span>4x Thermal</span>
+              <span>Night Vision</span>
+              <span>Temp Monitor</span>
+            </div>
+            <div class="product-price">₦800,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Control Room">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Control Room Setup</h3>
+            <p class="product-description">Professional monitoring station with redundant systems</p>
+            <div class="product-specs">
+              <span>Multi-Monitor</span>
+              <span>Redundancy</span>
+              <span>UPS Backup</span>
+            </div>
+            <div class="product-price">₦500,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Cloud Storage">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Cloud Storage Plan</h3>
+            <p class="product-description">Annual cloud storage subscription for unlimited cameras</p>
+            <div class="product-specs">
+              <span>Unlimited Cameras</span>
+              <span>30-Day Archive</span>
+              <span>Annual Plan</span>
+            </div>
+            <div class="product-price">₦180,000/year</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solar Power Section - Product Catalog -->
+  <section class="solution-section" id="solar">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>⚡ Solar Power Systems</h2>
+        <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="5kVA Solar">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">5kVA Solar System</h3>
+            <p class="product-description">Complete 5kVA hybrid system with 10kWh lithium battery</p>
+            <div class="product-specs">
+              <span>5kVA Hybrid</span>
+              <span>10kWh Battery</span>
+              <span>2.5kW Panels</span>
+            </div>
+            <div class="product-price">₦650,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="8kVA Solar">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">8kVA Solar System</h3>
+            <p class="product-description">Professional 8kVA hybrid system with 16kWh lithium storage</p>
+            <div class="product-specs">
+              <span>8kVA Hybrid</span>
+              <span>16kWh Battery</span>
+              <span>4kW Panels</span>
+            </div>
+            <div class="product-price">₦950,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="10kVA Solar">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">10kVA Solar System</h3>
+            <p class="product-description">Enterprise 10kVA system with 20kWh battery capacity</p>
+            <div class="product-specs">
+              <span>10kVA Hybrid</span>
+              <span>20kWh Battery</span>
+              <span>5kW Panels</span>
+            </div>
+            <div class="product-price">₦1,350,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Inverter">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Hybrid Inverter Only</h3>
+            <p class="product-description">Standalone 8kVA hybrid inverter with WiFi monitoring</p>
+            <div class="product-specs">
+              <span>8kVA Output</span>
+              <span>WiFi Enabled</span>
+              <span>MPPT Controller</span>
+            </div>
+            <div class="product-price">₦320,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Batteries">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Lithium Battery Bank</h3>
+            <p class="product-description">10kWh lithium battery module with BMS and warranty</p>
+            <div class="product-specs">
+              <span>10kWh Capacity</span>
+              <span>Built-in BMS</span>
+              <span>10-Year Warranty</span>
+            </div>
+            <div class="product-price">₦420,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="Solar Panels">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Solar Panels Package</h3>
+            <p class="product-description">5kW premium monocrystalline solar panel package</p>
+            <div class="product-specs">
+              <span>5kW Output</span>
+              <span>Monocrystal</span>
+              <span>25-Yr Warranty</span>
+            </div>
+            <div class="product-price">₦550,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Access Control Section - Product Catalog -->
+  <section class="solution-section" id="access">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>🔐 Access Control Systems</h2>
+        <p>Smart gates, biometric locks, and visitor management systems</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Basic Access">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Basic Access Control</h3>
+            <p class="product-description">RFID card-based access system for single gate</p>
+            <div class="product-specs">
+              <span>RFID Access</span>
+              <span>Local Only</span>
+              <span>Single Gate</span>
+            </div>
+            <div class="product-price">₦180,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Professional Access">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Professional Access System</h3>
+            <p class="product-description">Biometric + RFID system with audit trail logging</p>
+            <div class="product-specs">
+              <span>Biometric+RFID</span>
+              <span>Audit Logs</span>
+              <span>Multi-Gate</span>
+            </div>
+            <div class="product-price">₦420,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="Enterprise Access">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Enterprise Access Solution</h3>
+            <p class="product-description">Cloud-based system with facial recognition integration</p>
+            <div class="product-specs">
+              <span>Cloud-Based</span>
+              <span>Facial Recognition</span>
+              <span>Visitor Portal</span>
+            </div>
+            <div class="product-price">₦850,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Gate Operator">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Automatic Gate Operator</h3>
+            <p class="product-description">Heavy-duty automated gate system with backup power</p>
+            <div class="product-specs">
+              <span>Heavy Duty</span>
+              <span>UPS Backup</span>
+              <span>Safety Sensors</span>
+            </div>
+            <div class="product-price">₦350,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="Biometric">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Biometric Reader</h3>
+            <p class="product-description">Advanced fingerprint and face recognition device</p>
+            <div class="product-specs">
+              <span>Finger + Face</span>
+              <span>1000 Users</span>
+              <span>Offline Mode</span>
+            </div>
+            <div class="product-price">₦120,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Visitor">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Visitor Management</h3>
+            <p class="product-description">Complete visitor tracking and badge printing system</p>
+            <div class="product-specs">
+              <span>Badge Printer</span>
+              <span>Check-in/Out</span>
+              <span>Cloud Logs</span>
+            </div>
+            <div class="product-price">₦280,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Perimeter Security Section - Product Catalog -->
+  <section class="solution-section" id="perimeter">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>🔌 Perimeter Security</h2>
+        <p>High-voltage electric fencing with integrated alarms and monitoring</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Basic Fence">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Basic Electric Fence</h3>
+            <p class="product-description">Standard electric fence system for up to 1km perimeter</p>
+            <div class="product-specs">
+              <span>Up to 1km</span>
+              <span>Battery Powered</span>
+              <span>Shock Alert</span>
+            </div>
+            <div class="product-price">₦150,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Professional Fence">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Professional Fence System</h3>
+            <p class="product-description">Advanced system for up to 3km with alarm integration</p>
+            <div class="product-specs">
+              <span>Up to 3km</span>
+              <span>Solar+Battery</span>
+              <span>Alarm Link</span>
+            </div>
+            <div class="product-price">₦420,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="Enterprise Fence">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Enterprise Fence System</h3>
+            <p class="product-description">Large scale system for unlimited perimeter coverage</p>
+            <div class="product-specs">
+              <span>Unlimited Range</span>
+              <span>Solar + Hybrid</span>
+              <span>Cloud Monitoring</span>
+            </div>
+            <div class="product-price">₦850,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Energizer">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Solar Energizer</h3>
+            <p class="product-description">10W solar-powered fence energizer with battery</p>
+            <div class="product-specs">
+              <span>10W Solar</span>
+              <span>Battery Backup</span>
+              <span>3+ years</span>
+            </div>
+            <div class="product-price">₦85,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="Alarm Module">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Fence Alarm Module</h3>
+            <p class="product-description">Wireless alarm trigger for fence breach detection</p>
+            <div class="product-specs">
+              <span>Wireless</span>
+              <span>SMS Alert</span>
+              <span>Backup Power</span>
+            </div>
+            <div class="product-price">₦55,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Wire">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">High-Tension Wire</h3>
+            <p class="product-description">2.5mm agricultural electric fence wire (500m spool)</p>
+            <div class="product-specs">
+              <span>2.5mm Gauge</span>
+              <span>500m Spool</span>
+              <span>Tensile Rated</span>
+            </div>
+            <div class="product-price">₦35,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Smart Automation Section - Product Catalog -->
+  <section class="solution-section" id="automation">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>🏠 Smart Automation</h2>
+        <p>Unified control for lighting, climate, security, and energy management</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Basic Hub">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Basic Smart Hub</h3>
+            <p class="product-description">WiFi hub for basic lighting and device control</p>
+            <div class="product-specs">
+              <span>WiFi Enabled</span>
+              <span>10 Devices</span>
+              <span>Mobile App</span>
+            </div>
+            <div class="product-price">₦95,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Pro Hub">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Professional Smart Hub</h3>
+            <p class="product-description">Advanced hub with voice control and automations</p>
+            <div class="product-specs">
+              <span>Voice Control</span>
+              <span>50 Devices</span>
+              <span>Scheduling</span>
+            </div>
+            <div class="product-price">₦280,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="Enterprise Hub">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Enterprise Smart System</h3>
+            <p class="product-description">Full automation suite with multi-site management</p>
+            <div class="product-specs">
+              <span>Unlimited Devices</span>
+              <span>Multi-Site</span>
+              <span>Analytics</span>
+            </div>
+            <div class="product-price">₦650,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Smart Bulb">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Smart LED Bulbs</h3>
+            <p class="product-description">WiFi-enabled RGB bulbs (pack of 10) with dimming</p>
+            <div class="product-specs">
+              <span>RGB Colors</span>
+              <span>10 Pack</span>
+              <span>Dimmable</span>
+            </div>
+            <div class="product-price">₦85,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80" alt="Smart Switch">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Smart Wall Switch</h3>
+            <p class="product-description">4-gang WiFi switch with independent control</p>
+            <div class="product-specs">
+              <span>4-Gang</span>
+              <span>Independent</span>
+              <span>Energy Monitor</span>
+            </div>
+            <div class="product-price">₦45,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Smart Sensor">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Motion & Temperature Sensor</h3>
+            <p class="product-description">WiFi sensor for automated lighting and climate</p>
+            <div class="product-specs">
+              <span>Motion Detection</span>
+              <span>Temp Sensing</span>
+              <span>Auto Triggers</span>
+            </div>
+            <div class="product-price">₦32,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Full Integration Section -->
+  <section class="solution-section" id="integration">
+    <div class="solution-section-header">
+      <div class="container">
+        <h2>🔗 Full Integration</h2>
+        <p>Complete enterprise stack with unified monitoring and control</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80" alt="Small Package">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Small Enterprise Package</h3>
+            <p class="product-description">CCTV + Solar + Access for small offices</p>
+            <div class="product-specs">
+              <span>4 Cameras</span>
+              <span>5kVA Solar</span>
+              <span>Access Control</span>
+            </div>
+            <div class="product-price">₦1,200,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1504280390369-361c6d9f38f4?auto=format&fit=crop&w=500&q=80" alt="Medium Package">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Medium Enterprise Package</h3>
+            <p class="product-description">CCTV + Solar + Access + Automation</p>
+            <div class="product-specs">
+              <span>8 Cameras</span>
+              <span>8kVA Solar</span>
+              <span>Full Integration</span>
+            </div>
+            <div class="product-price">₦2,200,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80" alt="Large Package">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Large Enterprise Package</h3>
+            <p class="product-description">Full suite for large facilities with all systems</p>
+            <div class="product-specs">
+              <span>16 Cameras</span>
+              <span>10kVA Solar</span>
+              <span>Complete Stack</span>
+            </div>
+            <div class="product-price">₦3,800,000</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=500&q=80" alt="Custom">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">Custom Integration</h3>
+            <p class="product-description">Tailored solution based on your specific needs</p>
+            <div class="product-specs">
+              <span>Custom Design</span>
+              <span>Consulting</span>
+              <span>24/7 Support</span>
+            </div>
+            <div class="product-price">Contact for Quote</div>
+            <button class="btn add-to-cart">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-premium">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Ready to Secure Your Enterprise?</h2>
+        <p>Contact our security experts for a free consultation and custom quote</p>
+        <div class="cta-actions">
+          <a href="tel:+234701586218" class="btn btn-primary">Call: 0701 586 2018</a>
+          <a href="mailto:info@artsci.ng" class="btn btn-primary">Email Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-logo-section">
+          <img src="logo.png" alt="ARTSCI Logo" class="footer-logo">
+          <div>
+            <h3>ARTSCI</h3>
+            <p>Enterprise Security & Power Solutions Since 2015</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-divider"></div>
+
+      <div class="footer-middle">
+        <div class="footer-column">
+          <h4>Solutions</h4>
+          <a href="solutions.html#cctv">CCTV & Surveillance</a>
+          <a href="solutions.html#solar">Solar Power Systems</a>
+          <a href="solutions.html#access">Access Control</a>
+          <a href="solutions.html#perimeter">Perimeter Security</a>
+          <a href="solutions.html#automation">Smart Automation</a>
+          <a href="solutions.html#integration">Full Integration</a>
+        </div>
+
+        <div class="footer-column">
+          <h4>Company</h4>
+          <a href="index.html#why-artsci">About Us</a>
+          <a href="index.html#solutions">Our Services</a>
+          <a href="index.html#partners">Our Partners</a>
+          <a href="index.html#contact">Contact Us</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms & Conditions</a>
+        </div>
+
+        <div class="footer-column">
+          <h4>Contact</h4>
+          <div class="footer-contact">
+            <div class="contact-method">
+              <span class="method-icon"><i class="fas fa-phone"></i></span>
+              <div>
+                <div class="method-label">Phone</div>
+                <a href="tel:+2347015862018">0701 586 2018</a>
+              </div>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon"><i class="fas fa-envelope"></i></span>
+              <div>
+                <div class="method-label">Email</div>
+                <a href="mailto:info@artsci.ng">info@artsci.ng</a>
+              </div>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon"><i class="fab fa-instagram"></i></span>
+              <div>
+                <div class="method-label">Instagram</div>
+                <a href="https://instagram.com/artsci.ng">@artsci.ng</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-divider"></div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 ARTSCI Security & Power Solutions. All rights reserved.</p>
+        <p class="tagline">Fortress-Level Power, Security And Protection</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cart Notification -->
+  <div class="cart-notification" id="cartNotification">
+    <i class="fas fa-check-circle"></i> Item added to cart!
+  </div>
+
+  <script src="modern-interactions.js"></script>
+  <script>
+    // Add to Cart functionality
+    document.querySelectorAll('.add-to-cart').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const productCard = this.closest('.product-card');
+        const productName = productCard.querySelector('.product-name').textContent;
+        const productPrice = productCard.querySelector('.product-price').textContent;
+        
+        // Show notification
+        const notification = document.getElementById('cartNotification');
+        notification.innerHTML = `<i class="fas fa-check-circle"></i> ${productName} added to cart!`;
+        notification.classList.add('show');
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 3000);
+      });
+    });
+
+    // Solution Navigation Active State
+    const solutionNavItems = document.querySelectorAll('.solution-nav-item');
+    const solutionSections = document.querySelectorAll('.solution-section');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      solutionSections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (window.scrollY >= sectionTop - 200) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      solutionNavItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('href').slice(1) === current) {
+          item.classList.add('active');
+        }
+      });
+    });
+  </script>
+
+  <!-- Floating Cart Icon -->
+  <div class="floating-cart" id="floatingCart">
+    <button class="cart-button" id="cartButton">
+      <i class="fas fa-shopping-cart"></i>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+
+  <!-- Cart Modal -->
+  <div class="cart-modal" id="cartModal">
+    <div class="cart-modal-content">
+      <div class="cart-header">
+        <h2>Shopping Cart</h2>
+        <button class="close-cart" id="closeCart">&times;</button>
+      </div>
+
+      <div class="cart-items" id="cartItems">
+        <div class="empty-cart">
+          <i class="fas fa-shopping-bag"></i>
+          <p>Your cart is empty</p>
+        </div>
+      </div>
+
+      <div class="cart-summary" id="cartSummary" style="display: none;">
+        <div class="summary-item">
+          <span>Subtotal:</span>
+          <span id="subtotal">₦0</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+          <span>Total:</span>
+          <span id="total">₦0</span>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="checkout-form">
+          <input type="text" id="userName" placeholder="Full Name" required>
+          <input type="email" id="userEmail" placeholder="Email Address" required>
+          <input type="text" id="userLocation" placeholder="Location/Address" required>
+          <button class="btn btn-primary checkout-btn" id="checkoutBtn">
+            <i class="fab fa-whatsapp"></i> Checkout with WhatsApp
+          </button>
+          <button class="btn btn-secondary clear-cart-btn" id="clearCartBtn">
+            Clear Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Modal Overlay -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+
+  <script>
+    // ============================================
+    // Shopping Cart System
+    // ============================================
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    const cartButton = document.getElementById('cartButton');
+    const cartModal = document.getElementById('cartModal');
+    const cartOverlay = document.getElementById('cartOverlay');
+    const closeCart = document.getElementById('closeCart');
+    const cartItems = document.getElementById('cartItems');
+    const cartSummary = document.getElementById('cartSummary');
+    const cartCount = document.getElementById('cartCount');
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('total');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const clearCartBtn = document.getElementById('clearCartBtn');
+
+    // Add to cart functionality
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    addToCartButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const card = this.closest('.product-card');
+        const name = card.querySelector('.product-name').textContent;
+        const priceText = card.querySelector('.product-price').textContent;
+        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+
+        const existingItem = cart.find(item => item.name === name);
+        if (existingItem) {
+          existingItem.quantity++;
+        } else {
+          cart.push({ name, price, quantity: 1 });
+        }
+
+        saveCart();
+        updateCartUI();
+        showNotification(`${name} added to cart!`);
+      });
+    });
+
+    // Cart button click
+    cartButton.addEventListener('click', () => {
+      cartModal.classList.add('active');
+      cartOverlay.classList.add('active');
+    });
+
+    // Close cart
+    closeCart.addEventListener('click', () => {
+      closeCartModal();
+    });
+
+    cartOverlay.addEventListener('click', () => {
+      closeCartModal();
+    });
+
+    function closeCartModal() {
+      cartModal.classList.remove('active');
+      cartOverlay.classList.remove('active');
+    }
+
+    // Clear cart
+    clearCartBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear the cart?')) {
+        cart = [];
+        saveCart();
+        updateCartUI();
+      }
+    });
+
+    // Save cart to localStorage
+    function saveCart() {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    // Update cart UI
+    function updateCartUI() {
+      cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      if (cart.length === 0) {
+        cartItems.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-bag"></i><p>Your cart is empty</p></div>';
+        cartSummary.style.display = 'none';
+        return;
+      }
+
+      cartSummary.style.display = 'block';
+
+      // Render cart items
+      cartItems.innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+          <div class="item-details">
+            <h4>${item.name}</h4>
+            <p>₦${item.price.toLocaleString()}</p>
+          </div>
+          <div class="item-quantity">
+            <button class="qty-btn" onclick="updateQuantity(${index}, -1)">−</button>
+            <input type="number" value="${item.quantity}" min="1" onchange="setQuantity(${index}, this.value)">
+            <button class="qty-btn" onclick="updateQuantity(${index}, 1)">+</button>
+          </div>
+          <div class="item-total">
+            <span>₦${(item.price * item.quantity).toLocaleString()}</span>
+          </div>
+          <button class="remove-item" onclick="removeFromCart(${index})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+
+      // Calculate totals
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      subtotalEl.textContent = '₦' + subtotal.toLocaleString();
+      totalEl.textContent = '₦' + subtotal.toLocaleString();
+    }
+
+    // Update quantity
+    window.updateQuantity = function(index, change) {
+      if (cart[index]) {
+        cart[index].quantity += change;
+        if (cart[index].quantity <= 0) {
+          removeFromCart(index);
+        } else {
+          saveCart();
+          updateCartUI();
+        }
+      }
+    };
+
+    // Set quantity
+    window.setQuantity = function(index, value) {
+      const qty = parseInt(value);
+      if (qty > 0) {
+        cart[index].quantity = qty;
+        saveCart();
+        updateCartUI();
+      }
+    };
+
+    // Remove from cart
+    window.removeFromCart = function(index) {
+      cart.splice(index, 1);
+      saveCart();
+      updateCartUI();
+    };
+
+    // Checkout with WhatsApp
+    checkoutBtn.addEventListener('click', function() {
+      const name = document.getElementById('userName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const location = document.getElementById('userLocation').value.trim();
+
+      // Validate form
+      if (!name || !email || !location) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert('Cart is empty');
+        return;
+      }
+
+      // Build order summary
+      let orderSummary = `*ARTSCI Order Summary*\n\n`;
+      orderSummary += `*Customer Details:*\n`;
+      orderSummary += `Name: ${name}\n`;
+      orderSummary += `Email: ${email}\n`;
+      orderSummary += `Location: ${location}\n\n`;
+
+      orderSummary += `*Order Items:*\n`;
+      cart.forEach(item => {
+        orderSummary += `• ${item.name}\n  Qty: ${item.quantity} × ₦${item.price.toLocaleString()} = ₦${(item.price * item.quantity).toLocaleString()}\n`;
+      });
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      orderSummary += `\n*Total: ₦${total.toLocaleString()}*\n`;
+      orderSummary += `\nPlease confirm this order.`;
+
+      // WhatsApp API (update with your business number)
+      // WhatsApp business number (international format without "+")
+      const whatsappNumber = '2347015862018';
+      const encodedMessage = encodeURIComponent(orderSummary);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+      // Open WhatsApp
+      window.open(whatsappUrl, '_blank');
+
+      // Clear cart after checkout
+      setTimeout(() => {
+        cart = [];
+        saveCart();
+        updateCartUI();
+        closeCartModal();
+        showNotification('Order sent to WhatsApp! We will contact you shortly.');
+      }, 500);
+    });
+
+    // Show notification
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'cart-notification';
+      notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Initialize cart UI on page load
+    updateCartUI();
+  </script>
+
+  <style>
+    /* ============================================
+       FLOATING CART STYLES
+       ============================================ */
+
+    .floating-cart {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 900;
+    }
+
+    .cart-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-blue), #0285C2);
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(3, 169, 244, 0.4);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .cart-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(3, 169, 244, 0.5);
+    }
+
+    .cart-button:active {
+      transform: scale(0.95);
+    }
+
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #FF5722;
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border: 2px solid var(--white);
+    }
+
+    /* Cart Modal */
+    .cart-modal {
+      position: fixed;
+      right: -500px;
+      top: 0;
+      width: 420px;
+      height: 100vh;
+      background: var(--white);
+      box-shadow: -8px 0 32px rgba(10, 20, 40, 0.2);
+      z-index: 1200;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mobile-close-btn {
+      display: none;
+    }
+
+    .cart-modal.active {
+      right: 0;
+    }
+
+    .cart-modal-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--gray-light);
+      flex-shrink: 0;
+    }
+
+    .cart-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 0;
+    }
+
+    .close-cart {
+      background: var(--primary-blue);
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--white);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      border-radius: 50%;
+      flex-shrink: 0;
+      font-weight: bold;
+    }
+
+    .close-cart:hover {
+      background: #0285C2;
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(3, 169, 244, 0.3);
+    }
+
+    .close-cart:active {
+      transform: scale(0.95);
+    }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .empty-cart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-medium);
+      text-align: center;
+    }
+
+    .empty-cart i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-cart p {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      background: var(--gray-light);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .item-details h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--dark);
+      margin: 0 0 4px 0;
+      line-height: 1.3;
+    }
+
+    .item-details p {
+      font-size: 12px;
+      color: var(--primary-blue);
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--white);
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    .qty-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--primary-blue);
+      transition: var(--transition);
+    }
+
+    .qty-btn:hover {
+      background: var(--gray-light);
+    }
+
+    .item-quantity input {
+      width: 32px;
+      height: 24px;
+      border: none;
+      background: none;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .item-total {
+      font-weight: 700;
+      color: var(--primary-blue);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .remove-item {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #FF5722;
+      font-size: 14px;
+      transition: var(--transition);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-item:hover {
+      transform: scale(1.2);
+    }
+
+    .cart-summary {
+      padding: 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--gray-light);
+      flex-shrink: 0;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--gray-medium);
+      margin-bottom: 12px;
+    }
+
+    .summary-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 12px 0;
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 20px;
+    }
+
+    .checkout-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checkout-form input {
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    .checkout-form input:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.1);
+    }
+
+    .checkout-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .checkout-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .clear-cart-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+      background: var(--white);
+      color: var(--gray-medium);
+      border: 1px solid var(--border-color);
+    }
+
+    .clear-cart-btn:hover {
+      background: #f5f5f5;
+      color: var(--dark);
+    }
+
+    /* Cart Overlay */
+    .cart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 40, 0.5);
+      z-index: 1150;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .cart-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Cart Notification */
+    .cart-notification {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      background: var(--success);
+      color: var(--white);
+      padding: 14px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+      z-index: 1250;
+      transform: translateY(-120px);
+      transition: transform 0.3s ease;
+    }
+
+    .cart-notification.show {
+      transform: translateY(0);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .cart-modal {
+        width: 100%;
+        right: -100%;
+      }
+
+      .close-cart {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        background: var(--primary-blue);
+        color: var(--white);
+      }
+
+      .floating-cart {
+        right: 16px;
+        bottom: 80px;
+      }
+
+      .cart-button {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+      }
+
+      .cart-notification {
+        right: 16px;
+        top: 70px;
+        font-size: 13px;
+        padding: 12px 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .floating-cart {
+        right: 12px;
+        bottom: 80px;
+      }
+
+      .cart-button {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+      }
+
+      .cart-modal {
+        width: 100%;
+        right: -100%;
+      }
+
+      .cart-item {
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+      }
+
+      .item-quantity,
+      .item-total,
+      .remove-item {
+        display: none;
+      }
+
+      .item-details {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</body>
+</html>
