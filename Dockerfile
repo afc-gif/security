@@ -53,11 +53,28 @@ RUN apk del --no-cache .build-deps
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application files
-COPY laravel-app/ ./
+# First, verify laravel-app directory exists and list its contents
+RUN echo "=== Checking for laravel-app directory ===" && \
+    ls -la / | grep -E "var|laravel" && \
+    echo "=== Contents of root ===" && \
+    ls -la / && \
+    echo "=== Contents of /var/www/html ===" && \
+    ls -la /var/www/html/
 
-# Debug: List files to verify copy worked
-RUN ls -la /var/www/html/ | head -20
+# Copy only composer files first
+COPY laravel-app/composer.json /var/www/html/
+COPY laravel-app/composer.lock /var/www/html/
+
+# Verify files were copied
+RUN echo "=== After copying composer files ===" && \
+    ls -la /var/www/html/
+
+# Now copy everything else
+COPY laravel-app/ /var/www/html/
+
+# Verify full copy
+RUN echo "=== After copying all files ===" && \
+    ls -la /var/www/html/ | head -30
 
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
