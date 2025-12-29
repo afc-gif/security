@@ -18,6 +18,7 @@ RUN apk add --no-cache --virtual .build-deps \
     freetype-dev \
     libjpeg-turbo-dev \
     libpng-dev \
+    oniguruma-dev \
     zlib-dev \
     && apk add --no-cache \
     git \
@@ -25,6 +26,7 @@ RUN apk add --no-cache --virtual .build-deps \
     zip \
     unzip \
     postgresql-dev \
+    oniguruma \
     freetype \
     libjpeg-turbo \
     libpng
