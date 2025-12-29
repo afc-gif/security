@@ -50,9 +50,11 @@ RUN apk del --no-cache .build-deps
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copy dependency manifests first (better layer caching, ensures they exist)
+COPY laravel-app/composer.json laravel-app/composer.lock* ./ 
+
 # Copy application files
 COPY laravel-app/ ./
-
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
