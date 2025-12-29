@@ -1,5 +1,5 @@
-# Use official PHP image with FPM
-FROM php:8.2-fpm-alpine
+# Use official PHP image with built-in web server
+FROM php:8.3-cli-alpine
 
 # Set working directory
 WORKDIR /var/www/html
@@ -13,16 +13,14 @@ RUN apk add --no-cache \
     freetype-dev \
     zip \
     unzip \
-    sqlite \
-    mysql-client
+    postgresql-dev
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     gd \
     pdo \
-    pdo_mysql \
-    pdo_sqlite \
+    pdo_pgsql \
     mbstring \
     exif \
     pcntl \
@@ -36,20 +34,16 @@ COPY . .
 
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 777 storage bootstrap/cache
 
 # Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# Set permissions (must be done after composer install)
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Clear any cached configs that may have been generated
+# Clear any cached configs
 RUN rm -rf bootstrap/cache/*.php || true
 
-# Expose PHP-FPM port
-EXPOSE 9000
+# Expose port
+EXPOSE 8000
 
-# Start PHP-FPM
-CMD ["php-fpm"]
-
+# Start the Laravel development server
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
