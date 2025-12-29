@@ -4,22 +4,35 @@ FROM php:8.3-cli-alpine
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy from laravel-app subdirectory into root of container
-COPY laravel-app/ ./
-
-# Install system dependencies
-RUN apk add --no-cache \
+# Install system dependencies and build tools
+RUN apk add --no-cache --virtual .build-deps \
+    autoconf \
+    dpkg-dev \
+    file \
+    g++ \
+    gcc \
+    libc-dev \
+    make \
+    pkgconf \
+    re2c \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    zlib-dev \
+    && apk add --no-cache \
     git \
     curl \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
     zip \
     unzip \
-    postgresql-dev
+    postgresql-dev \
+    freetype \
+    libjpeg-turbo \
+    libpng
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+# Install PHP extensions with proper configuration
+RUN docker-php-ext-configure gd \
+    --with-freetype=/usr \
+    --with-jpeg=/usr \
     && docker-php-ext-install -j$(nproc) \
     gd \
     pdo \
@@ -29,11 +42,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     pcntl \
     bcmath
 
+# Remove build dependencies to reduce image size
+RUN apk del --no-cache .build-deps
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy application files
-COPY . .
+COPY laravel-app/ ./
 
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
