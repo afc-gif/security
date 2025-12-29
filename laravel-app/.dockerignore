@@ -17,3 +17,4 @@ storage/debugbar/
 docker/mysql-data/
 docker/redis-data/
 docker/nginx-logs/
+vendor
