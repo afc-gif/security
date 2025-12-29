@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env.local
+.DS_Store
+.vscode
+.idea
+README.md
+index.html
+modern-design.css
+modern-interactions.js
+solutions.html
+*.md
