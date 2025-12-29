@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MenuItem;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MenuItemController extends Controller
 {
@@ -61,7 +62,7 @@ class MenuItemController extends Controller
 
         if ($request->hasFile('image')) {
             if ($menuItem->image) {
-                \Storage::disk('public')->delete($menuItem->image);
+                Storage::disk('public')->delete($menuItem->image);
             }
             $validated['image'] = $request->file('image')->store('menu-items', 'public');
         }
@@ -78,7 +79,7 @@ class MenuItemController extends Controller
         ]);
 
         if ($menuItem->image) {
-            \Storage::disk('public')->delete($menuItem->image);
+            Storage::disk('public')->delete($menuItem->image);
         }
 
         $path = $request->file('image')->store('menu-items', 'public');
@@ -90,7 +91,7 @@ class MenuItemController extends Controller
     public function destroy(MenuItem $menuItem)
     {
         if ($menuItem->image) {
-            \Storage::disk('public')->delete($menuItem->image);
+            Storage::disk('public')->delete($menuItem->image);
         }
         $menuItem->delete();
 

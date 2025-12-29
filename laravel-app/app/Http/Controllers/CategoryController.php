@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
@@ -55,7 +56,7 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             if ($category->image) {
-                \Storage::disk('public')->delete($category->image);
+                Storage::disk('public')->delete($category->image);
             }
             $validated['image'] = $request->file('image')->store('categories', 'public');
         }
@@ -69,7 +70,7 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         if ($category->image) {
-            \Storage::disk('public')->delete($category->image);
+            Storage::disk('public')->delete($category->image);
         }
         $category->delete();
 
