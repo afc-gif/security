@@ -1,6 +1,9 @@
 # Use official PHP image with built-in web server
 FROM php:8.3-cli-alpine
 
+# Set environment variables
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Set working directory
 WORKDIR /var/www/html
 
@@ -50,11 +53,9 @@ RUN apk del --no-cache .build-deps
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy dependency manifests first (better layer caching, ensures they exist)
-COPY laravel-app/composer.json laravel-app/composer.lock* ./ 
-
 # Copy application files
 COPY laravel-app/ ./
+
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
