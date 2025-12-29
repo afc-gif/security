@@ -56,6 +56,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy application files
 COPY laravel-app/ ./
 
+# Debug: List files to verify copy worked
+RUN ls -la /var/www/html/ | head -20
+
 # Create necessary directories
 RUN mkdir -p storage bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
