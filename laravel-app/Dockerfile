@@ -8,6 +8,7 @@ WORKDIR /var/www/html
 RUN apk add --no-cache \
     git \
     curl \
+    oniguruma-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
