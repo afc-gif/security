@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -49,7 +51,8 @@ class AdminController extends Controller
 
     public function createProduct()
     {
-        return view('admin.products.create');
+        $categories = Category::orderBy('sort_order')->get(['id', 'name']);
+        return view('admin.products.create', compact('categories'));
     }
 
     public function storeProduct(Request $request)
@@ -74,7 +77,8 @@ class AdminController extends Controller
 
     public function editProduct(Product $product)
     {
-        return view('admin.products.edit', compact('product'));
+        $categories = Category::orderBy('sort_order')->get(['id', 'name']);
+        return view('admin.products.edit', compact('product', 'categories'));
     }
 
     public function updateProduct(Request $request, Product $product)
@@ -89,6 +93,9 @@ class AdminController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
@@ -99,6 +106,9 @@ class AdminController extends Controller
 
     public function deleteProduct(Product $product)
     {
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
+        }
         $product->delete();
         return redirect('/admin/products')->with('success', 'Product deleted successfully!');
     }

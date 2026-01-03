@@ -28,7 +28,13 @@
 
                 <div class="form-group">
                     <label for="category">Category</label>
-                    <input type="text" id="category" name="category" value="{{ old('category') }}">
+                    <input list="category-options" id="category" name="category" value="{{ old('category') }}" placeholder="Select or type a category">
+                    <datalist id="category-options">
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->name }}"></option>
+                        @endforeach
+                    </datalist>
+                    <span class="helper-text">Existing admin categories are suggested, but you can type a new one.</span>
                     @error('category')<span class="error-text">{{ $message }}</span>@enderror
                 </div>
 

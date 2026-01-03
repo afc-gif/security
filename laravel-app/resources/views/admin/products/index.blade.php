@@ -151,6 +151,7 @@
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th>Image</th>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Category</th>
@@ -162,6 +163,13 @@
                     <tbody>
                         @foreach($products as $product)
                             <tr>
+                                <td>
+                                    @if($product->image)
+                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #E5E7EB;">
+                                    @else
+                                        <span class="solution-meta">No image</span>
+                                    @endif
+                                </td>
                                 <td>#{{ $product->id }}</td>
                                 <td><strong>{{ $product->name }}</strong></td>
                                 <td>{{ $product->category ?? 'N/A' }}</td>
