@@ -98,4 +98,5 @@ RUN mkdir -p storage bootstrap/cache && \
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Run migrations on container start (non-fatal if DB not yet reachable), then serve
+CMD ["sh", "-c", "php artisan migrate --force || true && php artisan serve --host=0.0.0.0 --port=8000"]
