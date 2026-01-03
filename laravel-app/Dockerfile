@@ -62,8 +62,12 @@ RUN apk add --no-cache \
     git \
     curl
 
-# Install PHP extensions
-RUN apk add --no-cache $PHPIZE_DEPS && \
+# Install PHP extensions with build dependencies
+RUN apk add --no-cache $PHPIZE_DEPS \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    zlib-dev && \
     docker-php-ext-configure gd \
     --with-freetype=/usr \
     --with-jpeg=/usr \
@@ -75,7 +79,11 @@ RUN apk add --no-cache $PHPIZE_DEPS && \
     exif \
     pcntl \
     bcmath && \
-    apk del $PHPIZE_DEPS
+    apk del $PHPIZE_DEPS \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    zlib-dev
 
 # Copy from builder
 COPY --from=builder /var/www/html /var/www/html
