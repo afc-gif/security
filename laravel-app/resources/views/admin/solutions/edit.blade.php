@@ -1,56 +1,58 @@
-@extends('layouts.app')
+@extends('layout')
+
+@section('title', 'Edit Category - Admin - ARTSCI')
 
 @section('content')
-<div class="container mx-auto py-6">
-    <h1 class="text-3xl font-bold mb-6">Edit Solution Category</h1>
+<div class="admin-container">
+    @include('admin.partials.sidebar', ['active' => 'solutions'])
 
-    <form action="{{ route('admin.solutions.update', $solution) }}" method="POST" class="bg-white rounded-lg shadow p-6">
-        @csrf
-        @method('PUT')
-
-        <div class="mb-4">
-            <label for="name" class="block text-gray-700 font-bold mb-2">Name *</label>
-            <input type="text" name="name" id="name" class="w-full px-4 py-2 border rounded @error('name') border-red-500 @enderror" 
-                   value="{{ old('name', $solution->name) }}" required>
-            @error('name')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
+    <main class="admin-main">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Edit Category</h1>
+            </div>
         </div>
 
-        <div class="mb-4">
-            <label for="icon" class="block text-gray-700 font-bold mb-2">Icon (emoji) *</label>
-            <input type="text" name="icon" id="icon" class="w-full px-4 py-2 border rounded @error('icon') border-red-500 @enderror" 
-                   value="{{ old('icon', $solution->icon) }}" placeholder="e.g. 📹" maxlength="10" required>
-            @error('icon')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
-        </div>
+        <div class="form-container">
+            <form method="POST" action="{{ route('admin.solutions.update', $solution) }}">
+                @csrf
+                @method('PUT')
 
-        <div class="mb-4">
-            <label for="description" class="block text-gray-700 font-bold mb-2">Description</label>
-            <textarea name="description" id="description" rows="4" class="w-full px-4 py-2 border rounded @error('description') border-red-500 @enderror">{{ old('description', $solution->description) }}</textarea>
-            @error('description')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
-        </div>
+                <div class="form-group">
+                    <label for="name">Category Name *</label>
+                    <input type="text" id="name" name="name" value="{{ old('name', $solution->name) }}" required>
+                    @error('name')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label for="sort_order" class="block text-gray-700 font-bold mb-2">Sort Order</label>
-            <input type="number" name="sort_order" id="sort_order" class="w-full px-4 py-2 border rounded @error('sort_order') border-red-500 @enderror" 
-                   value="{{ old('sort_order', $solution->sort_order) }}">
-            @error('sort_order')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
-        </div>
+                <div class="form-group">
+                    <label for="icon">Icon (Emoji) *</label>
+                    <input type="text" id="icon" name="icon" value="{{ old('icon', $solution->icon) }}" maxlength="10" required>
+                    <span class="helper-text">Use an emoji to represent this category</span>
+                    @error('icon')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="flex gap-2">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                Update Solution
-            </button>
-            <a href="{{ route('admin.solutions.index') }}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600">
-                Cancel
-            </a>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description">{{ old('description', $solution->description) }}</textarea>
+                    @error('description')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="sort_order">Sort Order</label>
+                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $solution->sort_order) }}" min="0">
+                    <span class="helper-text">Lower numbers appear first</span>
+                    @error('sort_order')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Category</button>
+                    <a href="{{ route('admin.solutions.index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </main>
 </div>
 @endsection
