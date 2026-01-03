@@ -89,64 +89,29 @@
             </a>
         </div>
 
-        <div class="solution-sync-card">
-            <div class="solution-category-header">
-                <div>
-                    <h2 style="margin: 0 0 6px 0;">Solutions.html Snapshot</h2>
-                    <p class="solution-meta">Data pulled directly from <code>public/solutions.html</code> so the admin view matches the live solutions & product cards.</p>
-                </div>
-                <span class="solution-chip">{{ count($solutionProducts ?? []) }} categories</span>
+        @php
+            $flattened = [];
+            $rowId = 1;
+            foreach ($solutionProducts as $category) {
+                foreach ($category['items'] as $item) {
+                    $flattened[] = [
+                        'row_id' => $rowId++,
+                        'category' => $category['title'] ?? 'Uncategorized',
+                        'item' => $item,
+                    ];
+                }
+            }
+        @endphp
+
+        <div class="solution-category-header">
+            <div>
+                <h2 style="margin: 0 0 6px 0;">Solutions.html Snapshot (Marketing)</h2>
+                <p class="solution-meta">Source: <code>public/solutions.html</code>. This table replaces the old database list in admin.</p>
             </div>
-
-            @forelse($solutionProducts as $category)
-                <div style="border: 1px solid #EEF1F7; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                    <div class="solution-category-header">
-                        <div>
-                            @if($category['id'])
-                                <span class="solution-chip">#{{ $category['id'] }}</span>
-                            @endif
-                            <div style="font-weight: 700; font-size: 18px; margin: 6px 0;">{{ $category['title'] }}</div>
-                            @if(!empty($category['description']))
-                                <p class="solution-meta" style="margin: 0;">{{ $category['description'] }}</p>
-                            @endif
-                        </div>
-                        <span class="badge">{{ count($category['items']) }} items</span>
-                    </div>
-
-                    <div>
-                        @foreach($category['items'] as $item)
-                            <div class="solution-item-row">
-                                <div style="flex: 1;">
-                                    <div class="solution-item-name">{{ $item['name'] }}</div>
-                                    @if(!empty($item['description']))
-                                        <div class="solution-item-desc">{{ $item['description'] }}</div>
-                                    @endif
-                                    @if(!empty($item['specs']))
-                                        <div class="solution-specs">
-                                            @foreach($item['specs'] as $spec)
-                                                <span>{{ $spec }}</span>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="solution-price">
-                                    {{ $item['price'] ?? 'N/A' }}
-                                    @if(!empty($item['image']))
-                                        <div class="solution-meta" style="margin-top: 6px; word-break: break-all;">img: {{ $item['image'] }}</div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @empty
-                <div class="empty-state">
-                    <p>No products found in solutions.html. Confirm the file exists in <code>public/solutions.html</code>.</p>
-                </div>
-            @endforelse
+            <span class="solution-chip">{{ count($solutionProducts ?? []) }} categories</span>
         </div>
 
-        @if($products->count() > 0)
+        @if(count($flattened) > 0)
             <div class="products-table">
                 <table class="data-table">
                     <thead>
@@ -161,44 +126,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($products as $product)
+                        @foreach($flattened as $row)
+                            @php($item = $row['item'])
                             <tr>
                                 <td>
-                                    @if($product->image)
-                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #E5E7EB;">
+                                    @if(!empty($item['image']))
+                                        <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #E5E7EB;">
                                     @else
                                         <span class="solution-meta">No image</span>
                                     @endif
                                 </td>
-                                <td>#{{ $product->id }}</td>
-                                <td><strong>{{ $product->name }}</strong></td>
-                                <td>{{ $product->category ?? 'N/A' }}</td>
-                                <td>${{ number_format($product->price, 2) }}</td>
-                                <td>
-                                    <span class="stock-badge {{ $product->stock > 0 ? 'in-stock' : 'out-of-stock' }}">
-                                        {{ $product->stock }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-sm btn-edit">Edit</a>
-                                    <form action="{{ route('admin.products.delete', $product) }}" method="POST" style="display:inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                    </form>
-                                </td>
+                                <td>#{{ $row['row_id'] }}</td>
+                                <td><strong>{{ $item['name'] }}</strong></td>
+                                <td>{{ $row['category'] }}</td>
+                                <td>{{ $item['price'] ?? 'N/A' }}</td>
+                                <td><span class="stock-badge out-of-stock">N/A</span></td>
+                                <td><span class="solution-meta">Snapshot only</span></td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-
-            <div class="pagination-container">
-                {{ $products->links() }}
-            </div>
         @else
             <div class="empty-state">
-                <p>No products found. <a href="{{ route('admin.products.create') }}">Create one</a></p>
+                <p>No products found in <code>public/solutions.html</code>. Add cards there to display here.</p>
             </div>
         @endif
     </main>

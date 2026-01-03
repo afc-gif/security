@@ -43,8 +43,8 @@ class AdminController extends Controller
     // Products Management
     public function products()
     {
-        $products = Product::paginate(15);
         $solutionProducts = $this->loadSolutionProducts();
+        $products = collect(); // legacy DB list hidden per request
 
         return view('admin.products.index', compact('products', 'solutionProducts'));
     }
