@@ -1,64 +1,75 @@
-@extends('admin.layout')
+@extends('layout')
+
+@section('title', 'Categories - Admin - ARTSCI')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">Categories</h1>
-        <a href="{{ route('admin.categories.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded">
-            Add Category
-        </a>
-    </div>
+<div class="admin-container">
+    @include('admin.partials.sidebar', ['active' => 'categories'])
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Solution Categories</h1>
+            </div>
+            <a href="{{ route('categories.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Category
+            </a>
+        </div>
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <div class="alert alert-success">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full">
-            <thead class="bg-gray-100">
+    <div class="products-table">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Image</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Items</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($categories as $category)
-                    <tr class="border-t">
-                        <td class="px-6 py-4">{{ $category->name }}</td>
-                        <td class="px-6 py-4">
-                            @if($category->image)
-                                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="h-10 w-10 object-cover rounded">
-                            @else
-                                <span class="text-gray-400">No image</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4">{{ $category->items()->count() }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 text-xs rounded-full {{ $category->active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                @forelse($categories as $category)
+                    <tr>
+                        <td>#{{ $category->id }}</td>
+                        <td><strong>{{ $category->name }}</strong></td>
+                        <td>
+                            <span class="badge {{ $category->active ? 'badge-success' : 'badge-warning' }}">
                                 {{ $category->active ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            <a href="{{ route('admin.categories.edit', $category) }}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                            <form action="{{ route('admin.categories.destroy', $category) }}" method="POST" class="inline">
+                        <td>{{ $category->items()->count() }}</td>
+                        <td>
+                            <a href="{{ route('categories.edit', $category) }}" class="btn btn-sm btn-edit">Edit</a>
+                            <form action="{{ route('categories.destroy', $category) }}" method="POST" style="display:inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" onclick="return confirm('Are you sure?')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                             </form>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px;">
+                            No categories found. <a href="{{ route('categories.create') }}">Create one</a>
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
 
-    <div class="mt-4">
+    <div class="pagination-container">
         {{ $categories->links() }}
     </div>
+    </main>
 </div>
 @endsection

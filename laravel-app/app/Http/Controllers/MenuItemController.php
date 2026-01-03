@@ -39,7 +39,7 @@ class MenuItemController extends Controller
 
         MenuItem::create($validated);
 
-        return redirect()->route('admin.menu-items.index')->with('success', 'Menu item created successfully');
+        return redirect()->route('menu-items.index')->with('success', 'Menu item created successfully');
     }
 
     public function edit(MenuItem $menuItem)
@@ -69,7 +69,7 @@ class MenuItemController extends Controller
 
         $menuItem->update($validated);
 
-        return redirect()->route('admin.menu-items.index')->with('success', 'Menu item updated successfully');
+        return redirect()->route('menu-items.index')->with('success', 'Menu item updated successfully');
     }
 
     public function uploadImage(Request $request, MenuItem $menuItem)

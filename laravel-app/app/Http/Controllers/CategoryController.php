@@ -36,7 +36,7 @@ class CategoryController extends Controller
         $validated['slug'] = str()->slug($validated['name']);
         Category::create($validated);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully');
+        return redirect()->route('categories.index')->with('success', 'Category created successfully');
     }
 
     public function edit(Category $category)
@@ -64,7 +64,7 @@ class CategoryController extends Controller
         $validated['slug'] = str()->slug($validated['name']);
         $category->update($validated);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully');
+        return redirect()->route('categories.index')->with('success', 'Category updated successfully');
     }
 
     public function destroy(Category $category)
@@ -74,7 +74,7 @@ class CategoryController extends Controller
         }
         $category->delete();
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully');
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully');
     }
 
     // API endpoints for live polling

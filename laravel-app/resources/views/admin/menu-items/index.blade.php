@@ -1,53 +1,80 @@
-@extends('admin.layout')
+@extends('layout')
+
+@section('title', 'Menu Items - Admin - ARTSCI')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">Menu Items</h1>
-        <a href="{{ route('admin.menu-items.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded">
-            Add Menu Item
-        </a>
-    </div>
+<div class="admin-container">
+    @include('admin.partials.sidebar', ['active' => 'menu-items'])
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Products / Menu Items</h1>
+            </div>
+            <a href="{{ route('menu-items.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Product
+            </a>
+        </div>
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <div class="alert alert-success">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full">
-            <thead class="bg-gray-100">
+    <div class="products-table">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Category</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Image</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Price</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($menuItems as $item)
-                    <tr class="border-t">
-                        <td class="px-6 py-4">{{ $item->name }}</td>
-                        <td class="px-6 py-4">{{ $item->category->name }}</td>
-                        <td class="px-6 py-4">
-                            @if($item->image)
-                                <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" class="h-10 w-10 object-cover rounded">
-                            @else
-                                <span class="text-gray-400">No image</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4">{{ $item->price ? '₹' . number_format($item->price, 2) : '-' }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 text-xs rounded-full {{ $item->available ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                @forelse($menuItems as $item)
+                    <tr>
+                        <td>#{{ $item->id }}</td>
+                        <td><strong>{{ $item->name }}</strong></td>
+                        <td>{{ $item->category->name }}</td>
+                        <td>${{ $item->price ? number_format($item->price, 2) : '-' }}</td>
+                        <td>
+                            <span class="badge {{ $item->available ? 'badge-success' : 'badge-warning' }}">
                                 {{ $item->available ? 'Available' : 'Unavailable' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            <a href="{{ route('admin.menu-items.edit', $item) }}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                            <form action="{{ route('admin.menu-items.destroy', $item) }}" method="POST" class="inline">
+                        <td>
+                            <a href="{{ route('menu-items.edit', $item) }}" class="btn btn-sm btn-edit">Edit</a>
+                            <form action="{{ route('menu-items.destroy', $item) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            No menu items found. <a href="{{ route('menu-items.create') }}">Create one</a>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container">
+        {{ $menuItems->links() }}
+    </div>
+    </main>
+</div>
+@endsection>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" onclick="return confirm('Are you sure?')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>

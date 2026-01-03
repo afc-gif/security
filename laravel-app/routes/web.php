@@ -9,6 +9,8 @@ use App\Http\Controllers\AdminController;
 Route::get('/', function () {
     return file_get_contents(public_path('index.html'));
 })->name('home');
+Route::get('/solutions', [App\Http\Controllers\SolutionController::class, 'index'])->name('solutions.index');
+Route::get('/solutions/{solution}', [App\Http\Controllers\SolutionController::class, 'show'])->name('solutions.show');
 Route::get('/products/{product}', [ShopController::class, 'show'])->name('products.show');
 
 // Authentication
@@ -55,6 +57,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('categories', 'App\Http\Controllers\CategoryController');
     Route::resource('menu-items', 'App\Http\Controllers\MenuItemController');
     Route::post('/menu-items/{menuItem}/upload-image', [App\Http\Controllers\MenuItemController::class, 'uploadImage'])->name('menu-items.upload-image');
+
+    // Solutions Management
+    Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController');
+    Route::resource('solutions.items', 'App\Http\Controllers\Admin\SolutionItemController', ['except' => ['index', 'show']]);
 });
 
 // API routes for live polling

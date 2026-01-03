@@ -12,6 +12,12 @@
         <a href="{{ route('admin.dashboard') }}" class="nav-item {{ $active === 'dashboard' ? 'active' : '' }}">
             <i class="fas fa-chart-line"></i> Dashboard
         </a>
+        <a href="{{ route('categories.index') }}" class="nav-item {{ $active === 'categories' ? 'active' : '' }}">
+            <i class="fas fa-list"></i> Categories
+        </a>
+        <a href="{{ route('menu-items.index') }}" class="nav-item {{ $active === 'menu-items' ? 'active' : '' }}">
+            <i class="fas fa-utensils"></i> Menu Items
+        </a>
         <a href="{{ route('admin.products.index') }}" class="nav-item {{ $active === 'products' ? 'active' : '' }}">
             <i class="fas fa-box"></i> Products
         </a>

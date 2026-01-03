@@ -23,11 +23,11 @@ return [
 
     'path' => '/',
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => null,
 
-    'secure' => env('SESSION_SECURE_COOKIES', false),
+    'secure' => false,
 
     'http_only' => true,
 
-    'same_site' => 'lax',
+    'same_site' => 'Lax',
 ];

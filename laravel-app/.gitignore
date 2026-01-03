@@ -18,5 +18,8 @@ yarn-error.log
 *.log
 .env.local
 composer.lock
+/docker/mysql-data/
+/docker/postgres-data/
+/docker/redis-data/
 package-lock.json
 .history

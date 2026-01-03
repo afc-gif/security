@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -16,16 +17,30 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        Log::info('Login route hit', ['method' => $request->method()]);
+        
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|string|min:1',
         ]);
 
+        Log::info('Validation passed', ['email' => $credentials['email']]);
+
         if (Auth::attempt($credentials)) {
+            Log::info('Auth::attempt succeeded', ['email' => $credentials['email']]);
             $request->session()->regenerate();
+            
+            // Redirect admin to dashboard, regular users to home
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            if ($user->isAdmin()) {
+                return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
+            }
+            
             return redirect()->intended('/')->with('success', 'Logged in successfully!');
         }
 
+        Log::warning('Auth::attempt failed', ['email' => $credentials['email']]);
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');

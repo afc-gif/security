@@ -3,7 +3,7 @@
 # Docker Quick Start Script for ARTSCI POS System
 # This script initializes and starts the Docker containers
 
-LARAVEL_PATH="/home/codecps/Desktop/security/laravel-app"
+LARAVEL_PATH="/home/codecps/security/laravel-app"
 
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║      ARTSCI POS System - Docker Startup Script                ║"

@@ -11,34 +11,35 @@
         <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
             <div>
                 <div class="text-center mb-6">
-                    <img src="{{ asset('logo.png') }}" alt="ARTSCI Logo" class="h-16 w-auto mx-auto">
+                    <img src="<?php echo e(asset('logo.png')); ?>" alt="ARTSCI Logo" class="h-16 w-auto mx-auto">
                 </div>
                 <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     ARTSCI Login
                 </h2>
             </div>
 
-            @if ($errors->any())
+            <?php if($errors->any()): ?>
                 <div class="rounded-md bg-red-50 p-4">
                     <div class="text-sm font-medium text-red-800">
                         <strong>Login Failed!</strong>
-                        @foreach ($errors->all() as $error)
-                            <p>• {{ $error }}</p>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <p>• <?php echo e($error); ?></p>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            @if (session('success'))
+            <?php if(session('success')): ?>
                 <div class="rounded-md bg-green-50 p-4">
                     <div class="text-sm font-medium text-green-800">
-                        {{ session('success') }}
+                        <?php echo e(session('success')); ?>
+
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-6">
-                @csrf
+            <form method="POST" action="<?php echo e(route('login')); ?>" class="mt-8 space-y-6">
+                <?php echo csrf_field(); ?>
 
                 <div class="rounded-md shadow-sm -space-y-px">
                     <div>
@@ -47,7 +48,7 @@
                             id="email-address"
                             name="email"
                             type="email"
-                            value="{{ old('email') }}"
+                            value="<?php echo e(old('email')); ?>"
                             required
                             class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                             placeholder="Email address"
@@ -77,11 +78,11 @@
             </form>
 
             <div class="text-center">
-                <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                <a href="<?php echo e(route('register')); ?>" class="font-medium text-blue-600 hover:text-blue-500">
                     Don't have an account? Register
                 </a>
             </div>
         </div>
     </div>
 </body>
-</html>
+</html><?php /**PATH /var/www/html/resources/views/auth/login.blade.php ENDPATH**/ ?>

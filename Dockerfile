@@ -1,93 +1,66 @@
-# Use official PHP image with built-in web server
-FROM php:8.3-cli-alpine
+# syntax=docker/dockerfile:1
 
-# Set environment variables
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Builder stage: install PHP extensions and composer, then install dependencies
+FROM php:8.3-fpm-bullseye AS builder
 
-# Set working directory
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    git unzip zip curl libpq-dev libzip-dev libonig-dev \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_pgsql gd zip bcmath mbstring pcntl \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /var/www/html
 
-# Install system dependencies and build tools
-RUN apk add --no-cache --virtual .build-deps \
-    autoconf \
-    dpkg-dev \
-    file \
-    g++ \
-    gcc \
-    libc-dev \
-    make \
-    pkgconf \
-    re2c \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    zlib-dev \
-    && apk add --no-cache \
-    git \
-    curl \
-    zip \
-    unzip \
-    postgresql-dev \
-    oniguruma-dev \
-    oniguruma \
-    freetype \
-    libjpeg-turbo \
-    libpng
+# Bring in application code
+COPY laravel-app/ /var/www/html
 
-# Install PHP extensions with proper configuration
-RUN docker-php-ext-configure gd \
-    --with-freetype=/usr \
-    --with-jpeg=/usr \
-    && docker-php-ext-install -j$(nproc) \
-    gd \
-    pdo \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath
+# Prepare writable directories
+RUN mkdir -p storage/framework/{cache,data,sessions,views} bootstrap/cache \
+ && chmod -R 777 storage bootstrap/cache
 
-# Remove build dependencies to reduce image size
-RUN apk del --no-cache .build-deps
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# First, verify laravel-app directory exists and list its contents
-RUN echo "=== Checking for laravel-app directory ===" && \
-    ls -la / | grep -E "var|laravel" && \
-    echo "=== Contents of root ===" && \
-    ls -la / && \
-    echo "=== Contents of /var/www/html ===" && \
-    ls -la /var/www/html/
-
-# Copy only composer files first
-COPY laravel-app/composer.json /var/www/html/
-COPY laravel-app/composer.lock /var/www/html/
-
-# Verify files were copied
-RUN echo "=== After copying composer files ===" && \
-    ls -la /var/www/html/
-
-# Now copy everything else
-COPY laravel-app/ /var/www/html/
-
-# Verify full copy
-RUN echo "=== After copying all files ===" && \
-    ls -la /var/www/html/ | head -30
-
-# Create necessary directories
-RUN mkdir -p storage bootstrap/cache \
-    && chmod -R 777 storage bootstrap/cache
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+ && composer install --no-dev --prefer-dist --no-progress --no-interaction \
+ && rm -rf /root/.composer
 
-# Clear any cached configs
-RUN rm -rf bootstrap/cache/*.php || true
 
-# Expose port
-EXPOSE 8000
+# Runtime stage: nginx + php-fpm
+FROM php:8.3-fpm-bullseye
 
-# Start the Laravel development server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    nginx curl libpq-dev libzip-dev libonig-dev \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_pgsql gd zip bcmath mbstring pcntl \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html
+
+# Nginx configuration for single-container php-fpm
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/php-fpm-pool.conf /usr/local/etc/php-fpm.d/zz-custom-pool.conf
+
+# Copy built application from builder
+COPY --from=builder /var/www/html /var/www/html
+
+# Default environment (override at runtime)
+ENV APP_ENV=production \
+    PORT=80
+
+EXPOSE 80
+
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh \
+ && mkdir -p /var/log/nginx \
+ && chown -R www-data:www-data storage bootstrap/cache
+
+CMD ["/start.sh"]

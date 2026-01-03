@@ -1,60 +1,80 @@
-@extends('admin.layout')
+@extends('layout')
+
+@section('title', 'Add Product - Admin - ARTSCI')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Create Menu Item</h1>
+<div class="admin-container">
+    @include('admin.partials.sidebar', ['active' => 'menu-items'])
 
-    <form action="{{ route('admin.menu-items.store') }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow p-6">
-        @csrf
-
-        <div class="mb-4">
-            <label for="category_id" class="block text-sm font-semibold mb-2">Category *</label>
-            <select id="category_id" name="category_id" class="w-full border rounded px-3 py-2 @error('category_id') border-red-500 @enderror" required>
-                <option value="">Select a category</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
-                @endforeach
-            </select>
-            @error('category_id')<span class="text-red-600 text-sm">{{ $message }}</span>@enderror
+    <main class="admin-main">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Add New Product</h1>
+            </div>
         </div>
 
-        <div class="mb-4">
-            <label for="name" class="block text-sm font-semibold mb-2">Name *</label>
-            <input type="text" id="name" name="name" class="w-full border rounded px-3 py-2 @error('name') border-red-500 @enderror" value="{{ old('name') }}" required>
-            @error('name')<span class="text-red-600 text-sm">{{ $message }}</span>@enderror
-        </div>
+        <div class="form-container">
+            <form method="POST" action="{{ route('menu-items.store') }}" enctype="multipart/form-data">
+                @csrf
 
-        <div class="mb-4">
-            <label for="description" class="block text-sm font-semibold mb-2">Description</label>
-            <textarea id="description" name="description" rows="4" class="w-full border rounded px-3 py-2">{{ old('description') }}</textarea>
-        </div>
+                <div class="form-group">
+                    <label for="category_id">Category *</label>
+                    <select id="category_id" name="category_id" required>
+                        <option value="">Select a category</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('category_id')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label for="price" class="block text-sm font-semibold mb-2">Price</label>
-            <input type="number" id="price" name="price" step="0.01" class="w-full border rounded px-3 py-2" value="{{ old('price') }}">
-        </div>
+                <div class="form-group">
+                    <label for="name">Product Name *</label>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" required>
+                    @error('name')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label for="image" class="block text-sm font-semibold mb-2">Image</label>
-            <input type="file" id="image" name="image" accept="image/*" class="w-full border rounded px-3 py-2">
-        </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description">{{ old('description') }}</textarea>
+                    @error('description')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label for="sort_order" class="block text-sm font-semibold mb-2">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" class="w-full border rounded px-3 py-2" value="{{ old('sort_order', 0) }}">
-        </div>
+                <div class="form-group">
+                    <label for="price">Price *</label>
+                    <input type="number" id="price" name="price" step="0.01" value="{{ old('price') }}" required>
+                    @error('price')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-6">
-            <label class="flex items-center">
-                <input type="checkbox" name="available" value="1" {{ old('available', true) ? 'checked' : '' }} class="mr-2">
-                <span class="text-sm font-semibold">Available</span>
-            </label>
-        </div>
+                <div class="form-group">
+                    <label for="image">Product Image</label>
+                    <input type="file" id="image" name="image" accept="image/*">
+                    @error('image')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="flex gap-4">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Create</button>
-            <a href="{{ route('admin.menu-items.index') }}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400">Cancel</a>
+                <div class="form-group">
+                    <label for="sort_order">Sort Order</label>
+                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}">
+                    @error('sort_order')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="available" value="1" {{ old('available') ? 'checked' : '' }}>
+                        Available (Show on website)
+                    </label>
+                    @error('available')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Product</button>
+                    <a href="{{ route('menu-items.index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </main>
 </div>
 @endsection

@@ -1,5 +1,5 @@
-# Use official PHP image with built-in web server
-FROM php:8.3-cli-alpine
+# Use official PHP-FPM image
+FROM php:8.3-fpm-alpine
 
 # Set working directory
 WORKDIR /var/www/html
@@ -67,7 +67,7 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-d
 RUN rm -rf bootstrap/cache/*.php || true
 
 # Expose port
-EXPOSE 8000
+EXPOSE 9000
 
-# Start the Laravel development server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Start PHP-FPM
+CMD ["php-fpm"]

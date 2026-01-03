@@ -15,17 +15,11 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=laravel_pos
-      - DB_USERNAME=laravel
-      - DB_PASSWORD=laravel_password
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     networks:
       - laravel_network
     depends_on:
-      - mysql
       - redis
     restart: unless-stopped
     healthcheck:
@@ -55,28 +49,6 @@ services:
       timeout: 3s
       retries: 3
 
-  # MySQL Database Service
-  mysql:
-    image: mysql:8.0
-    container_name: laravel_mysql
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: laravel_pos
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: laravel_password
-      MYSQL_ROOT_PASSWORD: root_password
-    volumes:
-      - ./docker/mysql-data:/var/lib/mysql
-    networks:
-      - laravel_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis Cache Service (Optional but recommended)
   redis:
     image: redis:alpine
@@ -99,5 +71,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
   redis_data:
