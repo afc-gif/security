@@ -116,100 +116,34 @@ class AdminController extends Controller
 
     /**
      * Read solution categories/products for admin visibility.
-     * Prefers the database (admin-managed) and falls back to parsing public/solutions.html if empty.
+     * Uses database (admin-managed) only, so CRUD actions are always available.
      */
     private function loadSolutionProducts(): array
     {
-        // Prefer database-driven solutions & items
+        // Database-driven solutions & items
         $dbSolutions = Solution::with(['items' => function ($query) {
             $query->orderBy('sort_order');
         }])->where('active', true)->orderBy('sort_order')->get();
 
-        if ($dbSolutions->count() > 0) {
-            return $dbSolutions->map(function ($solution) {
-                return [
-                    'id' => $solution->id,
-                    'title' => $solution->name,
-                    'description' => $solution->description,
-                    'items' => $solution->items->map(function ($item) {
-                        return [
-                            'id' => $item->id,
-                            'solution_id' => $item->solution_id,
-                            'barcode' => $item->barcode,
-                            'name' => $item->name,
-                            'description' => $item->description,
-                            'price' => $item->price ? 'R' . number_format($item->price, 2) : null,
-                            'image' => $item->image ? asset('storage/' . $item->image) : null,
-                        ];
-                    })->toArray(),
-                ];
-            })->toArray();
-        }
-
-        $path = public_path('solutions.html');
-        if (!File::exists($path)) {
-            return [];
-        }
-
-        $html = File::get($path);
-        $previousLibxmlSetting = libxml_use_internal_errors(true);
-
-        $dom = new \DOMDocument();
-        if (!$dom->loadHTML($html)) {
-            libxml_clear_errors();
-            libxml_use_internal_errors($previousLibxmlSetting);
-            return [];
-        }
-
-        $xpath = new \DOMXPath($dom);
-        $categories = [];
-
-        foreach ($xpath->query('//section[contains(@class,"solution-section")]') as $section) {
-            $titleNode = $xpath->query('.//h2', $section)->item(0);
-            $descriptionNode = $xpath->query('.//div[contains(@class,"solution-section-header")]//p', $section)->item(0);
-
-            $category = [
-                'id' => $section->getAttribute('id') ?: null,
-                'title' => $titleNode ? trim($titleNode->textContent) : 'Untitled Section',
-                'description' => $descriptionNode ? trim($descriptionNode->textContent) : null,
-                'items' => [],
+        return $dbSolutions->map(function ($solution) {
+            return [
+                'id' => $solution->id,
+                'title' => $solution->name,
+                'description' => $solution->description,
+                'items' => $solution->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'solution_id' => $item->solution_id,
+                        'barcode' => $item->barcode,
+                        'name' => $item->name,
+                        'description' => $item->description,
+                        'price' => $item->price ? 'R' . number_format($item->price, 2) : null,
+                        'stock' => $item->stock,
+                        'image' => $item->image ? asset('storage/' . $item->image) : null,
+                    ];
+                })->toArray(),
             ];
-
-            foreach ($xpath->query('.//div[contains(@class,"product-card")]', $section) as $card) {
-                $nameNode = $xpath->query('.//h3[contains(@class,"product-name")]', $card)->item(0);
-                $descriptionNode = $xpath->query('.//p[contains(@class,"product-description")]', $card)->item(0);
-                $priceNode = $xpath->query('.//div[contains(@class,"product-price")]', $card)->item(0);
-                $imageNode = $xpath->query('.//div[contains(@class,"product-image")]//img', $card)->item(0);
-                $specNodes = $xpath->query('.//div[contains(@class,"product-specs")]//span', $card);
-
-                $specs = [];
-                if ($specNodes) {
-                    foreach ($specNodes as $specNode) {
-                        $specText = trim($specNode->textContent);
-                        if ($specText !== '') {
-                            $specs[] = $specText;
-                        }
-                    }
-                }
-
-                $category['items'][] = [
-                    'name' => $nameNode ? trim($nameNode->textContent) : 'Unnamed Product',
-                    'description' => $descriptionNode ? trim($descriptionNode->textContent) : '',
-                    'price' => $priceNode ? trim($priceNode->textContent) : null,
-                    'image' => ($imageNode && $imageNode->hasAttribute('src')) ? $imageNode->getAttribute('src') : null,
-                    'specs' => $specs,
-                ];
-            }
-
-            if (count($category['items']) > 0) {
-                $categories[] = $category;
-            }
-        }
-
-        libxml_clear_errors();
-        libxml_use_internal_errors($previousLibxmlSetting);
-
-        return $categories;
+        })->toArray();
     }
 
     // Orders Management
