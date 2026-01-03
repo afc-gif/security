@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Solution;
 
 class DatabaseSeeder extends Seeder
 {
@@ -30,13 +31,57 @@ class DatabaseSeeder extends Seeder
             'role' => 'user',
         ]);
 
+        // Create the 6 main solutions from index.html
+        $solutions = [
+            [
+                'name' => 'SURVEILLANCE',
+                'icon' => '📹',
+                'description' => 'HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring',
+                'sort_order' => 1,
+            ],
+            [
+                'name' => 'SOLAR POWER',
+                'icon' => '⚡',
+                'description' => 'Hybrid inverters with lithium batteries sized for enterprise loads',
+                'sort_order' => 2,
+            ],
+            [
+                'name' => 'ACCESS CONTROL',
+                'icon' => '🔐',
+                'description' => 'Smart gates, biometric locks, and visitor management systems',
+                'sort_order' => 3,
+            ],
+            [
+                'name' => 'PERIMETER SECURITY',
+                'icon' => '🔌',
+                'description' => 'High-voltage electric fencing with integrated alarms and monitoring',
+                'sort_order' => 4,
+            ],
+            [
+                'name' => 'SMART AUTOMATION',
+                'icon' => '🏠',
+                'description' => 'Unified control for lighting, climate, security, and energy management',
+                'sort_order' => 5,
+            ],
+            [
+                'name' => 'FULL INTEGRATION',
+                'icon' => '🔗',
+                'description' => 'Complete enterprise stack with unified monitoring and control',
+                'sort_order' => 6,
+            ],
+        ];
+
+        foreach ($solutions as $solutionData) {
+            Solution::firstOrCreate(['name' => $solutionData['name']], $solutionData);
+        }
+
         // Create sample products
         Product::create([
             'name' => 'Security Camera System',
             'description' => 'Advanced HD security camera system with night vision',
             'price' => 299.99,
             'stock' => 15,
-            'category' => 'Security',
+            'category' => 'SURVEILLANCE',
         ]);
 
         Product::create([
@@ -44,7 +89,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Reliable UPS system for enterprise applications',
             'price' => 599.99,
             'stock' => 8,
-            'category' => 'Power',
+            'category' => 'SOLAR POWER',
         ]);
 
         Product::create([
@@ -52,23 +97,31 @@ class DatabaseSeeder extends Seeder
             'description' => 'Modern biometric access control system',
             'price' => 1299.99,
             'stock' => 5,
-            'category' => 'Access Control',
+            'category' => 'ACCESS CONTROL',
         ]);
 
         Product::create([
-            'name' => 'Network Monitor',
-            'description' => 'Professional network monitoring equipment',
+            'name' => 'Perimeter Fence System',
+            'description' => 'Professional electric fencing system for secure perimeters',
             'price' => 449.99,
             'stock' => 12,
-            'category' => 'Network',
+            'category' => 'PERIMETER SECURITY',
         ]);
 
         Product::create([
-            'name' => 'Emergency Light System',
-            'description' => 'LED emergency lighting for safety',
+            'name' => 'Smart Home Automation Hub',
+            'description' => 'Central automation hub for integrated building control',
             'price' => 149.99,
             'stock' => 25,
-            'category' => 'Lighting',
+            'category' => 'SMART AUTOMATION',
+        ]);
+
+        Product::create([
+            'name' => 'Enterprise Integration Platform',
+            'description' => 'Complete platform for full system integration and management',
+            'price' => 1999.99,
+            'stock' => 3,
+            'category' => 'FULL INTEGRATION',
         ]);
     }
 }

@@ -27,14 +27,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="category">Category</label>
-                    <input list="category-options" id="category" name="category" value="{{ old('category') }}" placeholder="Select or type a category">
-                    <datalist id="category-options">
+                    <label for="category">Category *</label>
+                    <select id="category" name="category" required>
+                        <option value="">-- Select a Category --</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->name }}"></option>
+                            <option value="{{ $cat->name }}" @if(old('category') === $cat->name) selected @endif>
+                                {{ $cat->name }}
+                            </option>
                         @endforeach
-                    </datalist>
-                    <span class="helper-text">Existing admin categories are suggested, but you can type a new one.</span>
+                    </select>
+                    <span class="helper-text">Select from the 6 main solution categories</span>
                     @error('category')<span class="error-text">{{ $message }}</span>@enderror
                 </div>
 
