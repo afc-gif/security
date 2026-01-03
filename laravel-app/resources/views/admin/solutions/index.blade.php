@@ -61,6 +61,18 @@
         color: #6B7280;
     }
 
+    .status-badge {
+        font-weight: 600;
+    }
+
+    .status-active {
+        color: #10B981;
+    }
+
+    .status-inactive {
+        color: #EF4444;
+    }
+
     .solution-actions {
         display: flex;
         gap: 8px;
@@ -162,7 +174,7 @@
                             @endif
                             <div class="solution-meta">
                                 <span><strong>Products:</strong> {{ $solution->items->count() }}</span>
-                                <span><strong>Status:</strong> <span style="color: {{ $solution->active ? '#10B981' : '#EF4444' }};">{{ $solution->active ? 'Active' : 'Inactive' }}</span></span>
+                                <span><strong>Status:</strong> <span class="status-badge {{ $solution->active ? 'status-active' : 'status-inactive' }}">{{ $solution->active ? 'Active' : 'Inactive' }}</span></span>
                                 <span><strong>Order:</strong> {{ $solution->sort_order ?? '—' }}</span>
                             </div>
                         </div>

@@ -18,7 +18,9 @@ class AdminController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!auth()->check() || !auth()->user()->isAdmin()) {
+            /** @var \App\Models\User|null $user */
+            $user = auth()->user();
+            if (!$user || !$user->isAdmin()) {
                 abort(403, 'Unauthorized');
             }
             return $next($request);
@@ -156,7 +158,7 @@ class AdminController extends Controller
         try {
             $solution = Solution::where('name', $product->category)->first();
             if (!$solution) {
-                \Log::warning("Solution not found for category: {$product->category}");
+                Log::warning("Solution not found for category: {$product->category}");
                 return;
             }
 
@@ -190,7 +192,7 @@ class AdminController extends Controller
                 SolutionItem::create($payload);
             }
         } catch (\Exception $e) {
-            \Log::error("Error syncing product to solution item: " . $e->getMessage());
+            Log::error("Error syncing product to solution item: " . $e->getMessage());
             throw $e;
         }
     }
