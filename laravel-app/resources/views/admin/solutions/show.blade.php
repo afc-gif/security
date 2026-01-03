@@ -44,6 +44,13 @@
                         <h3 class="text-xl font-bold">{{ $item->name }}</h3>
                         <p class="text-gray-600 mt-1">{{ $item->description }}</p>
                         <p class="text-sm text-gray-500 mt-1">ID: #{{ $item->id }} &middot; Barcode: {{ $item->barcode }}</p>
+                        <p class="text-sm mt-1">
+                            @if ($item->stock === 0)
+                                <span class="px-2 py-1 rounded bg-red-100 text-red-700 font-semibold">Sold Out</span>
+                            @else
+                                <span class="px-2 py-1 rounded bg-green-100 text-green-700 font-semibold">Stock: {{ $item->stock }}</span>
+                            @endif
+                        </p>
                         @if ($item->price)
                             <p class="text-lg font-bold text-green-600 mt-2">R{{ number_format($item->price, 2) }}</p>
                         @endif

@@ -143,10 +143,20 @@
                                 <td><strong>{{ $item['name'] }}</strong></td>
                                 <td>{{ $row['category'] }}</td>
                                 <td>{{ $item['price'] ?? 'N/A' }}</td>
-                                <td><span class="stock-badge out-of-stock">N/A</span></td>
+                                <td>
+                                    @php($stock = $item['stock'] ?? 0)
+                                    <span class="stock-badge {{ $stock > 0 ? 'in-stock' : 'out-of-stock' }}">
+                                        {{ $stock > 0 ? $stock : 'Sold Out' }}
+                                    </span>
+                                </td>
                                 <td>
                                     @if(!empty($item['id']) && !empty($item['solution_id']))
-                                        <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="btn btn-sm btn-edit">Edit</a>
+                                        <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="btn btn-sm btn-edit" style="margin-right:6px;">Edit</a>
+                                        <form action="{{ route('admin.solutions.items.destroy', [$row['solution_id'], $item['id']]) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                                        </form>
                                     @else
                                         <span class="solution-meta">View only</span>
                                     @endif

@@ -23,6 +23,7 @@ class SolutionItemController extends Controller
             'barcode' => 'nullable|string|max:64|unique:solution_items,barcode',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'sort_order' => 'nullable|integer',
         ]);
@@ -30,6 +31,8 @@ class SolutionItemController extends Controller
         if (empty($validated['barcode'])) {
             $validated['barcode'] = $this->generateUniqueBarcode();
         }
+
+        $validated['stock'] = $validated['stock'] ?? 0;
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('solutions', 'public');
@@ -54,6 +57,7 @@ class SolutionItemController extends Controller
             'barcode' => 'nullable|string|max:64|unique:solution_items,barcode,' . $item->id,
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'sort_order' => 'nullable|integer',
         ]);
@@ -61,6 +65,8 @@ class SolutionItemController extends Controller
         if (empty($validated['barcode'])) {
             $validated['barcode'] = $item->barcode ?: $this->generateUniqueBarcode();
         }
+
+        $validated['stock'] = $validated['stock'] ?? $item->stock ?? 0;
 
         if ($request->hasFile('image')) {
             if ($item->image) {

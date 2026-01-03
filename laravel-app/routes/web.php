@@ -4,13 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SolutionController;
 
 // Public routes
 Route::get('/', function () {
     return file_get_contents(public_path('index.html'));
 })->name('home');
-Route::get('/solutions', [App\Http\Controllers\SolutionController::class, 'index'])->name('solutions.index');
-Route::get('/solutions/{solution}', [App\Http\Controllers\SolutionController::class, 'show'])->name('solutions.show');
+Route::get('/solutions', [SolutionController::class, 'index'])->name('solutions.index');
+Route::get('/solutions/{solution}', [SolutionController::class, 'show'])->name('solutions.show');
 Route::get('/products/{product}', [ShopController::class, 'show'])->name('products.show');
 
 // Authentication
@@ -66,3 +67,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 // API routes for live polling
 Route::get('/api/categories', [App\Http\Controllers\CategoryController::class, 'apiIndex']);
 Route::get('/api/categories/{category}/items', [App\Http\Controllers\CategoryController::class, 'apiItems']);
+Route::get('/api/solutions', [SolutionController::class, 'apiIndex']);

@@ -9,10 +9,11 @@ class SolutionItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['solution_id', 'name', 'barcode', 'description', 'price', 'image', 'sort_order', 'active'];
+    protected $fillable = ['solution_id', 'name', 'barcode', 'description', 'price', 'stock', 'image', 'sort_order', 'active'];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'stock' => 'integer',
     ];
 
     public function solution()

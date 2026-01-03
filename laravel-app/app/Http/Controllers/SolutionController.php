@@ -15,8 +15,20 @@ class SolutionController extends Controller
                                  $query->where('active', true)->orderBy('sort_order');
                              }])
                              ->get();
-        
+
         return view('solutions', compact('solutions'));
+    }
+
+    public function apiIndex()
+    {
+        $solutions = Solution::where('active', true)
+                             ->orderBy('sort_order')
+                             ->with(['items' => function ($query) {
+                                 $query->where('active', true)->orderBy('sort_order');
+                             }])
+                             ->get();
+
+        return response()->json($solutions);
     }
 
     public function show(Solution $solution)

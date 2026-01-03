@@ -43,6 +43,15 @@
         </div>
 
         <div class="mb-4">
+            <label for="stock" class="block text-gray-700 font-bold mb-2">Stock</label>
+            <input type="number" name="stock" id="stock" class="w-full px-4 py-2 border rounded @error('stock') border-red-500 @enderror" 
+                   value="{{ old('stock', 0) }}" min="0">
+            @error('stock')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <div class="mb-4">
             <label for="image" class="block text-gray-700 font-bold mb-2">Item Image</label>
             <input type="file" name="image" id="image" accept="image/*" class="w-full px-4 py-2 border rounded @error('image') border-red-500 @enderror">
             <p class="text-gray-500 text-sm mt-1">Max 2MB. Supported: JPEG, PNG, JPG, GIF, WebP</p>
