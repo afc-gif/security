@@ -18,6 +18,15 @@
         </div>
 
         <div class="mb-4">
+            <label for="barcode" class="block text-gray-700 font-bold mb-2">Barcode</label>
+            <input type="text" name="barcode" id="barcode" class="w-full px-4 py-2 border rounded @error('barcode') border-red-500 @enderror" 
+                   value="{{ old('barcode', $item->barcode) }}" placeholder="Leave blank to keep or auto-generate">
+            @error('barcode')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <div class="mb-4">
             <label for="description" class="block text-gray-700 font-bold mb-2">Description</label>
             <textarea name="description" id="description" rows="4" class="w-full px-4 py-2 border rounded @error('description') border-red-500 @enderror">{{ old('description', $item->description) }}</textarea>
             @error('description')

@@ -97,6 +97,7 @@
                     $flattened[] = [
                         'row_id' => $rowId++,
                         'category' => $category['title'] ?? 'Uncategorized',
+                        'solution_id' => $category['id'] ?? null,
                         'item' => $item,
                     ];
                 }
@@ -105,8 +106,8 @@
 
         <div class="solution-category-header">
             <div>
-                <h2 style="margin: 0 0 6px 0;">Solutions.html Snapshot (Marketing)</h2>
-                <p class="solution-meta">Source: <code>public/solutions.html</code>. This table replaces the old database list in admin.</p>
+                <h2 style="margin: 0 0 6px 0;">Solutions Catalog (DB)</h2>
+                <p class="solution-meta">Source: database solutions & items (manage under Admin → Solutions). Each item has ID + barcode for POS.</p>
             </div>
             <span class="solution-chip">{{ count($solutionProducts ?? []) }} categories</span>
         </div>
@@ -118,6 +119,7 @@
                         <tr>
                             <th>Image</th>
                             <th>ID</th>
+                            <th>Barcode</th>
                             <th>Name</th>
                             <th>Category</th>
                             <th>Price</th>
@@ -137,11 +139,18 @@
                                     @endif
                                 </td>
                                 <td>#{{ $row['row_id'] }}</td>
+                                <td>{{ $item['barcode'] ?? '—' }}</td>
                                 <td><strong>{{ $item['name'] }}</strong></td>
                                 <td>{{ $row['category'] }}</td>
                                 <td>{{ $item['price'] ?? 'N/A' }}</td>
                                 <td><span class="stock-badge out-of-stock">N/A</span></td>
-                                <td><span class="solution-meta">Snapshot only</span></td>
+                                <td>
+                                    @if(!empty($item['id']) && !empty($item['solution_id']))
+                                        <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="btn btn-sm btn-edit">Edit</a>
+                                    @else
+                                        <span class="solution-meta">View only</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

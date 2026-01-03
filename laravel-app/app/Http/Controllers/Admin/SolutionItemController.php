@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Solution;
 use App\Models\SolutionItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SolutionItemController extends Controller
 {
@@ -18,11 +20,16 @@ class SolutionItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'barcode' => 'nullable|string|max:64|unique:solution_items,barcode',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'sort_order' => 'nullable|integer',
         ]);
+
+        if (empty($validated['barcode'])) {
+            $validated['barcode'] = $this->generateUniqueBarcode();
+        }
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('solutions', 'public');
@@ -44,13 +51,21 @@ class SolutionItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'barcode' => 'nullable|string|max:64|unique:solution_items,barcode,' . $item->id,
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'sort_order' => 'nullable|integer',
         ]);
 
+        if (empty($validated['barcode'])) {
+            $validated['barcode'] = $item->barcode ?: $this->generateUniqueBarcode();
+        }
+
         if ($request->hasFile('image')) {
+            if ($item->image) {
+                Storage::disk('public')->delete($item->image);
+            }
             $path = $request->file('image')->store('solutions', 'public');
             $validated['image'] = $path;
         }
@@ -63,9 +78,21 @@ class SolutionItemController extends Controller
 
     public function destroy(Solution $solution, SolutionItem $item)
     {
+        if ($item->image) {
+            Storage::disk('public')->delete($item->image);
+        }
         $item->delete();
 
         return redirect()->route('admin.solutions.show', $solution)
                         ->with('success', 'Solution item deleted successfully.');
+    }
+
+    private function generateUniqueBarcode(): string
+    {
+        do {
+            $code = strtoupper(Str::random(10));
+        } while (SolutionItem::where('barcode', $code)->exists());
+
+        return $code;
     }
 }

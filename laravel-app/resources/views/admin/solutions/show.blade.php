@@ -43,6 +43,7 @@
                     <div class="col-span-2">
                         <h3 class="text-xl font-bold">{{ $item->name }}</h3>
                         <p class="text-gray-600 mt-1">{{ $item->description }}</p>
+                        <p class="text-sm text-gray-500 mt-1">ID: #{{ $item->id }} &middot; Barcode: {{ $item->barcode }}</p>
                         @if ($item->price)
                             <p class="text-lg font-bold text-green-600 mt-2">R{{ number_format($item->price, 2) }}</p>
                         @endif

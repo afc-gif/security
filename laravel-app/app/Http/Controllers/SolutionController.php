@@ -11,7 +11,9 @@ class SolutionController extends Controller
     {
         $solutions = Solution::where('active', true)
                              ->orderBy('sort_order')
-                             ->with('items')
+                             ->with(['items' => function ($query) {
+                                 $query->where('active', true)->orderBy('sort_order');
+                             }])
                              ->get();
         
         return view('solutions', compact('solutions'));

@@ -9,7 +9,7 @@ class SolutionItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['solution_id', 'name', 'description', 'price', 'image', 'sort_order', 'active'];
+    protected $fillable = ['solution_id', 'name', 'barcode', 'description', 'price', 'image', 'sort_order', 'active'];
 
     protected $casts = [
         'price' => 'decimal:2',

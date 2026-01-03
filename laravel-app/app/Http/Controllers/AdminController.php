@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Category;
+use App\Models\Solution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -114,11 +115,37 @@ class AdminController extends Controller
     }
 
     /**
-     * Read product/category data directly from public/solutions.html for admin visibility.
-     * This keeps the admin view in sync with the live marketing page without touching the DB.
+     * Read solution categories/products for admin visibility.
+     * Prefers the database (admin-managed) and falls back to parsing public/solutions.html if empty.
      */
     private function loadSolutionProducts(): array
     {
+        // Prefer database-driven solutions & items
+        $dbSolutions = Solution::with(['items' => function ($query) {
+            $query->orderBy('sort_order');
+        }])->where('active', true)->orderBy('sort_order')->get();
+
+        if ($dbSolutions->count() > 0) {
+            return $dbSolutions->map(function ($solution) {
+                return [
+                    'id' => $solution->id,
+                    'title' => $solution->name,
+                    'description' => $solution->description,
+                    'items' => $solution->items->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'solution_id' => $item->solution_id,
+                            'barcode' => $item->barcode,
+                            'name' => $item->name,
+                            'description' => $item->description,
+                            'price' => $item->price ? 'R' . number_format($item->price, 2) : null,
+                            'image' => $item->image ? asset('storage/' . $item->image) : null,
+                        ];
+                    })->toArray(),
+                ];
+            })->toArray();
+        }
+
         $path = public_path('solutions.html');
         if (!File::exists($path)) {
             return [];
