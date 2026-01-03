@@ -68,7 +68,8 @@ RUN apk add --no-cache $PHPIZE_DEPS \
     libjpeg-turbo-dev \
     libpng-dev \
     zlib-dev \
-    postgresql-dev && \
+    postgresql-dev \
+    oniguruma-dev && \
     docker-php-ext-configure gd \
     --with-freetype=/usr \
     --with-jpeg=/usr \
@@ -85,7 +86,8 @@ RUN apk add --no-cache $PHPIZE_DEPS \
     libjpeg-turbo-dev \
     libpng-dev \
     zlib-dev \
-    postgresql-dev
+    postgresql-dev \
+    oniguruma-dev
 
 # Copy from builder
 COPY --from=builder /var/www/html /var/www/html
