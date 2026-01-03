@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
-use App\Models\Category;
 use App\Models\Solution;
+use App\Models\SolutionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -52,7 +53,7 @@ class AdminController extends Controller
 
     public function createProduct()
     {
-        $categories = Category::orderBy('sort_order')->get(['id', 'name']);
+        $categories = Solution::orderBy('sort_order')->get(['id', 'name']);
         return view('admin.products.create', compact('categories'));
     }
 
@@ -63,7 +64,7 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'category' => 'nullable|string',
+            'category' => 'required|string|exists:solutions,name',
             'image' => 'nullable|image|max:2048',
         ]);
 
@@ -71,14 +72,15 @@ class AdminController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        Product::create($validated);
+        $product = Product::create($validated);
+        $this->syncProductToSolutionItem($product);
 
         return redirect('/admin/products')->with('success', 'Product created successfully!');
     }
 
     public function editProduct(Product $product)
     {
-        $categories = Category::orderBy('sort_order')->get(['id', 'name']);
+        $categories = Solution::orderBy('sort_order')->get(['id', 'name']);
         return view('admin.products.edit', compact('product', 'categories'));
     }
 
@@ -89,7 +91,7 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'category' => 'nullable|string',
+            'category' => 'required|string|exists:solutions,name',
             'image' => 'nullable|image|max:2048',
         ]);
 
@@ -101,6 +103,7 @@ class AdminController extends Controller
         }
 
         $product->update($validated);
+        $this->syncProductToSolutionItem($product);
 
         return redirect('/admin/products')->with('success', 'Product updated successfully!');
     }
@@ -110,6 +113,7 @@ class AdminController extends Controller
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
+        $this->removeSolutionItemForProduct($product);
         $product->delete();
         return redirect('/admin/products')->with('success', 'Product deleted successfully!');
     }
@@ -144,6 +148,45 @@ class AdminController extends Controller
                 })->toArray(),
             ];
         })->toArray();
+    }
+
+    private function syncProductToSolutionItem(Product $product): void
+    {
+        $solution = Solution::where('name', $product->category)->first();
+        if (!$solution) {
+            return;
+        }
+
+        $item = SolutionItem::where('product_id', $product->id)->first();
+        $payload = [
+            'solution_id' => $solution->id,
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price' => $product->price,
+            'stock' => $product->stock,
+            'barcode' => $item->barcode ?? null,
+            'image' => $product->image,
+            'active' => true,
+        ];
+
+        if (empty($payload['barcode'])) {
+            $payload['barcode'] = strtoupper(Str::random(10));
+        }
+
+        if ($item) {
+            $item->update($payload);
+        } else {
+            SolutionItem::create($payload);
+        }
+    }
+
+    private function removeSolutionItemForProduct(Product $product): void
+    {
+        $item = SolutionItem::where('product_id', $product->id)->first();
+        if ($item) {
+            $item->delete();
+        }
     }
 
     // Orders Management
