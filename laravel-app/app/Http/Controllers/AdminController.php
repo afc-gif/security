@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class AdminController extends Controller
 {
@@ -41,7 +42,9 @@ class AdminController extends Controller
     public function products()
     {
         $products = Product::paginate(15);
-        return view('admin.products.index', compact('products'));
+        $solutionProducts = $this->loadSolutionProducts();
+
+        return view('admin.products.index', compact('products', 'solutionProducts'));
     }
 
     public function createProduct()
@@ -98,6 +101,78 @@ class AdminController extends Controller
     {
         $product->delete();
         return redirect('/admin/products')->with('success', 'Product deleted successfully!');
+    }
+
+    /**
+     * Read product/category data directly from public/solutions.html for admin visibility.
+     * This keeps the admin view in sync with the live marketing page without touching the DB.
+     */
+    private function loadSolutionProducts(): array
+    {
+        $path = public_path('solutions.html');
+        if (!File::exists($path)) {
+            return [];
+        }
+
+        $html = File::get($path);
+        $previousLibxmlSetting = libxml_use_internal_errors(true);
+
+        $dom = new \DOMDocument();
+        if (!$dom->loadHTML($html)) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxmlSetting);
+            return [];
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $categories = [];
+
+        foreach ($xpath->query('//section[contains(@class,"solution-section")]') as $section) {
+            $titleNode = $xpath->query('.//h2', $section)->item(0);
+            $descriptionNode = $xpath->query('.//div[contains(@class,"solution-section-header")]//p', $section)->item(0);
+
+            $category = [
+                'id' => $section->getAttribute('id') ?: null,
+                'title' => $titleNode ? trim($titleNode->textContent) : 'Untitled Section',
+                'description' => $descriptionNode ? trim($descriptionNode->textContent) : null,
+                'items' => [],
+            ];
+
+            foreach ($xpath->query('.//div[contains(@class,"product-card")]', $section) as $card) {
+                $nameNode = $xpath->query('.//h3[contains(@class,"product-name")]', $card)->item(0);
+                $descriptionNode = $xpath->query('.//p[contains(@class,"product-description")]', $card)->item(0);
+                $priceNode = $xpath->query('.//div[contains(@class,"product-price")]', $card)->item(0);
+                $imageNode = $xpath->query('.//div[contains(@class,"product-image")]//img', $card)->item(0);
+                $specNodes = $xpath->query('.//div[contains(@class,"product-specs")]//span', $card);
+
+                $specs = [];
+                if ($specNodes) {
+                    foreach ($specNodes as $specNode) {
+                        $specText = trim($specNode->textContent);
+                        if ($specText !== '') {
+                            $specs[] = $specText;
+                        }
+                    }
+                }
+
+                $category['items'][] = [
+                    'name' => $nameNode ? trim($nameNode->textContent) : 'Unnamed Product',
+                    'description' => $descriptionNode ? trim($descriptionNode->textContent) : '',
+                    'price' => $priceNode ? trim($priceNode->textContent) : null,
+                    'image' => ($imageNode && $imageNode->hasAttribute('src')) ? $imageNode->getAttribute('src') : null,
+                    'specs' => $specs,
+                ];
+            }
+
+            if (count($category['items']) > 0) {
+                $categories[] = $category;
+            }
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxmlSetting);
+
+        return $categories;
     }
 
     // Orders Management
