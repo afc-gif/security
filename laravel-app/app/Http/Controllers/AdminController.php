@@ -53,7 +53,7 @@ class AdminController extends Controller
 
     public function createProduct()
     {
-        $categories = Solution::orderBy('sort_order')->get(['id', 'name']);
+        $categories = Solution::orderBy('sort_order')->get();
         return view('admin.products.create', compact('categories'));
     }
 
@@ -80,7 +80,7 @@ class AdminController extends Controller
 
     public function editProduct(Product $product)
     {
-        $categories = Solution::orderBy('sort_order')->get(['id', 'name']);
+        $categories = Solution::orderBy('sort_order')->get();
         return view('admin.products.edit', compact('product', 'categories'));
     }
 

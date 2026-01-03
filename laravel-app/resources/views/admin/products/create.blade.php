@@ -30,11 +30,13 @@
                     <label for="category">Category *</label>
                     <select id="category" name="category" required>
                         <option value="">-- Select a Category --</option>
-                        @foreach($categories as $cat)
+                        @forelse($categories as $cat)
                             <option value="{{ $cat->name }}" @if(old('category') === $cat->name) selected @endif>
-                                {{ $cat->name }}
+                                {{ $cat->icon ?? '' }} {{ $cat->name }}
                             </option>
-                        @endforeach
+                        @empty
+                            <option value="" disabled>No categories available</option>
+                        @endforelse
                     </select>
                     <span class="helper-text">Select from the 6 main solution categories</span>
                     @error('category')<span class="error-text">{{ $message }}</span>@enderror
