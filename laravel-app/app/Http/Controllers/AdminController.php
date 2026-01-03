@@ -10,6 +10,7 @@ use App\Models\SolutionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -152,32 +153,45 @@ class AdminController extends Controller
 
     private function syncProductToSolutionItem(Product $product): void
     {
-        $solution = Solution::where('name', $product->category)->first();
-        if (!$solution) {
-            return;
-        }
+        try {
+            $solution = Solution::where('name', $product->category)->first();
+            if (!$solution) {
+                \Log::warning("Solution not found for category: {$product->category}");
+                return;
+            }
 
-        $item = SolutionItem::where('product_id', $product->id)->first();
-        $payload = [
-            'solution_id' => $solution->id,
-            'product_id' => $product->id,
-            'name' => $product->name,
-            'description' => $product->description,
-            'price' => $product->price,
-            'stock' => $product->stock,
-            'barcode' => $item->barcode ?? null,
-            'image' => $product->image,
-            'active' => true,
-        ];
+            $item = SolutionItem::where('product_id', $product->id)->first();
+            $barcode = null;
+            
+            if ($item && !empty($item->barcode)) {
+                $barcode = $item->barcode;
+            } else {
+                // Generate unique barcode
+                do {
+                    $barcode = strtoupper(Str::random(10));
+                } while (SolutionItem::where('barcode', $barcode)->exists());
+            }
 
-        if (empty($payload['barcode'])) {
-            $payload['barcode'] = strtoupper(Str::random(10));
-        }
+            $payload = [
+                'solution_id' => $solution->id,
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'barcode' => $barcode,
+                'image' => $product->image,
+                'active' => true,
+            ];
 
-        if ($item) {
-            $item->update($payload);
-        } else {
-            SolutionItem::create($payload);
+            if ($item) {
+                $item->update($payload);
+            } else {
+                SolutionItem::create($payload);
+            }
+        } catch (\Exception $e) {
+            \Log::error("Error syncing product to solution item: " . $e->getMessage());
+            throw $e;
         }
     }
 
