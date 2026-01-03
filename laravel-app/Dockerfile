@@ -41,8 +41,8 @@ RUN docker-php-ext-configure gd \
 # Copy Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy app files
-COPY . ./
+# Copy app files from laravel-app directory
+COPY laravel-app/ ./
 
 # Install dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
