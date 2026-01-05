@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}">
+    <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}">
     @yield('extra-css')
 </head>
 <body>
@@ -16,7 +18,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="nav-logo" aria-label="ARTSCI home">
-                <img src="{{ asset('images/logo.png') }}" alt="ARTSCI logo" class="nav-logo-img">
+                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI logo" class="nav-logo-img">
                 <div class="brand-text">
                     <span class="brand-name">ARTSCI</span>
                     <span class="brand-tagline">Security POS Suite</span>

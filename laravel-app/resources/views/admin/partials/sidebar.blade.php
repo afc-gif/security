@@ -2,7 +2,7 @@
 
 <aside class="admin-sidebar">
     <div class="admin-brand">
-        <img src="{{ asset('images/logo.png') }}" alt="ARTSCI logo">
+        <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI logo">
         <div class="brand-text">
             <span class="brand-name">ARTSCI</span>
             <span class="brand-tagline">Admin Console</span>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - ARTSCI</title>
+    <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}">
+    <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
 </head>

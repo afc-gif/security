@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - ARTSCI</title>
+    <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}">
+    <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
@@ -11,7 +13,7 @@
         <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
             <div>
                 <div class="text-center mb-6">
-                    <img src="{{ asset('logo.png') }}" alt="ARTSCI Logo" class="h-16 w-auto mx-auto">
+                    <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="h-16 w-auto mx-auto">
                 </div>
                 <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     ARTSCI Login
