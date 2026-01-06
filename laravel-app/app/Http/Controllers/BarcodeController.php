@@ -9,8 +9,7 @@ use Illuminate\Http\Response;
 class BarcodeController extends Controller
 {
     /**
-     * Download barcode image for a solution item (large, scannable format)
-     * Returns 400x150px PNG that can be printed and scanned
+     * Display download page with barcode preview
      */
     public function download(SolutionItem $solutionItem)
     {
@@ -18,12 +17,32 @@ class BarcodeController extends Controller
             abort(404, 'Barcode not found for this item');
         }
 
-        // Generate large, scannable barcode (400x150px is optimal for most scanners)
+        // Generate SVG barcode for preview
+        $barcodeSvg = BarcodeGenerator::generateImage(
+            $solutionItem->barcode,
+            'svg'
+        );
+
+        return view('barcode.download', [
+            'barcode' => $solutionItem->barcode,
+            'barcodeSvg' => $barcodeSvg,
+            'solutionItem' => $solutionItem
+        ]);
+    }
+
+    /**
+     * Download barcode image as PNG
+     */
+    public function downloadImage(SolutionItem $solutionItem)
+    {
+        if (!$solutionItem->barcode) {
+            abort(404, 'Barcode not found for this item');
+        }
+
+        // Generate PNG barcode
         $barcodeImage = BarcodeGenerator::generateImage(
             $solutionItem->barcode,
-            'png',
-            400,  // width in pixels
-            150   // height in pixels
+            'png'
         );
 
         // Return as downloadable image
@@ -81,7 +100,7 @@ class BarcodeController extends Controller
     }
 
     /**
-     * Get print-friendly HTML page with barcode and instructions
+     * Get print-friendly page with barcode and number only
      * Perfect for printing and pasting on products
      */
     public function printLabel(SolutionItem $solutionItem)
@@ -90,17 +109,16 @@ class BarcodeController extends Controller
             abort(404, 'Barcode not found for this item');
         }
 
-        // Generate print-friendly HTML with large barcode
-        $html = BarcodeGenerator::generateImage(
+        // Generate SVG barcode
+        $barcodeSvg = BarcodeGenerator::generateImage(
             $solutionItem->barcode,
-            'print',
-            500,  // large for printing
-            180
+            'svg'
         );
 
-        return response($html)
-            ->header('Content-Type', 'text/html; charset=utf-8')
-            ->header('Cache-Control', 'public, max-age=3600');
+        return view('barcode.print', [
+            'barcode' => $solutionItem->barcode,
+            'barcodeSvg' => $barcodeSvg
+        ]);
     }
 
     /**
