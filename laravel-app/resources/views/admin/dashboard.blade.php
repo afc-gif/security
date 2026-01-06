@@ -17,7 +17,7 @@
                     <p class="text-gray-500 text-sm font-medium">Total Products</p>
                     <p class="text-3xl font-bold text-blue-600 mt-2">{{ $totalProducts }}</p>
                 </div>
-                <div class="text-blue-600 text-4xl">📦</div>
+                <div class="text-blue-600 text-4xl">■</div>
             </div>
         </div>
 
@@ -28,7 +28,7 @@
                     <p class="text-gray-500 text-sm font-medium">Total Orders</p>
                     <p class="text-3xl font-bold text-green-600 mt-2">{{ $totalOrders }}</p>
                 </div>
-                <div class="text-green-600 text-4xl">📊</div>
+                <div class="text-green-600 text-4xl">■</div>
             </div>
         </div>
 
@@ -39,7 +39,7 @@
                     <p class="text-gray-500 text-sm font-medium">Total Revenue</p>
                     <p class="text-3xl font-bold text-yellow-600 mt-2">${{ number_format($totalRevenue, 2) }}</p>
                 </div>
-                <div class="text-yellow-600 text-4xl">💰</div>
+                <div class="text-yellow-600 text-4xl">■</div>
             </div>
         </div>
 
@@ -50,7 +50,7 @@
                     <p class="text-gray-500 text-sm font-medium">Total Users</p>
                     <p class="text-3xl font-bold text-orange-600 mt-2">{{ $totalUsers }}</p>
                 </div>
-                <div class="text-orange-600 text-4xl">👥</div>
+                <div class="text-orange-600 text-4xl">■</div>
             </div>
         </div>
     </div>
@@ -99,19 +99,19 @@
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <a href="{{ route('admin.products.index') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition text-center hover:bg-blue-50">
-            <div class="text-4xl mb-3">📦</div>
+            <div class="text-4xl mb-3">■</div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Manage Products</h3>
             <p class="text-gray-600 text-sm">Create, edit, and manage your product inventory</p>
         </a>
 
         <a href="{{ route('admin.solutions.index') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition text-center hover:bg-green-50">
-            <div class="text-4xl mb-3">🎁</div>
+            <div class="text-4xl mb-3">■</div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Manage Solutions</h3>
             <p class="text-gray-600 text-sm">Organize products into bundles and categories</p>
         </a>
 
         <a href="{{ route('admin.users.index') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition text-center hover:bg-orange-50">
-            <div class="text-4xl mb-3">👥</div>
+            <div class="text-4xl mb-3">■</div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Manage Users</h3>
             <p class="text-gray-600 text-sm">Approve users and manage team members</p>
         </a>

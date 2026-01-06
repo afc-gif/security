@@ -782,7 +782,7 @@
                     <a href="{{ route('admin.dashboard') }}" style="background: rgba(255,235,59,0.3); border: 2px solid var(--primary-yellow); color: var(--primary-yellow); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; transition: all 0.3s;">📊 Admin</a>
                     <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                         @csrf
-                        <button type="submit" style="background: rgba(244,67,54,0.3); border: 2px solid #f44336; color: #f44336; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.3s;">🚪 Logout</button>
+                        <button type="submit" style="background: rgba(244,67,54,0.3); border: 2px solid #f44336; color: #f44336; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.3s;">Logout</button>
                     </form>
                 </div>
             </div>
@@ -891,27 +891,34 @@
     </div>
 
     <script>
-        // Sample Products Database
-        const products = [
-            { id: 1, name: "Hikvision Camera", sku: "HK-001", price: 45000, category: "cctv", stock: 12, emoji: "📹" },
-            { id: 2, name: "CCTV DVR", sku: "DVR-001", price: 65000, category: "cctv", stock: 8, emoji: "🎥" },
-            { id: 3, name: "Solar Panel 400W", sku: "SOL-001", price: 180000, category: "solar", stock: 5, emoji: "☀️" },
-            { id: 4, name: "Battery Bank 10kW", sku: "BAT-001", price: 450000, category: "solar", stock: 3, emoji: "🔋" },
-            { id: 5, name: "Inverter 5kW", sku: "INV-001", price: 280000, category: "power", stock: 6, emoji: "⚡" },
-            { id: 6, name: "Cable Reel 100m", sku: "CBL-001", price: 15000, category: "power", stock: 20, emoji: "🔌" },
-            { id: 7, name: "Smart Thermostat", sku: "SMT-001", price: 35000, category: "power", stock: 14, emoji: "🌡️" },
-            { id: 8, name: "Door Access Control", sku: "ACC-001", price: 95000, category: "cctv", stock: 7, emoji: "🚪" },
-        ];
-
+        // Products loaded from database
+        let products = [];
         let cart = [];
         let selectedPaymentMethod = "cash";
 
         // Initialize
-        function init() {
-            renderProducts(products);
+        async function init() {
+            await loadProducts();
             updateClock();
             setInterval(updateClock, 1000);
             setupEventListeners();
+        }
+
+        // Load products from database API
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/pos/products', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                });
+                const data = await response.json();
+                products = data || [];
+                renderProducts(products);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                alert('Error loading products from database');
+            }
         }
 
         // Render Products
@@ -919,12 +926,12 @@
             const grid = document.getElementById("productsGrid");
             grid.innerHTML = productsToShow.map(product => `
                 <div class="product-card">
-                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-image">Item</div>
                     <div class="product-info">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-sku">${product.sku}</div>
-                        <div class="product-price">₦${product.price.toLocaleString()}</div>
-                        <div class="product-stock">Stock: ${product.stock}</div>
+                        <div class="product-name">${product.name || product.product_name}</div>
+                        <div class="product-sku">${product.sku || product.barcode || 'N/A'}</div>
+                        <div class="product-price">₦${(product.price || 0).toLocaleString()}</div>
+                        <div class="product-stock">Stock: ${product.stock || 0}</div>
                         <button onclick="addToCart(${product.id})">Add to Cart</button>
                     </div>
                 </div>
