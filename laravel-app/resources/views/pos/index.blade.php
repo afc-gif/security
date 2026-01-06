@@ -1070,7 +1070,12 @@
                 }
 
                 const totalText = document.getElementById("total").textContent;
-                const total = parseFloat(totalText.replace('$', ''));
+                // Strip currency symbols/commas so backend receives a numeric total
+                const total = parseFloat(totalText.replace(/[^\d.-]/g, ''));
+                if (Number.isNaN(total)) {
+                    alert("Unable to read total amount. Please try again.");
+                    return;
+                }
 
                 try {
                     // Send sale data to server
