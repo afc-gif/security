@@ -30,7 +30,7 @@ class AdminController extends Controller
     // Dashboard
     public function dashboard()
     {
-        $totalProducts = Product::count();
+        $totalProducts = SolutionItem::count();
         $totalOrders = Order::count();
         $totalRevenue = Order::where('status', 'completed')->sum('total_amount');
         $totalUsers = User::where('role', 'user')->count();
@@ -144,7 +144,7 @@ class AdminController extends Controller
                         'barcode' => $item->barcode,
                         'name' => $item->name,
                         'description' => $item->description,
-                        'price' => $item->price ? 'R' . number_format($item->price, 2) : null,
+                        'price' => $item->price ? '\u20a6' . number_format($item->price, 2) : null,
                         'stock' => $item->stock,
                         'image' => $item->image ? asset('storage/' . $item->image) : null,
                     ];

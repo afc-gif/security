@@ -71,7 +71,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ $row['category'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-semibold">{{ $item['price'] ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ number_format($item['price'] ?? 0, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php($stock = $item['stock'] ?? 0)
                                 <span class="px-3 py-1 rounded text-sm font-semibold @if($stock > 0) bg-green-100 text-green-800 @else bg-red-100 text-red-800 @endif">
