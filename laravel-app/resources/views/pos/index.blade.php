@@ -775,7 +775,16 @@
                     <p>Professional POS System</p>
                 </div>
             </div>
-            <div class="pos-clock" id="clock">00:00:00</div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="pos-clock" id="clock">00:00:00</div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="{{ route('admin.dashboard') }}" style="background: rgba(255,235,59,0.3); border: 2px solid var(--primary-yellow); color: var(--primary-yellow); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; transition: all 0.3s;">📊 Admin</a>
+                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                        @csrf
+                        <button type="submit" style="background: rgba(244,67,54,0.3); border: 2px solid #f44336; color: #f44336; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.3s;">🚪 Logout</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- LEFT: PRODUCTS -->

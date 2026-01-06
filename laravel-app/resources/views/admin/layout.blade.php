@@ -10,17 +10,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
 </head>
 <body class="bg-gray-50">
-    <nav class="bg-blue-600 text-white p-4 shadow">
+    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Admin Panel</h1>
-            <div class="flex gap-4">
-                <a href="{{ route('admin.dashboard') }}" class="hover:underline">Dashboard</a>
-                <a href="{{ route('admin.categories.index') }}" class="hover:underline">Categories</a>
-                <a href="{{ route('admin.menu-items.index') }}" class="hover:underline">Menu Items</a>
-                <form action="{{ route('logout') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="hover:underline">Logout</button>
-                </form>
+            <div class="flex items-center gap-3">
+                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI" class="h-10 w-auto">
+                <h1 class="text-2xl font-bold">ARTSCI Admin</h1>
+            </div>
+            <div class="flex gap-6 items-center">
+                <a href="{{ route('admin.dashboard') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Dashboard</a>
+                <a href="{{ route('admin.categories.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Categories</a>
+                <a href="{{ route('admin.menu-items.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Menu Items</a>
+                <a href="{{ route('pos.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition" title="Go to POS System">🛒 POS</a>
+                
+                <!-- User Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-2 hover:bg-blue-500 px-3 py-2 rounded transition">
+                        <span class="text-sm">{{ Auth::user()->name ?? 'User' }}</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="absolute right-0 mt-0 w-48 bg-white text-gray-800 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div class="px-4 py-3 border-b border-gray-200">
+                            <p class="font-semibold text-sm">{{ Auth::user()->name ?? 'User' }}</p>
+                            <p class="text-xs text-gray-600">{{ Auth::user()->email ?? 'user@example.com' }}</p>
+                            <span class="inline-block mt-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">{{ Auth::user()->role ?? 'user' }}</span>
+                        </div>
+                        <form action="{{ route('logout') }}" method="POST" class="block">
+                            @csrf
+                            <button type="submit" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-semibold transition">
+                                🚪 Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
