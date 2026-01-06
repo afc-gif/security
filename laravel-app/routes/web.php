@@ -80,8 +80,9 @@ Route::middleware('auth')->group(function () {
     
     // Receipt view route
     Route::get('/pos/receipt/{order}', function (App\Models\Order $order) {
-        // Ensure user can only view their own sales (optional - remove if admins should see all)
-        if (auth()->user()->isPOS() && $order->user_id !== auth()->id()) {
+        // Ensure user can only view their own sales or admins can see all
+        $user = auth()->user();
+        if ($user && $user->role === 'pos' && $order->user_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
         return view('pos.receipt', compact('order'));

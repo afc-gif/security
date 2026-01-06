@@ -266,10 +266,14 @@
 
         <!-- Print & Back Buttons -->
         <button class="print-button" onclick="window.print()">🖨️ Print Receipt</button>
-        <button class="back-button" onclick="window.location.href='{{ route('pos.index') }}'">← Back to POS</button>
+        <button class="back-button" onclick="goBackToPOS()">← Back to POS</button>
     </div>
 
     <script>
+        function goBackToPOS() {
+            window.location.href = '{{ route("pos.index") }}';
+        }
+
         // Auto-focus print dialog on load
         window.addEventListener('load', function() {
             // Uncomment below to auto-print on page load
