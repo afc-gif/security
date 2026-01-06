@@ -47,6 +47,187 @@
             min-height: 100vh;
         }
 
+        /* ==================== SCANNER SECTION ==================== */
+        .scanner-section {
+            position: fixed;
+            bottom: 20px;
+            right: 420px;
+            background: linear-gradient(135deg, var(--primary-dark-blue), var(--primary-blue));
+            color: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(3, 169, 244, 0.25);
+            width: 350px;
+            z-index: 100;
+            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scanner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .scanner-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .scanner-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: var(--white);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        .scanner-toggle:hover {
+            background: rgba(255, 235, 59, 0.3);
+        }
+
+        .scanner-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .scanner-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .scanner-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary-yellow);
+            box-shadow: 0 0 0 3px rgba(255, 235, 59, 0.2);
+        }
+
+        .scanner-status {
+            display: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .scanner-status.show {
+            display: block;
+        }
+
+        .scanner-status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success);
+            color: #a5d6a7;
+        }
+
+        .scanner-status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--error);
+            color: #ef9a9a;
+        }
+
+        .scanner-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            padding-right: 6px;
+        }
+
+        .scanner-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            border-left: 3px solid var(--primary-yellow);
+        }
+
+        .scanner-item-name {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 2px;
+        }
+
+        .scanner-item-code {
+            color: rgba(255, 255, 255, 0.7);
+            font-family: monospace;
+        }
+
+        .scanner-actions {
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .scanner-actions button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .scanner-actions button:hover {
+            background: rgba(255, 235, 59, 0.3);
+            border-color: var(--primary-yellow);
+        }
+
+        .scanner-status.loading {
+            background: rgba(3, 169, 244, 0.2);
+            border: 1px solid rgba(255, 235, 59, 0.5);
+            color: var(--primary-yellow);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1400px) {
+            .scanner-section {
+                right: 20px;
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scanner-section {
+                position: static;
+                width: 100%;
+                max-height: none;
+            }
+        }
+
         /* ==================== HEADER ==================== */
         .pos-header {
             grid-column: 1 / -1;
@@ -668,6 +849,35 @@
                 <button class="clear-cart-btn" id="clearCartBtn">Clear Cart</button>
             </div>
         </div>
+
+        <!-- SCANNER SECTION -->
+        <div class="scanner-section" id="scannerSection">
+            <div class="scanner-header">
+                <h3>📱 Barcode Scanner</h3>
+                <button class="scanner-toggle" id="scannerToggle" title="Toggle scanner">−</button>
+            </div>
+
+            <input 
+                type="text" 
+                class="scanner-input" 
+                id="scannerInput" 
+                placeholder="Scan barcode here..."
+                autocomplete="off"
+            >
+
+            <div class="scanner-status" id="scannerStatus"></div>
+
+            <div class="scanner-history" id="scannerHistory">
+                <div style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; padding: 20px;">
+                    No scans yet
+                </div>
+            </div>
+
+            <div class="scanner-actions">
+                <button id="clearScannerBtn">🗑️ Clear</button>
+                <button id="toggleScannerDbBtn" title="Toggle between sample data and database">🔄 Mode</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -848,6 +1058,164 @@
                     updateCart();
                 }
             });
+
+            // Scanner functionality
+            setupScannerListeners();
+        }
+
+        // ==================== SCANNER FUNCTIONALITY ====================
+        let scannerHistory = [];
+        let useDatabaseMode = true;
+        let isScannerMinimized = false;
+
+        // Barcode lookup mapping for sample data (simulating product SKUs as barcodes)
+        const barcodeMap = {
+            "HK-001": 1,      // Hikvision Camera
+            "DVR-001": 2,     // CCTV DVR
+            "SOL-001": 3,     // Solar Panel
+            "BAT-001": 4,     // Battery Bank
+            "INV-001": 5,     // Inverter
+            "CBL-001": 6,     // Cable Reel
+            "SMT-001": 7,     // Smart Thermostat
+            "ACC-001": 8,     // Door Access Control
+        };
+
+        function setupScannerListeners() {
+            const scannerInput = document.getElementById("scannerInput");
+            const scannerStatus = document.getElementById("scannerStatus");
+            const clearScannerBtn = document.getElementById("clearScannerBtn");
+            const toggleScannerDbBtn = document.getElementById("toggleScannerDbBtn");
+            const scannerToggle = document.getElementById("scannerToggle");
+
+            // Scanner input - captures barcode
+            scannerInput.addEventListener("keydown", async function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const barcode = this.value.trim();
+
+                    if (!barcode) {
+                        showScannerStatus("Please scan a barcode", "error");
+                        return;
+                    }
+
+                    showScannerStatus("Processing barcode...", "loading");
+
+                    try {
+                        let product = null;
+
+                        if (useDatabaseMode) {
+                            // Fetch from database via API
+                            product = await lookupProductByBarcode(barcode);
+                        } else {
+                            // Use sample data mapping
+                            const productId = barcodeMap[barcode];
+                            product = productId ? products.find(p => p.id === productId) : null;
+                        }
+
+                        if (product) {
+                            addToCart(product.id);
+                            addToScannerHistory(product.name, barcode, true);
+                            showScannerStatus(`✓ Added: ${product.name}`, "success");
+                        } else {
+                            addToScannerHistory(`Unknown: ${barcode}`, barcode, false);
+                            showScannerStatus("✗ Product not found", "error");
+                        }
+                    } catch (error) {
+                        addToScannerHistory(`Error scanning: ${barcode}`, barcode, false);
+                        showScannerStatus("✗ Scan error", "error");
+                    }
+
+                    // Clear input for next scan
+                    this.value = "";
+                    this.focus();
+                }
+            });
+
+            // Clear scanner history
+            clearScannerBtn.addEventListener("click", function() {
+                scannerHistory = [];
+                document.getElementById("scannerHistory").innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; padding: 20px;">
+                        No scans yet
+                    </div>
+                `;
+            });
+
+            // Toggle database mode
+            toggleScannerDbBtn.addEventListener("click", function() {
+                useDatabaseMode = !useDatabaseMode;
+                const mode = useDatabaseMode ? "Database" : "Sample";
+                this.title = `Current: ${mode} Mode`;
+                showScannerStatus(`Switched to ${mode} mode`, "success");
+            });
+
+            // Toggle scanner visibility
+            scannerToggle.addEventListener("click", function() {
+                isScannerMinimized = !isScannerMinimized;
+                const scannerHistory = document.getElementById("scannerHistory");
+                const scannerActions = document.querySelector(".scanner-actions");
+                const scannerInput = document.getElementById("scannerInput");
+
+                if (isScannerMinimized) {
+                    scannerInput.style.display = "none";
+                    scannerHistory.style.display = "none";
+                    scannerActions.style.display = "none";
+                    this.textContent = "+";
+                } else {
+                    scannerInput.style.display = "block";
+                    scannerHistory.style.display = "block";
+                    scannerActions.style.display = "flex";
+                    this.textContent = "−";
+                }
+            });
+
+            // Focus scanner on load
+            scannerInput.focus();
+        }
+
+        function addToScannerHistory(name, barcode, success) {
+            scannerHistory.unshift({ name, barcode, success, time: new Date() });
+            if (scannerHistory.length > 10) scannerHistory.pop();
+            updateScannerDisplay();
+        }
+
+        function updateScannerDisplay() {
+            const historyDiv = document.getElementById("scannerHistory");
+            if (scannerHistory.length === 0) {
+                historyDiv.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; padding: 20px;">
+                        No scans yet
+                    </div>
+                `;
+                return;
+            }
+
+            historyDiv.innerHTML = scannerHistory.map((item, idx) => `
+                <div class="scanner-item" style="border-left-color: ${item.success ? '#4CAF50' : '#f44336'};">
+                    <div class="scanner-item-name">${item.success ? '✓' : '✗'} ${item.name}</div>
+                    <div class="scanner-item-code">${item.barcode}</div>
+                </div>
+            `).join("");
+        }
+
+        function showScannerStatus(message, type) {
+            const statusDiv = document.getElementById("scannerStatus");
+            statusDiv.textContent = message;
+            statusDiv.className = `scanner-status show ${type}`;
+            setTimeout(() => {
+                statusDiv.classList.remove("show");
+            }, 3000);
+        }
+
+        async function lookupProductByBarcode(barcode) {
+            try {
+                const response = await fetch(`/api/pos/barcode/${encodeURIComponent(barcode)}`);
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.error("Barcode lookup error:", error);
+                return null;
+            }
         }
 
         // Start

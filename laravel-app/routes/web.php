@@ -87,6 +87,14 @@ Route::get('/api/categories', [App\Http\Controllers\CategoryController::class, '
 Route::get('/api/categories/{category}/items', [App\Http\Controllers\CategoryController::class, 'apiItems']);
 Route::get('/api/solutions', [SolutionController::class, 'apiIndex']);
 
+// POS API routes (for barcode scanning and product lookup)
+Route::middleware('auth')->prefix('api/pos')->group(function () {
+    Route::get('/barcode/{barcode}', [App\Http\Controllers\PosController::class, 'lookupBarcode']);
+    Route::get('/products', [App\Http\Controllers\PosController::class, 'getProducts']);
+    Route::get('/search/{query}', [App\Http\Controllers\PosController::class, 'searchProducts']);
+    Route::post('/complete-sale', [App\Http\Controllers\PosController::class, 'completeSale']);
+});
+
 // Barcode routes (accessible to authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/barcode/{solutionItem}/view', [BarcodeController::class, 'view'])->name('barcode.view');
