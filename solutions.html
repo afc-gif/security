@@ -2003,37 +2003,53 @@
   </style>
 
   <script>
+    let cachedProducts = [];
+    const POLL_INTERVAL = 5000; // Poll every 5 seconds
+
     // Load products from admin database on page load
-    document.addEventListener('DOMContentLoaded', async function() {
+    async function loadProducts() {
       try {
         const response = await fetch('/api/pos/products');
         const products = await response.json();
 
-        // Clear all product grids
-        const grids = document.querySelectorAll('.products-grid');
-        grids.forEach(grid => {
-          // Keep the first grid (CCTV) and populate it
-          if (grid === grids[0]) {
-            grid.innerHTML = '';
-            if (products.length > 0) {
-              products.forEach(product => {
-                grid.innerHTML += createProductCard(product);
-              });
-            } else {
-              grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No products available</p></div>';
-            }
-          } else {
-            // For other sections, just show a message
-            grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>Products loaded from admin database</p></div>';
-          }
-        });
+        // Check if products have changed
+        const productsChanged = JSON.stringify(products) !== JSON.stringify(cachedProducts);
+        
+        if (productsChanged) {
+          cachedProducts = products;
+          updateProductGrids(products);
+        }
       } catch (error) {
         console.error('Error loading products:', error);
-        const grids = document.querySelectorAll('.products-grid');
-        grids.forEach(grid => {
-          grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1; color: red;"><p>Error loading products</p></div>';
-        });
       }
+    }
+
+    function updateProductGrids(products) {
+      const grids = document.querySelectorAll('.products-grid');
+      grids.forEach(grid => {
+        // Keep the first grid (CCTV) and populate it
+        if (grid === grids[0]) {
+          grid.innerHTML = '';
+          if (products.length > 0) {
+            products.forEach(product => {
+              grid.innerHTML += createProductCard(product);
+            });
+          } else {
+            grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No products available</p></div>';
+          }
+        } else {
+          // For other sections, just show a message
+          grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>Products loaded from admin database</p></div>';
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Initial load
+      await loadProducts();
+      
+      // Start polling for product updates
+      setInterval(loadProducts, POLL_INTERVAL);
     });
 
     function createProductCard(product) {
