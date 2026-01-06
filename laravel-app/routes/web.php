@@ -4,12 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\ShopController;
 
 // Authentication routes only
 Route::middleware('web')->group(function () {
-    Route::get('/', function () {
-        return view('shop.index');
-    })->name('home');
+    Route::get('/', [ShopController::class, 'index'])->name('home');
+    Route::post('/shop/{product}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
 
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\SolutionItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
@@ -12,7 +12,7 @@ class ShopController extends Controller
 {
     public function index()
     {
-        $products = Product::paginate(12);
+        $products = SolutionItem::where('active', true)->paginate(12);
         return view('shop.index', compact('products'));
     }
 

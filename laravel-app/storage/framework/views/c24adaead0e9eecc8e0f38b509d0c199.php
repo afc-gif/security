@@ -1,69 +1,68 @@
-@extends('layout')
+<?php $__env->startSection('title', 'Shop - ARTSCI'); ?>
 
-@section('title', 'Shop - ARTSCI')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="products-section">
     <div class="container">
         <h1 class="page-title">Our Products</h1>
         <p class="page-subtitle">Browse our selection of quality products</p>
 
-        @if($products->count() > 0)
+        <?php if($products->count() > 0): ?>
             <div class="products-grid">
-                @foreach($products as $product)
+                <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="product-card">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="product-image">
-                        @else
+                        <?php if($product->image): ?>
+                            <img src="<?php echo e(asset('storage/' . $product->image)); ?>" alt="<?php echo e($product->name); ?>" class="product-image">
+                        <?php else: ?>
                             <div class="product-image-placeholder">
                                 <i class="fas fa-box"></i>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
                         <div class="product-info">
-                            <h3 class="product-name">{{ $product->name }}</h3>
-                            <p class="product-category">{{ $product->solution->name ?? 'Uncategorized' }}</p>
-                            <p class="product-description">{{ Str::limit($product->description, 50) }}</p>
+                            <h3 class="product-name"><?php echo e($product->name); ?></h3>
+                            <p class="product-category"><?php echo e($product->solution->name ?? 'Uncategorized'); ?></p>
+                            <p class="product-description"><?php echo e(Str::limit($product->description, 50)); ?></p>
 
                             <div class="product-footer">
-                                <span class="product-price">₦{{ number_format($product->price, 2) }}</span>
-                                @if($product->stock > 0)
+                                <span class="product-price">₦<?php echo e(number_format($product->price, 2)); ?></span>
+                                <?php if($product->stock > 0): ?>
                                     <span class="stock-badge in-stock">In Stock</span>
-                                @else
+                                <?php else: ?>
                                     <span class="stock-badge out-of-stock">Out of Stock</span>
-                                @endif
+                                <?php endif; ?>
                             </div>
 
-                            <form method="POST" action="{{ route('shop.addToCart', $product) }}" class="add-to-cart-form">
-                                @csrf
+                            <form method="POST" action="<?php echo e(route('shop.addToCart', $product)); ?>" class="add-to-cart-form">
+                                <?php echo csrf_field(); ?>
                                 <input type="hidden" name="quantity" value="1">
-                                @if($product->stock > 0)
+                                <?php if($product->stock > 0): ?>
                                     <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
-                                @else
+                                <?php else: ?>
                                     <button type="button" class="btn btn-disabled btn-sm" disabled>Out of Stock</button>
-                                @endif
+                                <?php endif; ?>
                             </form>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
 
             <!-- Pagination -->
             <div class="pagination-container">
-                {{ $products->links() }}
+                <?php echo e($products->links()); ?>
+
             </div>
-        @else
+        <?php else: ?>
             <div class="empty-state">
                 <i class="fas fa-inbox"></i>
                 <h2>No Products Available</h2>
                 <p>Check back soon for new products!</p>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('extra-css')
+<?php $__env->startSection('extra-css'); ?>
 <style>
     .products-section {
         padding: 60px 20px;
@@ -260,4 +259,6 @@
         color: white;
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH /var/www/html/resources/views/shop/index.blade.php ENDPATH**/ ?>
