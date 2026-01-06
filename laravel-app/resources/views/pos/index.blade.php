@@ -1065,7 +1065,7 @@
 
                 try {
                     // Send sale data to server
-                    const response = await fetch('{{ route("api.pos.complete-sale") ?? "/api/pos/complete-sale" }}', {
+                    const response = await fetch('/api/pos/complete-sale', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
