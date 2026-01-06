@@ -34,13 +34,12 @@ class PosController extends Controller
             // Return product data in format compatible with POS
             return response()->json([
                 'id' => $solutionItem->id,
-                'name' => $solutionItem->product_name ?? $solutionItem->name,
+                'name' => $solutionItem->name,
                 'sku' => $solutionItem->barcode,
                 'barcode' => $solutionItem->barcode,
                 'price' => (int) $solutionItem->price,
                 'stock' => $solutionItem->stock ?? 999,
-                'category' => 'product',
-                'emoji' => '📦'
+                'category' => 'product'
             ]);
         } catch (\Exception $e) {
             return response()->json(
@@ -60,18 +59,17 @@ class PosController extends Controller
         try {
             $items = SolutionItem::where('barcode', '!=', null)
                 ->where('active', true)
-                ->select('id', 'barcode', 'product_name', 'name', 'price', 'stock')
+                ->select('id', 'barcode', 'name', 'price', 'stock')
                 ->get()
                 ->map(function ($item) {
                     return [
                         'id' => $item->id,
-                        'name' => $item->product_name ?? $item->name,
+                        'name' => $item->name,
                         'sku' => $item->barcode,
                         'barcode' => $item->barcode,
                         'price' => (int) $item->price,
                         'stock' => $item->stock ?? 999,
-                        'category' => 'product',
-                        'emoji' => '📦'
+                        'category' => 'product'
                     ];
                 });
 
@@ -95,24 +93,22 @@ class PosController extends Controller
         try {
             $items = SolutionItem::where(function ($q) use ($query) {
                 $q->where('barcode', 'like', "%{$query}%")
-                  ->orWhere('product_name', 'like', "%{$query}%")
                   ->orWhere('name', 'like', "%{$query}%");
             })
             ->where('barcode', '!=', null)
             ->where('active', true)
-            ->select('id', 'barcode', 'product_name', 'name', 'price', 'stock')
+            ->select('id', 'barcode', 'name', 'price', 'stock')
             ->limit(20)
             ->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'name' => $item->product_name ?? $item->name,
+                    'name' => $item->name,
                     'sku' => $item->barcode,
                     'barcode' => $item->barcode,
                     'price' => (int) $item->price,
                     'stock' => $item->stock ?? 999,
-                    'category' => 'product',
-                    'emoji' => '📦'
+                    'category' => 'product'
                 ];
             });
 
