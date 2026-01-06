@@ -8,7 +8,9 @@ use App\Http\Controllers\ShopController;
 
 // Authentication routes only
 Route::middleware('web')->group(function () {
-    Route::get('/', [ShopController::class, 'index'])->name('home');
+    Route::get('/', function () {
+        return view('welcome');
+    })->name('home');
     Route::post('/shop/{product}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
 
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
