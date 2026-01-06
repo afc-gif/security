@@ -137,7 +137,20 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>#<?php echo e($row['row_id']); ?></td>
-                                <td><?php echo e($item['barcode'] ?? '—'); ?></td>
+                                <td>
+                                    <?php if(!empty($item['barcode'])): ?>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <code style="font-size: 12px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;"><?php echo e($item['barcode']); ?></code>
+                                            <?php if(!empty($item['id']) && !empty($item['solution_id'])): ?>
+                                                <a href="<?php echo e(route('barcode.download', ['solutionItem' => $item['id']])); ?>" class="btn btn-sm" style="background: #0366d6; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Download barcode">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="solution-meta">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><strong><?php echo e($item['name']); ?></strong></td>
                                 <td><?php echo e($row['category']); ?></td>
                                 <td><?php echo e($item['price'] ?? 'N/A'); ?></td>
