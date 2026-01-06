@@ -11,6 +11,7 @@ Route::middleware('web')->group(function () {
     Route::get('/', function () {
         return view('welcome');
     })->name('home');
+    Route::get('/solutions', [ShopController::class, 'solutions'])->name('solutions.index');
     Route::post('/shop/{product}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
 
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

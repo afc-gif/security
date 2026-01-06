@@ -16,6 +16,12 @@ class ShopController extends Controller
         return view('shop.index', compact('products'));
     }
 
+    public function solutions()
+    {
+        $solutions = SolutionItem::where('active', true)->with('solution')->get();
+        return view('shop.solutions', compact('solutions'));
+    }
+
     public function show(Product $product)
     {
         return view('shop.show', compact('product'));

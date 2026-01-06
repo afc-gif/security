@@ -2001,5 +2001,65 @@
       }
     }
   </style>
+
+  <script>
+    // Load products from admin database on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        const response = await fetch('/api/pos/products');
+        const products = await response.json();
+
+        // Clear all product grids
+        const grids = document.querySelectorAll('.products-grid');
+        grids.forEach(grid => {
+          // Keep the first grid (CCTV) and populate it
+          if (grid === grids[0]) {
+            grid.innerHTML = '';
+            if (products.length > 0) {
+              products.forEach(product => {
+                grid.innerHTML += createProductCard(product);
+              });
+            } else {
+              grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No products available</p></div>';
+            }
+          } else {
+            // For other sections, just show a message
+            grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>Products loaded from admin database</p></div>';
+          }
+        });
+      } catch (error) {
+        console.error('Error loading products:', error);
+        const grids = document.querySelectorAll('.products-grid');
+        grids.forEach(grid => {
+          grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1; color: red;"><p>Error loading products</p></div>';
+        });
+      }
+    });
+
+    function createProductCard(product) {
+      return `
+        <div class="product-card">
+          <div class="product-image">
+            <img src="${product.image || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(product.name)}'">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-description">${product.description || 'Enterprise-grade product'}</p>
+            <div class="product-specs">
+              <span>${product.solution?.name || 'Solution'}</span>
+              <span>Barcode: ${product.barcode}</span>
+              <span>Stock: ${product.stock}</span>
+            </div>
+            <div class="product-price">₦${parseFloat(product.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            <button class="btn add-to-cart" onclick="addToCart('${product.id}', '${product.name}', ${product.price})">Add to Cart</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function addToCart(id, name, price) {
+      alert(`Added "${name}" to cart - ₦${price.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    }
+  </script>
 </body>
 </html>
