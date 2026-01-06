@@ -22,6 +22,18 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin',
                 'password' => Hash::make('admin123'),
                 'role' => 'admin',
+                'status' => 'approved',
+            ]
+        );
+
+        // Create sample POS user if not exists (pre-approved for testing)
+        User::firstOrCreate(
+            ['email' => 'pos@example.com'],
+            [
+                'name' => 'POS User',
+                'password' => Hash::make('pos123'),
+                'role' => 'pos',
+                'status' => 'approved',
             ]
         );
 
@@ -32,6 +44,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'John Doe',
                 'password' => Hash::make('password123'),
                 'role' => 'user',
+                'status' => 'approved',
             ]
         );
 

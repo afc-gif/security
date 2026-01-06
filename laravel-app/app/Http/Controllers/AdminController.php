@@ -232,8 +232,49 @@ class AdminController extends Controller
     // Users Management
     public function users()
     {
-        $users = User::paginate(15);
-        return view('admin.users.index', compact('users'));
+        $approvedUsers = User::where('status', 'approved')->paginate(15);
+        $pendingCount = User::where('status', 'pending')->count();
+        return view('admin.users.index', compact('approvedUsers', 'pendingCount'));
+    }
+
+    // Pending Users (waiting for approval)
+    public function pendingUsers()
+    {
+        $pendingUsers = User::where('status', 'pending')->paginate(15);
+        return view('admin.users.pending', compact('pendingUsers'));
+    }
+
+    // Approve user and assign role
+    public function approveUser(User $user, $role)
+    {
+        if (!in_array($role, ['admin', 'pos'])) {
+            return back()->withErrors('Invalid role specified.');
+        }
+
+        $user->update([
+            'status' => 'approved',
+            'role' => $role,
+        ]);
+
+        Log::info('User approved and role assigned', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'role' => $role,
+        ]);
+
+        return back()->with('success', "User {$user->name} approved as {$role}!");
+    }
+
+    // Reject pending user
+    public function rejectUser(User $user)
+    {
+        $user->delete();
+
+        Log::info('Pending user rejected', [
+            'email' => $user->email,
+        ]);
+
+        return back()->with('success', 'User registration rejected and removed.');
     }
 
     public function deleteUser(User $user)

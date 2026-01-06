@@ -17,6 +17,7 @@ class User extends Model implements AuthenticatableContract
         'email',
         'password',
         'role',
+        'status',
     ];
 
     protected $hidden = [
@@ -36,5 +37,20 @@ class User extends Model implements AuthenticatableContract
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isApproved()
+    {
+        return $this->status === 'approved';
+    }
+
+    public function isPOS()
+    {
+        return $this->role === 'pos';
     }
 }

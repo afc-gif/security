@@ -26,18 +26,31 @@ class AuthController extends Controller
 
         Log::info('Validation passed', ['email' => $credentials['email']]);
 
+        // Check if user exists and is approved
+        $user = User::where('email', $credentials['email'])->first();
+        
+        if ($user && $user->isPending()) {
+            return back()->withErrors([
+                'email' => 'Your account is pending approval. Please contact an administrator.',
+            ])->onlyInput('email');
+        }
+
         if (Auth::attempt($credentials)) {
             Log::info('Auth::attempt succeeded', ['email' => $credentials['email']]);
             $request->session()->regenerate();
             
-            // Redirect admin to dashboard, regular users to home
+            // Redirect based on role
             /** @var \App\Models\User $user */
             $user = auth()->user();
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
+            } elseif ($user->isPOS()) {
+                return redirect()->route('pos.index')->with('success', 'Logged in to POS!');
             }
             
-            return redirect()->intended('/')->with('success', 'Logged in successfully!');
+            return back()->withErrors([
+                'email' => 'No role assigned. Please contact an administrator.',
+            ])->onlyInput('email');
         }
 
         Log::warning('Auth::attempt failed', ['email' => $credentials['email']]);
@@ -63,12 +76,13 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'user',
+            'role' => null, // Will be assigned by admin
+            'status' => 'pending', // Waiting for approval
         ]);
 
-        Auth::login($user);
+        Log::info('New user registered and pending approval', ['email' => $user->email]);
 
-        return redirect('/')->with('success', 'Registration successful!');
+        return redirect()->route('login')->with('success', 'Registration successful! Your account is pending admin approval. Please wait for an administrator to assign your role.');
     }
 
     public function logout(Request $request)

@@ -20,8 +20,14 @@ http://localhost:8000/login
 
 **Admin Account:**
 - **Email:** `admin@example.com`
-- **Password:** Your configured password
+- **Password:** `admin123`
 - **Role:** Admin (full system access)
+
+**POS Account (Sample):**
+- **Email:** `pos@example.com`
+- **Password:** `pos123`
+- **Role:** POS (sales only - cannot access admin)
+- **Status:** To be approved by admin (see [Role Approval System](ROLE_APPROVAL_SYSTEM.md))
 
 ### **3. After Login - Two Options**
 
@@ -37,7 +43,30 @@ http://localhost:8000/login
 
 ---
 
-## **🔧 Admin Dashboard** (http://localhost:8000/admin/dashboard)
+## **�️ POS User Login** (For Sales Staff)
+
+### **For New POS Users**
+1. **Register at:** `http://localhost:8000/register`
+2. **Enter details:**
+   - Name (e.g., "John Smith")
+   - Email (e.g., `john.sales@example.com`)
+   - Password (minimum 8 characters)
+3. **Submit** → Receive message: *"Your account is pending admin approval"*
+4. **Wait** for admin to approve
+
+### **For Already Approved POS Users**
+1. Go to: `http://localhost:8000/login`
+2. Login with your email and password
+3. You'll be redirected directly to the POS system
+4. Start scanning products!
+
+### **Default Test POS Account**
+If admin has created a POS user for testing:
+- **Email:** `pos@example.com`
+- **Password:** `pos123`
+- Login and access POS system
+
+---
 
 ### **Navigation Menu**
 - **Dashboard** - Overview and statistics
@@ -209,34 +238,46 @@ Request body:
 ## **📱 Workflow Example**
 
 ### **Admin Workflow**
-1. Login to admin: `admin@example.com`
+1. Login to admin: `admin@example.com` / `admin123`
 2. Go to Products → Create new product
 3. System auto-generates barcode
 4. Download or print barcode
-5. Go to POS when ready to sell
+5. Go to Users → Pending to approve new POS staff
+6. Go to POS when ready to sell
 
-### **POS Workflow**
-1. Login to POS (same credentials as admin)
-2. Choose mode: Database (real barcodes) or Sample (test codes)
-3. Scan product barcode with scanner
-4. Product auto-adds to cart
-5. Continue scanning products
-6. Select payment method
-7. Click "Complete Sale"
-8. Logout when done
+### **POS Staff Workflow**
+1. **First Time:** Register at `/register` with your details
+2. **Wait:** Admin approves your account at `/admin/users/pending`
+3. **Login:** Go to `/login` with your email and password
+4. **Redirected:** Automatically goes to POS system
+5. **Scan:** Choose mode (Database or Sample) and scan products
+6. **Checkout:** Select payment method and complete sale
+7. **Logout:** Click logout when done
+
+### **Admin Approving New POS Staff**
+1. POS staff registers at `/register`
+2. Admin goes to `/admin/users/pending`
+3. Admin clicks **"✓ Approve as POS"**
+4. POS staff can now login and use system
 
 ---
 
 ## **🆘 Troubleshooting**
 
 ### **Can't login?**
-- Email: `admin@example.com`
-- Check password with system admin
+- Check email spelling carefully
+- Password is case-sensitive
+- Make sure account is approved (pending users cannot login)
 - Clear browser cookies
 - Try incognito/private browsing mode
 
+### **Registered but can't login?**
+- Your account is still pending admin approval
+- Admin must visit `/admin/users/pending` and click "Approve as POS"
+- Check with your administrator for approval status
+
 ### **POS page not loading?**
-- Make sure you're logged in first
+- Make sure you're logged in first (not redirected to login)
 - Check URL: `http://localhost:8000/pos`
 - Refresh the page
 - Check browser console for errors
@@ -303,14 +344,52 @@ Login (admin@example.com)
 
 ---
 
-## **📞 Key Information**
+## **� Quick Reference - Login URLs**
 
-- **System Type:** Admin + POS Only
-- **No Shop/Cart Features:** Removed as requested
-- **Authentication:** Email/Password login required
-- **Barcode Format:** CODE_128 (industry standard)
-- **Database:** PostgreSQL
-- **Framework:** Laravel 10 + PHP 8.3
-- **Version:** 1.0.0 (Admin & POS)
-- **Last Updated:** January 6, 2026
+| User Type | Login URL | Email | Password | Role | Notes |
+|-----------|-----------|-------|----------|------|-------|
+| Admin | `/login` | `admin@example.com` | `admin123` | Admin | Full system access |
+| POS Staff | `/login` | Custom email | Custom password | POS | Must be approved first |
+| Test POS | `/login` | `pos@example.com` | `pos123` | POS | Sample account if seeded |
+| New Staff | `/register` | Custom email | Custom password | Pending | Must await approval |
+
+---
+
+## **🔄 Complete Access Flow**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              ARTSCI Login & Access Control              │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+            ┌─ LOGIN PAGE (/login) ─┐
+            │ Email + Password       │
+            └───────────────────────┘
+                          │
+                ┌─────────┴─────────┐
+                ▼                   ▼
+            ADMIN                 POS
+            │                     │
+            ├─ Admin Dashboard    ├─ POS System
+            ├─ Products Mgmt      ├─ Barcode Scanner
+            ├─ Users Approval     ├─ Shopping Cart
+            ├─ Solutions          └─ Payment Methods
+            └─ Orders
+```
+
+---
+
+## **🎓 Complete Setup Guide**
+
+For detailed information on the role assignment and approval system, see:
+→ [ROLE_APPROVAL_SYSTEM.md](ROLE_APPROVAL_SYSTEM.md)
+
+This includes:
+- ✅ Complete workflow documentation
+- ✅ Admin approval interface guide
+- ✅ Database schema details
+- ✅ Security features
+- ✅ Testing procedures
+- ✅ Audit logging
 

@@ -9,6 +9,8 @@ use App\Http\Controllers\BarcodeController;
 Route::middleware('web')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 });
 
@@ -24,8 +26,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
     Route::delete('/products/{product}', [AdminController::class, 'deleteProduct'])->name('admin.products.delete');
 
-    // Users Management
+    // Users Management (view pending, approve, assign roles)
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users.index');
+    Route::get('/users/pending', [AdminController::class, 'pendingUsers'])->name('admin.users.pending');
+    Route::patch('/users/{user}/approve/{role}', [AdminController::class, 'approveUser'])->name('admin.users.approve');
+    Route::patch('/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
 
     // Solutions/Products Management
