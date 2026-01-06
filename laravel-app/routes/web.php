@@ -60,8 +60,25 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/menu-items/{menuItem}/upload-image', [App\Http\Controllers\MenuItemController::class, 'uploadImage'])->name('menu-items.upload-image');
 
     // Solutions Management
-    Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController');
-    Route::resource('solutions.items', 'App\Http\Controllers\Admin\SolutionItemController', ['except' => ['index', 'show']]);
+    Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
+        'index' => 'admin.solutions.index',
+        'show' => 'admin.solutions.show',
+        'create' => 'admin.solutions.create',
+        'store' => 'admin.solutions.store',
+        'edit' => 'admin.solutions.edit',
+        'update' => 'admin.solutions.update',
+        'destroy' => 'admin.solutions.destroy',
+    ]]);
+    Route::resource('solutions.items', 'App\Http\Controllers\Admin\SolutionItemController', [
+        'except' => ['index', 'show'],
+        'names' => [
+            'create' => 'admin.solutions.items.create',
+            'store' => 'admin.solutions.items.store',
+            'edit' => 'admin.solutions.items.edit',
+            'update' => 'admin.solutions.items.update',
+            'destroy' => 'admin.solutions.items.destroy',
+        ]
+    ]);
 });
 
 // API routes for live polling
