@@ -141,11 +141,14 @@
                                 <td>#{{ $row['row_id'] }}</td>
                                 <td>
                                     @if(!empty($item['barcode']))
-                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                             <code style="font-size: 12px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">{{ $item['barcode'] }}</code>
                                             @if(!empty($item['id']) && !empty($item['solution_id']))
-                                                <a href="{{ route('barcode.download', ['solutionItem' => $item['id']]) }}" class="btn btn-sm" style="background: #0366d6; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Download barcode">
-                                                    <i class="fas fa-download"></i>
+                                                <a href="{{ route('barcode.download', ['solutionItem' => $item['id']]) }}" class="btn btn-sm" style="background: #0366d6; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Download barcode image">
+                                                    <i class="fas fa-download"></i> PNG
+                                                </a>
+                                                <a href="{{ route('barcode.print', ['solutionItem' => $item['id']]) }}" class="btn btn-sm" style="background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Print barcode label" target="_blank">
+                                                    <i class="fas fa-print"></i> Print
                                                 </a>
                                             @endif
                                         </div>
