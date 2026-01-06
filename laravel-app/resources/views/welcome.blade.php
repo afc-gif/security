@@ -43,56 +43,128 @@
       <img class="hero-slide-bg" src="{{ asset('Desktop-014.webp') }}" alt="Enterprise surveillance workspace" />
       <img class="hero-slide-bg" src="{{ asset('Desktop-015.webp') }}" alt="Security network monitoring dashboard" />
     </div>
-    <div class="hero-content">
-      <div class="hero-text">
-        <h1 class="hero-title">Enterprise Security & Power Solutions</h1>
-        <p class="hero-subtitle">Advanced surveillance, access control, and energy management systems for critical infrastructure</p>
-        <button class="hero-cta" onclick="document.getElementById('contact').scrollIntoView({behavior: 'smooth'})">Schedule Demo</button>
-      </div>
-      <div class="hero-dots">
-        <span class="dot active" onclick="changeSlide(0)"></span>
-        <span class="dot" onclick="changeSlide(1)"></span>
-        <span class="dot" onclick="changeSlide(2)"></span>
-        <span class="dot" onclick="changeSlide(3)"></span>
-      </div>
-    </div>
   </section>
 
   <!-- Solutions Section -->
   <section class="solutions" id="solutions">
     <div class="container">
       <div class="section-header">
-        <h2>Comprehensive Security Solutions</h2>
-        <p>Integrated systems designed for maximum protection and efficiency</p>
+        <h2>Enterprise Solutions</h2>
+        <p>Integrated security and power systems for complete infrastructure protection</p>
       </div>
       <div class="solutions-grid">
-        <div class="solution-card">
-          <div class="solution-icon">
-            <i class="fas fa-video"></i>
-          </div>
-          <h3>Advanced CCTV Systems</h3>
-          <p>High-definition surveillance with AI-powered analytics for real-time threat detection and automated response</p>
+        <a href="solutions.html#cctv" class="solution-card solution-cctv">
+          <div class="solution-icon">📹</div>
+          <h3>SURVEILLANCE</h3>
+          <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
+          <ul>
+            <li>4K IP cameras with AI detection</li>
+            <li>Cloud + local storage</li>
+            <li>Mobile app monitoring</li>
+            <li>Smart alerts & analytics</li>
+          </ul>
+        </a>
+
+        <a href="solutions.html#solar" class="solution-card solution-power">
+          <div class="solution-icon">⚡</div>
+          <h3>SOLAR POWER</h3>
+          <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
+          <ul>
+            <li>5-10kVA hybrid systems</li>
+            <li>Lithium battery storage</li>
+            <li>Solar panel integration</li>
+            <li>Energy monitoring</li>
+          </ul>
+        </a>
+
+        <a href="solutions.html#access" class="solution-card solution-access">
+          <div class="solution-icon">🔐</div>
+          <h3>ACCESS CONTROL</h3>
+          <p>Smart gates, biometric locks, and visitor management systems</p>
+          <ul>
+            <li>Automatic gate systems</li>
+            <li>Biometric access control</li>
+            <li>RFID integration</li>
+            <li>Audit trails & reports</li>
+          </ul>
+        </a>
+
+        <a href="solutions.html#perimeter" class="solution-card solution-fence">
+          <div class="solution-icon">🔌</div>
+          <h3>PERIMETER SECURITY</h3>
+          <p>High-voltage electric fencing with integrated alarms and monitoring</p>
+          <ul>
+            <li>Multi-zone electric fence</li>
+            <li>Alarm integration</li>
+            <li>Battery backup 24/7</li>
+            <li>Compliance certified</li>
+          </ul>
+        </a>
+
+        <a href="solutions.html#automation" class="solution-card solution-smart">
+          <div class="solution-icon">🏠</div>
+          <h3>SMART AUTOMATION</h3>
+          <p>Unified control for lighting, climate, security, and energy management</p>
+          <ul>
+            <li>Central dashboard control</li>
+            <li>Scheduling & automations</li>
+            <li>Mobile app integration</li>
+            <li>Voice control compatible</li>
+          </ul>
+        </a>
+
+        <a href="solutions.html#integration" class="solution-card solution-integration">
+          <div class="solution-icon">🔗</div>
+          <h3>FULL INTEGRATION</h3>
+          <p>Complete enterprise stack with unified monitoring and control</p>
+          <ul>
+            <li>All systems integrated</li>
+            <li>Single dashboard</li>
+            <li>API access available</li>
+            <li>White-label options</li>
+          </ul>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why ARTSCI Section -->
+  <section class="why-artsci" id="why-artsci">
+    <div class="container">
+      <div class="section-header">
+        <h2>Why Choose ARTSCI</h2>
+        <p>The only security partner you need for complete infrastructure protection</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-item">
+          <div class="why-number">01</div>
+          <h4>Expert Engineering</h4>
+          <p>In-house engineers design systems for YOUR specific needs, not generic solutions. Every installation is optimized for maximum uptime and performance.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon">
-            <i class="fas fa-lock"></i>
-          </div>
-          <h3>Access Control Solutions</h3>
-          <p>Biometric and card-based access systems with integration to security protocols for facilities management</p>
+        <div class="why-item">
+          <div class="why-number">02</div>
+          <h4>Professional Installation</h4>
+          <p>Certified technicians handle all installations with zero disruption to your operations. Clean cabling, proper grounding, and full documentation included.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon">
-            <i class="fas fa-power-off"></i>
-          </div>
-          <h3>Power Management</h3>
-          <p>UPS systems, solar integration, and backup power solutions for uninterrupted security operations</p>
+        <div class="why-item">
+          <div class="why-number">03</div>
+          <h4>24/7 Monitoring</h4>
+          <p>Round-the-clock remote monitoring with instant alerts. Our team responds to issues before they become problems, ensuring uninterrupted security.</p>
         </div>
-        <div class="solution-card">
-          <div class="solution-icon">
-            <i class="fas fa-network-wired"></i>
-          </div>
-          <h3>Network Infrastructure</h3>
-          <p>Secure fiber-optic networks and IoT connectivity for seamless system integration and monitoring</p>
+        <div class="why-item">
+          <div class="why-number">04</div>
+          <h4>Preventive Support</h4>
+          <p>Regular maintenance visits, firmware updates, and system health checks. We keep your infrastructure running at peak performance year-round.</p>
+        </div>
+        <div class="why-item">
+          <div class="why-number">05</div>
+          <h4>Certified Partnerships</h4>
+          <p>Authorized distributor for DAHUA, HIKVISION, AMCREST, FELICITY, and CENTURION. Access to enterprise-grade hardware with full warranty support.</p>
+        </div>
+        <div class="why-item">
+          <div class="why-number">06</div>
+          <h4>Proven Track Record</h4>
+          <p>Since 2015, serving 500+ clients including banks, oil companies, schools, and government agencies. 99.8% uptime guarantee backed by our reputation.</p>
         </div>
       </div>
     </div>
@@ -103,110 +175,177 @@
     <div class="container">
       <div class="section-header">
         <h2>Professional Services</h2>
-        <p>Expert support at every stage of your security journey</p>
+        <p>Complete lifecycle support from assessment to 24/7 monitoring</p>
       </div>
       <div class="services-grid">
         <div class="service-item">
-          <h3>System Design</h3>
-          <p>Custom architecture for your facility's unique security needs</p>
+          <div class="service-step">1</div>
+          <h4>Site Assessment</h4>
+          <p>Professional walkthrough with risk analysis, load calculation, and custom recommendations</p>
         </div>
         <div class="service-item">
-          <h3>Installation</h3>
-          <p>Professional deployment with minimal operational disruption</p>
+          <div class="service-step">2</div>
+          <h4>System Design</h4>
+          <p>Custom engineering tailored to your exact requirements, budget, and infrastructure</p>
         </div>
         <div class="service-item">
-          <h3>Maintenance</h3>
-          <p>24/7 monitoring and preventive maintenance programs</p>
+          <div class="service-step">3</div>
+          <h4>Professional Install</h4>
+          <p>Certified technicians with minimal downtime, complete documentation, and staff training</p>
         </div>
         <div class="service-item">
-          <h3>Training</h3>
-          <p>Comprehensive staff training on all system operations</p>
+          <div class="service-step">4</div>
+          <h4>Testing & Handover</h4>
+          <p>Full system testing, compliance verification, and knowledge transfer to your team</p>
+        </div>
+        <div class="service-item">
+          <div class="service-step">5</div>
+          <h4>24/7 Monitoring</h4>
+          <p>Continuous remote monitoring with instant alerts and incident response</p>
+        </div>
+        <div class="service-item">
+          <div class="service-step">6</div>
+          <h4>Preventive Maintenance</h4>
+          <p>Regular health checks, updates, and optimization for maximum system longevity</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Why ARTSCI Section -->
-  <section class="why-artsci" id="why-artsci">
+  <!-- Clients & Partners Section -->
+  <section class="partners-section" id="partners">
     <div class="container">
       <div class="section-header">
-        <h2>Why Choose ARTSCI</h2>
-        <p>Industry-leading expertise and innovation</p>
+        <h2>Trusted By Industry Leaders</h2>
+        <p>We serve banks, oil & gas, schools, government, and estates across Nigeria</p>
       </div>
-      <div class="features-grid">
-        <div class="feature">
-          <h4>24/7 Support</h4>
-          <p>Round-the-clock monitoring and technical support</p>
+      <div class="clients-showcase">
+        <div class="client-type">
+          <span class="client-badge">Banking</span>
         </div>
-        <div class="feature">
-          <h4>AI Integration</h4>
-          <p>Advanced analytics for predictive threat detection</p>
+        <div class="client-type">
+          <span class="client-badge">Oil & Gas</span>
         </div>
-        <div class="feature">
-          <h4>Scalability</h4>
-          <p>Systems that grow with your organization</p>
+        <div class="client-type">
+          <span class="client-badge">Education</span>
         </div>
-        <div class="feature">
-          <h4>Compliance</h4>
-          <p>Full adherence to international security standards</p>
+        <div class="client-type">
+          <span class="client-badge">Government</span>
+        </div>
+        <div class="client-type">
+          <span class="client-badge">Real Estate</span>
+        </div>
+        <div class="client-type">
+          <span class="client-badge">Enterprise</span>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top: 60px;">
+        <h2>Hardware Partners</h2>
+        <p>Enterprise-grade brands trusted worldwide</p>
+      </div>
+      <div class="partners-grid">
+        <div class="partner-logo">
+          <img src="{{ asset('dahua png.png') }}" alt="DAHUA">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('hikvision png2.png') }}" alt="HIKVISION">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('amcrest 2.png') }}" alt="AMCREST">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('centurion.png') }}" alt="CENTURION">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('felicity logo PNG2.png') }}" alt="FELICITY">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('deye 1.png') }}" alt="DEYE">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('growatt 1.png') }}" alt="GROWATT">
+        </div>
+        <div class="partner-logo">
+          <img src="{{ asset('nemtek 1.png') }}" alt="NEMTEK">
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Contact Section -->
-  <section class="contact" id="contact">
+  <!-- Contact & Footer -->
+  <footer class="footer" id="contact">
     <div class="container">
-      <div class="section-header">
-        <h2>Get Started Today</h2>
-        <p>Let's secure your enterprise</p>
+      <div class="footer-top">
+        <div class="footer-logo-section">
+          <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="footer-logo">
+          <div>
+            <h3>ARTSCI</h3>
+            <p>Enterprise Security & Power Solutions Since 2015</p>
+          </div>
+        </div>
       </div>
-      <form class="contact-form" onsubmit="handleContactSubmit(event)">
-        <input type="text" placeholder="Your Name" required>
-        <input type="email" placeholder="Your Email" required>
-        <input type="tel" placeholder="Your Phone" required>
-        <textarea placeholder="Tell us about your security needs..." rows="5" required></textarea>
-        <button type="submit">Request Demo</button>
-      </form>
-    </div>
-  </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2024 ARTSCI. All rights reserved. Enterprise Security Solutions.</p>
-      <div class="footer-links">
-        <a href="#solutions">Solutions</a>
-        <a href="#services">Services</a>
-        <a href="#contact">Contact</a>
+      <div class="footer-divider"></div>
+
+      <div class="footer-middle">
+        <div class="footer-column">
+          <h4>Solutions</h4>
+          <a href="solutions.html#cctv">CCTV & Surveillance</a>
+          <a href="solutions.html#solar">Solar Power Systems</a>
+          <a href="solutions.html#access">Access Control</a>
+          <a href="solutions.html#perimeter">Perimeter Security</a>
+          <a href="solutions.html#automation">Smart Automation</a>
+          <a href="solutions.html#integration">Full Integration</a>
+        </div>
+
+        <div class="footer-column">
+          <h4>Company</h4>
+          <a href="#why-artsci">About Us</a>
+          <a href="#services">Our Services</a>
+          <a href="#partners">Our Partners</a>
+          <a href="#contact">Contact Us</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms & Conditions</a>
+        </div>
+
+        <div class="footer-column">
+          <h4>Contact</h4>
+          <div class="footer-contact">
+            <div class="contact-method">
+              <span class="method-icon"><i class="fas fa-phone"></i></span>
+              <div>
+                <p class="method-label">Phone</p>
+                <a href="tel:+2347015862018">0701 586 2018</a>
+              </div>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon"><i class="fas fa-envelope"></i></span>
+              <div>
+                <p class="method-label">Email</p>
+                <a href="mailto:info@artsci.ng">info@artsci.ng</a>
+              </div>
+            </div>
+            <div class="contact-method">
+              <span class="method-icon"><i class="fab fa-instagram"></i></span>
+              <div>
+                <p class="method-label">Social</p>
+                <a href="https://instagram.com/artsci.ng" target="_blank">@artsci.ng</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-divider"></div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 ARTSCI Security & Power Solutions. All rights reserved.</p>
+        <p class="tagline">Fortress-Level Power, Security And Protection </p>
       </div>
     </div>
   </footer>
 
   <script src="{{ asset('modern-interactions.js') }}"></script>
-  <script>
-    let currentSlide = 0;
-    const slides = document.querySelectorAll('.hero-slide-bg');
-    const dots = document.querySelectorAll('.dot');
-
-    function changeSlide(index) {
-      slides.forEach(slide => slide.classList.remove('active'));
-      dots.forEach(dot => dot.classList.remove('active'));
-      slides[index].classList.add('active');
-      dots[index].classList.add('active');
-      currentSlide = index;
-    }
-
-    setInterval(() => {
-      currentSlide = (currentSlide + 1) % slides.length;
-      changeSlide(currentSlide);
-    }, 5000);
-
-    function handleContactSubmit(event) {
-      event.preventDefault();
-      alert('Thank you for your interest. We will contact you soon!');
-      event.target.reset();
-    }
-  </script>
 </body>
 </html>
