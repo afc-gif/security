@@ -1,14 +1,12 @@
-@extends('layout')
+@extends('admin.layout')
 
-@section('title', 'Categories - Admin - ARTSCI')
 
 @section('content')
-<div class="admin-container">
-    @include('admin.partials.sidebar', ['active' => 'categories'])
+<div class="container mx-auto py-8 px-4">
 
-    <main class="admin-main">
-        <div class="admin-header">
-            <div class="admin-header-left">
+    
+        
+            
                 <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -70,6 +68,5 @@
     <div class="pagination-container">
         {{ $categories->links() }}
     </div>
-    </main>
 </div>
 @endsection

@@ -1,148 +1,13 @@
-@extends('layout')
+@extends('admin.layout')
 
-@section('title', 'Solutions/Categories - Admin - ARTSCI')
 
-@section('extra-css')
-<style>
-    .solution-card {
-        background: white;
-        border: 1px solid #E0E6EF;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        transition: all 0.3s ease;
-    }
-
-    .solution-card:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        border-color: #03A9F4;
-    }
-
-    .solution-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 12px;
-    }
-
-    .solution-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .solution-title h3 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0;
-    }
-
-    .solution-icon {
-        font-size: 28px;
-        line-height: 1;
-    }
-
-    .solution-description {
-        color: #6B7280;
-        font-size: 14px;
-        margin: 8px 0 0 0;
-    }
-
-    .solution-meta {
-        display: flex;
-        gap: 24px;
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid #E5E7EB;
-        font-size: 13px;
-        color: #6B7280;
-    }
-
-    .status-badge {
-        font-weight: 600;
-    }
-
-    .status-active {
-        color: #10B981;
-    }
-
-    .status-inactive {
-        color: #EF4444;
-    }
-
-    .solution-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .btn-icon {
-        padding: 8px 12px;
-        font-size: 12px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-weight: 600;
-    }
-
-    .btn-view {
-        background: #E0F2FE;
-        color: #0369A1;
-    }
-
-    .btn-view:hover {
-        background: #0369A1;
-        color: white;
-    }
-
-    .btn-edit {
-        background: #DBEAFE;
-        color: #1D4ED8;
-    }
-
-    .btn-edit:hover {
-        background: #1D4ED8;
-        color: white;
-    }
-
-    .btn-delete {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-
-    .btn-delete:hover {
-        background: #991B1B;
-        color: white;
-    }
-
-    .empty-state {
-        background: #FFFBEB;
-        border: 1px solid #FCD34D;
-        border-radius: 8px;
-        padding: 32px;
-        text-align: center;
-        color: #92400E;
-    }
-
-    .empty-state h2 {
-        margin-top: 0;
-        margin-bottom: 12px;
-        font-size: 18px;
-        font-weight: 600;
-    }
-</style>
-@endsection
 
 @section('content')
-<div class="admin-container">
-    @include('admin.partials.sidebar', ['active' => 'solutions'])
+<div class="container mx-auto py-8 px-4">
 
-    <main class="admin-main">
-        <div class="admin-header">
-            <div class="admin-header-left">
+    
+        
+            
                 <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -205,6 +70,5 @@
                 </div>
             @endforelse
         </div>
-    </main>
 </div>
 @endsection

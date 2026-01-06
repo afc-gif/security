@@ -1,34 +1,27 @@
-@extends('layout')
-
-@section('title', 'Add Product - Admin - ARTSCI')
+@extends('admin.layout')
 
 @section('content')
-<div class="admin-container">
-    @include('admin.partials.sidebar', ['active' => 'products'])
+<div class="container mx-auto py-8 px-4">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-4xl font-bold text-gray-900 mb-8">Add New Product</h1>
 
-    <main class="admin-main">
-        <div class="admin-header">
-            <div class="admin-header-left">
-                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Add New Product</h1>
-            </div>
-        </div>
-
-        <div class="form-container">
-            <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
                 @csrf
 
-                <div class="form-group">
-                    <label for="name">Product Name *</label>
-                    <input type="text" id="name" name="name" value="{{ old('name') }}" required>
-                    @error('name')<span class="error-text">{{ $message }}</span>@enderror
+                <!-- Product Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('name') border-red-500 @enderror">
+                    @error('name')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="category">Category *</label>
-                    <select id="category" name="category" required>
+                <!-- Category -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                    <select id="category" name="category" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('category') border-red-500 @enderror">
                         <option value="">-- Select a Category --</option>
                         @forelse($categories as $cat)
                             <option value="{{ $cat->name }}" @if(old('category') === $cat->name) selected @endif>
@@ -38,40 +31,55 @@
                             <option value="" disabled>No categories available</option>
                         @endforelse
                     </select>
-                    <span class="helper-text">Select from the 6 main solution categories</span>
-                    @error('category')<span class="error-text">{{ $message }}</span>@enderror
+                    <p class="text-gray-600 text-sm mt-1">Select from the main solution categories</p>
+                    @error('category')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="price">Price *</label>
-                    <input type="number" id="price" name="price" step="0.01" value="{{ old('price') }}" required>
-                    @error('price')<span class="error-text">{{ $message }}</span>@enderror
+                <!-- Price & Stock Row -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                        <input type="number" id="price" name="price" step="0.01" value="{{ old('price') }}" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('price') border-red-500 @enderror">
+                        @error('price')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div>
+                        <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
+                        <input type="number" id="stock" name="stock" value="{{ old('stock', 0) }}" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('stock') border-red-500 @enderror">
+                        @error('stock')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="stock">Stock *</label>
-                    <input type="number" id="stock" name="stock" value="{{ old('stock', 0) }}" required>
-                    @error('stock')<span class="error-text">{{ $message }}</span>@enderror
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea id="description" name="description" rows="4"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                    @error('description')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description">{{ old('description') }}</textarea>
-                    @error('description')<span class="error-text">{{ $message }}</span>@enderror
+                <!-- Image -->
+                <div>
+                    <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                    <input type="file" id="image" name="image" accept="image/*"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('image') border-red-500 @enderror">
+                    <p class="text-gray-600 text-sm mt-1">JPG, PNG or GIF (max 2MB)</p>
+                    @error('image')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="image">Product Image</label>
-                    <input type="file" id="image" name="image" accept="image/*">
-                    @error('image')<span class="error-text">{{ $message }}</span>@enderror
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Add Product</button>
-                    <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">Cancel</a>
+                <!-- Buttons -->
+                <div class="flex gap-4 pt-6">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Create Product
+                    </button>
+                    <a href="{{ route('admin.products.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Cancel
+                    </a>
                 </div>
             </form>
         </div>
-    </main>
+    </div>
 </div>
 @endsection

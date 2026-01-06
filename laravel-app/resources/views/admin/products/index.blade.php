@@ -1,192 +1,105 @@
-@extends('layout')
-
-@section('title', 'Products - Admin - ARTSCI')
-
-@section('extra-css')
-<style>
-    .solution-sync-card {
-        background: white;
-        border: 1px solid #E0E6EF;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 24px;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
-    }
-    .solution-category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 10px;
-    }
-    .solution-chip {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: #F0F4FF;
-        color: #0366d6;
-        font-weight: 600;
-        font-size: 12px;
-    }
-    .solution-item-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 0;
-        border-top: 1px solid #EEF1F7;
-    }
-    .solution-item-row:first-child {
-        border-top: none;
-    }
-    .solution-item-name {
-        font-weight: 700;
-        color: #111827;
-    }
-    .solution-item-desc {
-        color: #4B5563;
-        font-size: 14px;
-        margin: 6px 0;
-    }
-    .solution-specs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .solution-specs span {
-        background: #F3F4F6;
-        border-radius: 6px;
-        padding: 4px 8px;
-        font-size: 12px;
-        color: #374151;
-    }
-    .solution-price {
-        min-width: 140px;
-        text-align: right;
-        font-weight: 700;
-        color: #0F766E;
-    }
-    .solution-meta {
-        color: #6B7280;
-        font-size: 13px;
-    }
-</style>
-@endsection
+@extends('admin.layout')
 
 @section('content')
-<div class="admin-container">
-    @include('admin.partials.sidebar', ['active' => 'products'])
-
-    <main class="admin-main">
-        <div class="admin-header">
-            <div class="admin-header-left">
-                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Products Management</h1>
-            </div>
-            <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Product
-            </a>
+<div class="container mx-auto py-8 px-4">
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900">Products Management</h1>
+            <p class="text-gray-600 mt-2">Manage products and generate barcodes for POS system</p>
         </div>
+        <a href="{{ route('admin.products.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+            + Create Product
+        </a>
+    </div>
 
-        @php
-            $flattened = [];
-            $rowId = 1;
-            foreach ($solutionProducts as $category) {
-                foreach ($category['items'] as $item) {
-                    $flattened[] = [
-                        'row_id' => $rowId++,
-                        'category' => $category['title'] ?? 'Uncategorized',
-                        'solution_id' => $category['id'] ?? null,
-                        'item' => $item,
-                    ];
-                }
+    @php
+        $flattened = [];
+        $rowId = 1;
+        foreach ($solutionProducts as $category) {
+            foreach ($category['items'] as $item) {
+                $flattened[] = [
+                    'row_id' => $rowId++,
+                    'category' => $category['title'] ?? 'Uncategorized',
+                    'solution_id' => $category['id'] ?? null,
+                    'item' => $item,
+                ];
             }
-        @endphp
+        }
+    @endphp
 
-        <div class="solution-category-header">
-            <div>
-                <h2 style="margin: 0 0 6px 0;">Solutions Catalog (DB)</h2>
-                <p class="solution-meta">Source: database solutions & items (manage under Admin → Solutions). Each item has ID + barcode for POS.</p>
-            </div>
-            <span class="solution-chip">{{ count($solutionProducts ?? []) }} categories</span>
-        </div>
-
-        @if(count($flattened) > 0)
-            <div class="products-table">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>ID</th>
-                            <th>Barcode</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($flattened as $row)
-                            @php($item = $row['item'])
-                            <tr>
-                                <td>
-                                    @if(!empty($item['image']))
-                                        <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #E5E7EB;">
-                                    @else
-                                        <span class="solution-meta">No image</span>
-                                    @endif
-                                </td>
-                                <td>#{{ $row['row_id'] }}</td>
-                                <td>
-                                    @if(!empty($item['barcode']))
-                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                            <code style="font-size: 12px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">{{ $item['barcode'] }}</code>
-                                            @if(!empty($item['id']) && !empty($item['solution_id']))
-                                                <a href="{{ route('barcode.download', ['solutionItem' => $item['id']]) }}" class="btn btn-sm" style="background: #0366d6; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Download barcode image">
-                                                    <i class="fas fa-download"></i> PNG
-                                                </a>
-                                                <a href="{{ route('barcode.print', ['solutionItem' => $item['id']]) }}" class="btn btn-sm" style="background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px;" title="Print barcode label" target="_blank">
-                                                    <i class="fas fa-print"></i> Print
-                                                </a>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <span class="solution-meta">—</span>
-                                    @endif
-                                </td>
-                                <td><strong>{{ $item['name'] }}</strong></td>
-                                <td>{{ $row['category'] }}</td>
-                                <td>{{ $item['price'] ?? 'N/A' }}</td>
-                                <td>
-                                    @php($stock = $item['stock'] ?? 0)
-                                    <span class="stock-badge {{ $stock > 0 ? 'in-stock' : 'out-of-stock' }}">
-                                        {{ $stock > 0 ? $stock : 'Sold Out' }}
-                                    </span>
-                                </td>
-                                <td>
+    @if(count($flattened) > 0)
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Image</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Barcode</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach($flattened as $row)
+                        @php($item = $row['item'])
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if(!empty($item['image']))
+                                    <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
+                                @else
+                                    <span class="text-gray-400 text-sm">No image</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-900">{{ $item['name'] }}</div>
+                                <div class="text-sm text-gray-600">{{ substr($item['description'] ?? '', 0, 50) }}...</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if(!empty($item['barcode']))
+                                    <code class="bg-gray-100 px-3 py-1 rounded text-sm font-mono">{{ $item['barcode'] }}</code>
                                     @if(!empty($item['id']) && !empty($item['solution_id']))
-                                        <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="btn btn-sm btn-edit" style="margin-right:6px;">Edit</a>
-                                        <form action="{{ route('admin.solutions.items.destroy', [$row['solution_id'], $item['id']]) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
-                                        </form>
-                                    @else
-                                        <span class="solution-meta">View only</span>
+                                        <div class="mt-2 space-x-2">
+                                            <a href="{{ route('barcode.download', ['solutionItem' => $item['id']]) }}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Download</a>
+                                            <a href="{{ route('barcode.print', ['solutionItem' => $item['id']]) }}" class="text-green-600 hover:text-green-800 text-sm font-semibold" target="_blank">Print</a>
+                                        </div>
                                     @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <div class="empty-state">
-                <p>No products found in <code>public/solutions.html</code>. Add cards there to display here.</p>
-            </div>
-        @endif
-    </main>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ $row['category'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-semibold">{{ $item['price'] ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @php($stock = $item['stock'] ?? 0)
+                                <span class="px-3 py-1 rounded text-sm font-semibold @if($stock > 0) bg-green-100 text-green-800 @else bg-red-100 text-red-800 @endif">
+                                    {{ $stock > 0 ? $stock . ' in stock' : 'Sold Out' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                @if(!empty($item['id']) && !empty($item['solution_id']))
+                                    <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="text-blue-600 hover:text-blue-800 font-semibold">Edit</a>
+                                    <form action="{{ route('admin.solutions.items.destroy', [$row['solution_id'], $item['id']]) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800 font-semibold" onclick="return confirm('Delete this product?')">Delete</button>
+                                    </form>
+                                @else
+                                    <span class="text-gray-400">View only</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+            <p class="text-blue-700 font-semibold">No products yet</p>
+            <p class="text-blue-600 mt-2">Create your first product to get started. Products will appear in the POS system for sales.</p>
+        </div>
+    @endif
 </div>
 @endsection
