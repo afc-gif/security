@@ -144,7 +144,7 @@ class AdminController extends Controller
                         'barcode' => $item->barcode,
                         'name' => $item->name,
                         'description' => $item->description,
-                        'price' => $item->price ? '\u20a6' . number_format($item->price, 2) : null,
+                        'price' => $item->price ? '₦' . number_format($item->price, 2) : null,
                         'stock' => $item->stock,
                         'image' => $item->image ? asset('storage/' . $item->image) : null,
                     ];
