@@ -779,7 +779,7 @@
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="pos-clock" id="clock">00:00:00</div>
                 <div style="display: flex; gap: 10px;">
-                    <a href="{{ route('admin.dashboard') }}" style="background: rgba(255,235,59,0.3); border: 2px solid var(--primary-yellow); color: var(--primary-yellow); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; transition: all 0.3s;">📊 Admin</a>
+                    <a href="{{ route('admin.dashboard') }}" style="background: rgba(255,235,59,0.3); border: 2px solid var(--primary-yellow); color: var(--primary-yellow); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; transition: all 0.3s;">Admin</a>
                     <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                         @csrf
                         <button type="submit" style="background: rgba(244,67,54,0.3); border: 2px solid #f44336; color: #f44336; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.3s;">Logout</button>
@@ -863,7 +863,7 @@
         <!-- SCANNER SECTION -->
         <div class="scanner-section" id="scannerSection">
             <div class="scanner-header">
-                <h3>📱 Barcode Scanner</h3>
+                <h3>Barcode Scanner</h3>
                 <button class="scanner-toggle" id="scannerToggle" title="Toggle scanner">−</button>
             </div>
 
@@ -884,8 +884,8 @@
             </div>
 
             <div class="scanner-actions">
-                <button id="clearScannerBtn">🗑️ Clear</button>
-                <button id="toggleScannerDbBtn" title="Toggle between sample data and database">🔄 Mode</button>
+                <button id="clearScannerBtn">Clear</button>
+                <button id="toggleScannerDbBtn" title="Toggle between sample data and database">Mode</button>
             </div>
         </div>
     </div>
@@ -902,6 +902,8 @@
             updateClock();
             setInterval(updateClock, 1000);
             setupEventListeners();
+            // Auto-focus barcode scanner for immediate scanning
+            document.getElementById("scannerInput").focus();
         }
 
         // Load products from database API
@@ -1260,9 +1262,21 @@
 
         async function lookupProductByBarcode(barcode) {
             try {
-                const response = await fetch(`/api/pos/barcode/${encodeURIComponent(barcode)}`);
-                if (!response.ok) return null;
-                return await response.json();
+                const url = `/api/pos/barcode/${encodeURIComponent(barcode)}`;
+                console.log('Fetching barcode from:', url);
+                const response = await fetch(url, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                });
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    console.log('Response not OK, returning null');
+                    return null;
+                }
+                const data = await response.json();
+                console.log('Fetched product:', data);
+                return data;
             } catch (error) {
                 console.error("Barcode lookup error:", error);
                 return null;
