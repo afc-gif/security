@@ -95,3 +95,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/barcode/{solutionItem}/print', [BarcodeController::class, 'printLabel'])->name('barcode.print');
     Route::get('/barcode/{solutionItem}/info', [BarcodeController::class, 'metadata'])->name('barcode.metadata');
 });
+
+// POS System (accessible to authenticated users)
+Route::middleware('auth')->group(function () {
+    Route::get('/pos', function () {
+        return view('pos.index');
+    })->name('pos.index');
+});
