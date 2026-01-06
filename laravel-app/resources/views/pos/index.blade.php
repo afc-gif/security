@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>ARTSCI - Point of Sale</title>
     <style>
         :root {
@@ -1053,11 +1054,45 @@
             });
 
             // Checkout
-            document.getElementById("checkoutBtn").addEventListener("click", function() {
-                const total = document.getElementById("total").textContent;
-                alert(`Sale completed! Total: ${total}\nPayment Method: ${selectedPaymentMethod.toUpperCase()}\n\nThank you for your purchase!`);
-                cart = [];
-                updateCart();
+            document.getElementById("checkoutBtn").addEventListener("click", async function() {
+                if (cart.length === 0) {
+                    alert("Cart is empty!");
+                    return;
+                }
+
+                const totalText = document.getElementById("total").textContent;
+                const total = parseFloat(totalText.replace('$', ''));
+
+                try {
+                    // Send sale data to server
+                    const response = await fetch('{{ route("api.pos.complete-sale") ?? "/api/pos/complete-sale" }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                        },
+                        body: JSON.stringify({
+                            items: cart,
+                            total: total,
+                            payment_method: selectedPaymentMethod
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Show receipt
+                        alert(`Sale completed!\nOrder #${result.sale_id}\nTotal: $${total.toFixed(2)}\nSold by: ${result.salesperson}\n\nThank you for your purchase!`);
+                        
+                        // Redirect to receipt page
+                        window.location.href = `/pos/receipt/${result.sale_id}`;
+                    } else {
+                        alert(`Error: ${result.error}`);
+                    }
+                } catch (error) {
+                    alert(`Error completing sale: ${error.message}`);
+                    console.error('Sale error:', error);
+                }
             });
 
             // Clear Cart

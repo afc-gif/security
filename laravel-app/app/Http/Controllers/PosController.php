@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\SolutionItem;
+use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class PosController extends Controller
 {
@@ -16,12 +19,14 @@ class PosController extends Controller
     public function lookupBarcode(string $barcode): JsonResponse
     {
         try {
-            // Search for solution item with matching barcode
-            $solutionItem = SolutionItem::where('barcode', $barcode)->first();
+            // Search for solution item with matching barcode (database products only)
+            $solutionItem = SolutionItem::where('barcode', $barcode)
+                ->where('active', true)
+                ->first();
 
             if (!$solutionItem) {
                 return response()->json(
-                    ['error' => 'Barcode not found'],
+                    ['error' => 'Product not found'],
                     404
                 );
             }
@@ -33,7 +38,7 @@ class PosController extends Controller
                 'sku' => $solutionItem->barcode,
                 'barcode' => $solutionItem->barcode,
                 'price' => (int) $solutionItem->price,
-                'stock' => 999, // Unlimited for now
+                'stock' => $solutionItem->stock ?? 999,
                 'category' => 'product',
                 'emoji' => '📦'
             ]);
@@ -46,7 +51,7 @@ class PosController extends Controller
     }
 
     /**
-     * Get all products for POS catalog
+     * Get all products for POS catalog (database products only)
      * 
      * @return JsonResponse
      */
@@ -54,7 +59,8 @@ class PosController extends Controller
     {
         try {
             $items = SolutionItem::where('barcode', '!=', null)
-                ->select('id', 'barcode', 'product_name', 'name', 'price')
+                ->where('active', true)
+                ->select('id', 'barcode', 'product_name', 'name', 'price', 'stock')
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -63,7 +69,7 @@ class PosController extends Controller
                         'sku' => $item->barcode,
                         'barcode' => $item->barcode,
                         'price' => (int) $item->price,
-                        'stock' => 999,
+                        'stock' => $item->stock ?? 999,
                         'category' => 'product',
                         'emoji' => '📦'
                     ];
@@ -79,7 +85,7 @@ class PosController extends Controller
     }
 
     /**
-     * Search products by name or barcode
+     * Search products by name or barcode (database products only)
      * 
      * @param string $query
      * @return JsonResponse
@@ -93,7 +99,8 @@ class PosController extends Controller
                   ->orWhere('name', 'like', "%{$query}%");
             })
             ->where('barcode', '!=', null)
-            ->select('id', 'barcode', 'product_name', 'name', 'price')
+            ->where('active', true)
+            ->select('id', 'barcode', 'product_name', 'name', 'price', 'stock')
             ->limit(20)
             ->get()
             ->map(function ($item) {
@@ -103,7 +110,7 @@ class PosController extends Controller
                     'sku' => $item->barcode,
                     'barcode' => $item->barcode,
                     'price' => (int) $item->price,
-                    'stock' => 999,
+                    'stock' => $item->stock ?? 999,
                     'category' => 'product',
                     'emoji' => '📦'
                 ];
@@ -119,7 +126,7 @@ class PosController extends Controller
     }
 
     /**
-     * Complete a POS sale (create order from cart)
+     * Complete a POS sale (create order with salesperson info)
      * 
      * @return JsonResponse
      */
@@ -131,20 +138,58 @@ class PosController extends Controller
                 'items' => 'required|array',
                 'items.*.id' => 'required|integer',
                 'items.*.quantity' => 'required|integer|min:1',
+                'items.*.price' => 'required|numeric|min:0',
                 'total' => 'required|numeric|min:0',
                 'payment_method' => 'required|in:cash,card,mobile'
             ]);
 
-            // Create order (implement based on your Order model)
-            // This is a placeholder - adjust based on your business logic
-            
+            // Create order with current user (POS operator) as the seller
+            $order = Order::create([
+                'user_id' => auth()->id(), // Current logged-in POS user
+                'total_amount' => $cartData['total'],
+                'status' => 'completed',
+                'payment_method' => $cartData['payment_method'],
+                'notes' => 'POS Sale'
+            ]);
+
+            // Create order items
+            foreach ($cartData['items'] as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'solution_item_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price']
+                ]);
+
+                // Optional: Update stock
+                $solutionItem = SolutionItem::find($item['id']);
+                if ($solutionItem && $solutionItem->stock) {
+                    $solutionItem->decrement('stock', $item['quantity']);
+                }
+            }
+
+            Log::info('POS Sale Completed', [
+                'order_id' => $order->id,
+                'seller' => auth()->user()->name,
+                'total' => $cartData['total'],
+                'payment_method' => $cartData['payment_method']
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Sale completed successfully',
-                'sale_id' => 'SALE-' . time(),
-                'timestamp' => now()->toIso8601String()
+                'sale_id' => $order->id,
+                'salesperson' => auth()->user()->name,
+                'timestamp' => $order->created_at->toIso8601String(),
+                'total' => $cartData['total'],
+                'payment_method' => $cartData['payment_method']
             ]);
         } catch (\Exception $e) {
+            Log::error('POS Sale Failed', [
+                'error' => $e->getMessage(),
+                'user' => auth()->user()->name ?? 'Unknown'
+            ]);
+            
             return response()->json(
                 ['error' => 'Sale failed: ' . $e->getMessage()],
                 500

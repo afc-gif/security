@@ -13,6 +13,7 @@ class Order extends Model
         'user_id',
         'total_amount',
         'status',
+        'payment_method',
         'notes',
     ];
 
@@ -30,5 +31,10 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function getSalespersonName()
+    {
+        return $this->user?->name ?? 'Unknown Salesperson';
     }
 }
