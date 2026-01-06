@@ -62,23 +62,57 @@ class AdminController extends Controller
 
     public function storeProduct(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'category' => 'required|string|exists:solutions,name',
-            'image' => 'nullable|image|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'price' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'category' => 'required|string|exists:solutions,name',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            // Handle image upload with better error handling
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                
+                if (!$image->isValid()) {
+                    Log::error("Invalid image file uploaded", ['error' => $image->getErrorMessage()]);
+                    return back()->withErrors('Invalid image file. Please try again.');
+                }
+
+                try {
+                    // Store the image in the public disk under products folder
+                    $path = $image->store('products', 'public');
+                    $validated['image'] = $path;
+                    Log::info("Image stored successfully", ['path' => $path]);
+                } catch (\Exception $e) {
+                    Log::error("Image storage failed: " . $e->getMessage());
+                    return back()->withErrors('Failed to upload image. Please check server permissions and try again.');
+                }
+            }
+
+            // Create the product
+            $product = Product::create($validated);
+            Log::info("Product created", ['product_id' => $product->id, 'name' => $product->name]);
+
+            // Sync to solution item
+            try {
+                $this->syncProductToSolutionItem($product);
+            } catch (\Exception $e) {
+                Log::error("Failed to sync product to solution item: " . $e->getMessage(), ['product_id' => $product->id]);
+                // Don't fail the request - product was created successfully
+                return redirect('/admin/products')->with('success', 'Product created successfully! (Note: Solution sync encountered an issue)');
+            }
+
+            return redirect('/admin/products')->with('success', 'Product created successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning("Product validation failed", ['errors' => $e->errors()]);
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error("Unexpected error in storeProduct: " . $e->getMessage(), ['exception' => $e]);
+            return back()->withErrors('An unexpected error occurred. Please try again. Error: ' . $e->getMessage());
         }
-
-        $product = Product::create($validated);
-        $this->syncProductToSolutionItem($product);
-
-        return redirect('/admin/products')->with('success', 'Product created successfully!');
     }
 
     public function editProduct(Product $product)
@@ -89,26 +123,65 @@ class AdminController extends Controller
 
     public function updateProduct(Request $request, Product $product)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'category' => 'required|string|exists:solutions,name',
-            'image' => 'nullable|image|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'price' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'category' => 'required|string|exists:solutions,name',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ]);
 
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            // Handle image upload with better error handling
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                
+                if (!$image->isValid()) {
+                    Log::error("Invalid image file uploaded during update", ['error' => $image->getErrorMessage()]);
+                    return back()->withErrors('Invalid image file. Please try again.');
+                }
+
+                // Delete old image if it exists
+                if ($product->image && Storage::disk('public')->exists($product->image)) {
+                    try {
+                        Storage::disk('public')->delete($product->image);
+                        Log::info("Old image deleted", ['path' => $product->image]);
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to delete old image: " . $e->getMessage());
+                    }
+                }
+
+                try {
+                    $path = $image->store('products', 'public');
+                    $validated['image'] = $path;
+                    Log::info("New image stored successfully", ['path' => $path]);
+                } catch (\Exception $e) {
+                    Log::error("Image storage failed during update: " . $e->getMessage());
+                    return back()->withErrors('Failed to upload image. Please check server permissions and try again.');
+                }
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+
+            // Update the product
+            $product->update($validated);
+            Log::info("Product updated", ['product_id' => $product->id]);
+
+            // Sync to solution item
+            try {
+                $this->syncProductToSolutionItem($product);
+            } catch (\Exception $e) {
+                Log::error("Failed to sync updated product to solution item: " . $e->getMessage(), ['product_id' => $product->id]);
+                return redirect('/admin/products')->with('success', 'Product updated successfully! (Note: Solution sync encountered an issue)');
+            }
+
+            return redirect('/admin/products')->with('success', 'Product updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning("Product validation failed during update", ['errors' => $e->errors()]);
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error("Unexpected error in updateProduct: " . $e->getMessage(), ['exception' => $e]);
+            return back()->withErrors('An unexpected error occurred. Please try again. Error: ' . $e->getMessage());
         }
-
-        $product->update($validated);
-        $this->syncProductToSolutionItem($product);
-
-        return redirect('/admin/products')->with('success', 'Product updated successfully!');
     }
 
     public function deleteProduct(Product $product)
@@ -159,6 +232,7 @@ class AdminController extends Controller
             $solution = Solution::where('name', $product->category)->first();
             if (!$solution) {
                 Log::warning("Solution not found for category: {$product->category}");
+                // Create a fallback solution if needed
                 return;
             }
 
@@ -168,10 +242,16 @@ class AdminController extends Controller
             if ($item && !empty($item->barcode)) {
                 $barcode = $item->barcode;
             } else {
-                // Generate unique barcode
+                // Generate unique barcode - ensure uniqueness
+                $attempts = 0;
                 do {
                     $barcode = strtoupper(Str::random(10));
-                } while (SolutionItem::where('barcode', $barcode)->exists());
+                    $attempts++;
+                } while ($attempts < 10 && SolutionItem::where('barcode', $barcode)->exists());
+                
+                if ($attempts >= 10) {
+                    $barcode = 'BC-' . $product->id . '-' . time();
+                }
             }
 
             $payload = [
@@ -188,11 +268,17 @@ class AdminController extends Controller
 
             if ($item) {
                 $item->update($payload);
+                Log::info("SolutionItem updated", ['item_id' => $item->id, 'barcode' => $barcode]);
             } else {
-                SolutionItem::create($payload);
+                $createdItem = SolutionItem::create($payload);
+                Log::info("SolutionItem created", ['item_id' => $createdItem->id, 'barcode' => $barcode]);
             }
         } catch (\Exception $e) {
-            Log::error("Error syncing product to solution item: " . $e->getMessage());
+            Log::error("Error syncing product to solution item: " . $e->getMessage(), [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'exception' => $e
+            ]);
             throw $e;
         }
     }

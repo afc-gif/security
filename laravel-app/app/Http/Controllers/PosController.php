@@ -57,18 +57,24 @@ class PosController extends Controller
     public function getProducts(): JsonResponse
     {
         try {
-            $items = SolutionItem::where('barcode', '!=', null)
-                ->where('active', true)
-                ->select('id', 'barcode', 'name', 'price', 'stock')
+            $items = SolutionItem::where('active', true)
+                ->with('solution')
+                ->select('id', 'solution_id', 'barcode', 'name', 'description', 'price', 'stock', 'image')
                 ->get()
                 ->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'name' => $item->name,
+                        'description' => $item->description ?? 'Enterprise-grade solution product',
                         'sku' => $item->barcode,
                         'barcode' => $item->barcode,
-                        'price' => (int) $item->price,
+                        'price' => (float) $item->price,
                         'stock' => $item->stock ?? 999,
+                        'image' => $item->image,
+                        'solution' => [
+                            'id' => $item->solution?->id,
+                            'name' => $item->solution?->name ?? 'Solution'
+                        ],
                         'category' => 'product'
                     ];
                 });

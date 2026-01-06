@@ -2001,5 +2001,321 @@
       }
     }
   </style>
+
+  <script>
+    let cachedProducts = [];
+    let cart = [];
+    const POLL_INTERVAL = 5000; // Poll every 5 seconds
+
+    // Load cart from localStorage
+    function loadCart() {
+      const savedCart = localStorage.getItem('artsci_cart');
+      if (savedCart) {
+        try {
+          cart = JSON.parse(savedCart);
+        } catch (e) {
+          cart = [];
+        }
+      }
+    }
+
+    // Save cart to localStorage
+    function saveCart() {
+      localStorage.setItem('artsci_cart', JSON.stringify(cart));
+      updateCartCount();
+    }
+
+    // Update cart count badge
+    function updateCartCount() {
+      const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const countBadge = document.querySelector('.cart-count');
+      if (countBadge) {
+        countBadge.textContent = cartCount;
+        countBadge.style.display = cartCount > 0 ? 'flex' : 'none';
+      }
+    }
+
+    // Load products from admin database on page load
+    async function loadProducts() {
+      try {
+        const response = await fetch('/api/pos/products');
+        const products = await response.json();
+
+        // Check if products have changed
+        const productsChanged = JSON.stringify(products) !== JSON.stringify(cachedProducts);
+        
+        if (productsChanged) {
+          cachedProducts = products;
+          updateProductGrids(products);
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    }
+
+    function updateProductGrids(products) {
+      const grids = document.querySelectorAll('.products-grid');
+      grids.forEach((grid, index) => {
+        // Keep the first grid (CCTV) and populate it with all products
+        if (index === 0) {
+          grid.innerHTML = '';
+          if (products.length > 0) {
+            products.forEach(product => {
+              grid.innerHTML += createProductCard(product);
+            });
+          } else {
+            grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No products available. Admin will add products soon.</p></div>';
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Load cart first
+      loadCart();
+
+      // Initial load of products
+      await loadProducts();
+      
+      // Start polling for product updates every 5 seconds
+      setInterval(loadProducts, POLL_INTERVAL);
+    });
+
+    function createProductCard(product) {
+      const productName = product.name.replace(/'/g, "\\'");
+      const productDesc = (product.description || 'Enterprise-grade product').replace(/'/g, "\\'");
+      
+      return `
+        <div class="product-card">
+          <div class="product-image">
+            <img src="${product.image || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(product.name)}'">
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-description">${product.description || 'Enterprise-grade product'}</p>
+            <div class="product-specs">
+              <span>${product.solution?.name || 'Solution'}</span>
+              <span>Stock: ${product.stock}</span>
+            </div>
+            <div class="product-price">₦${parseFloat(product.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            <button class="btn add-to-cart" onclick="addToCart(${product.id}, '${productName}', ${product.price})">
+              <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function addToCart(id, name, price) {
+      // Check if product already in cart
+      const existingItem = cart.find(item => item.id === id);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({
+          id: id,
+          name: name,
+          price: price,
+          quantity: 1
+        });
+      }
+      
+      saveCart();
+      showNotification(`Added "${name}" to cart`);
+      updateCartUI();
+    }
+
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'cart-notification';
+      notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    function updateCartUI() {
+      const cartItems = document.querySelector('.cart-items');
+      if (!cartItems) return;
+
+      if (cart.length === 0) {
+        cartItems.innerHTML = `
+          <div class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <p>Your cart is empty</p>
+          </div>
+        `;
+      } else {
+        cartItems.innerHTML = cart.map(item => `
+          <div class="cart-item">
+            <div class="item-details">
+              <h4>${item.name}</h4>
+              <p>₦${parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            </div>
+            <div class="item-quantity">
+              <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
+              <input type="number" value="${item.quantity}" readonly>
+              <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+            </div>
+            <div class="item-total">₦${(parseFloat(item.price) * item.quantity).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            <button class="remove-item" onclick="removeFromCart(${item.id})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `).join('');
+      }
+      
+      updateCartSummary();
+    }
+
+    function updateQuantity(id, change) {
+      const item = cart.find(item => item.id === id);
+      if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+          removeFromCart(id);
+        } else {
+          saveCart();
+          updateCartUI();
+        }
+      }
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      saveCart();
+      updateCartUI();
+    }
+
+    function updateCartSummary() {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const cartSummary = document.querySelector('.cart-summary');
+      if (!cartSummary) return;
+
+      cartSummary.innerHTML = `
+        <div class="summary-item">
+          <span>Subtotal:</span>
+          <span>₦${subtotal.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+        </div>
+        <div class="summary-item">
+          <span>Items:</span>
+          <span>${cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+          <span>Total:</span>
+          <span>₦${subtotal.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+        </div>
+        <div class="checkout-form">
+          <input type="text" id="userName" placeholder="Your Name" />
+          <input type="email" id="userEmail" placeholder="Your Email" />
+          <input type="text" id="userLocation" placeholder="Delivery Location" />
+          <button class="checkout-btn btn" style="background: var(--primary-blue); color: var(--white);" onclick="checkout()">
+            <i class="fas fa-paper-plane"></i> Send via WhatsApp
+          </button>
+          <button class="clear-cart-btn" onclick="clearCart()">Clear Cart</button>
+        </div>
+      `;
+    }
+
+    function checkout() {
+      if (cart.length === 0) {
+        alert('Your cart is empty');
+        return;
+      }
+
+      const name = document.getElementById('userName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const location = document.getElementById('userLocation').value.trim();
+
+      if (!name || !email || !location) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      let orderSummary = `*ARTSCI Security Solutions - Order*\n\n`;
+      orderSummary += `*Customer Details:*\n`;
+      orderSummary += `Name: ${name}\n`;
+      orderSummary += `Email: ${email}\n`;
+      orderSummary += `Location: ${location}\n\n`;
+      orderSummary += `*Order Items:*\n`;
+
+      cart.forEach(item => {
+        const itemTotal = parseFloat(item.price) * item.quantity;
+        orderSummary += `• ${item.name}\n  Qty: ${item.quantity} × ₦${parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})} = ₦${itemTotal.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n`;
+      });
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      orderSummary += `\n*Total Amount: ₦${total.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}*\n`;
+      orderSummary += `\nPlease confirm this order.`;
+
+      const whatsappNumber = '2347015862018';
+      const encodedMessage = encodeURIComponent(orderSummary);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+      window.open(whatsappUrl, '_blank');
+
+      setTimeout(() => {
+        cart = [];
+        saveCart();
+        updateCartUI();
+        closeCart();
+        showNotification('Order sent to WhatsApp! We will contact you shortly.');
+      }, 500);
+    }
+
+    function clearCart() {
+      if (confirm('Are you sure you want to clear your cart?')) {
+        cart = [];
+        saveCart();
+        updateCartUI();
+      }
+    }
+
+    // Cart Modal Functions
+    function openCart() {
+      const modal = document.querySelector('.cart-modal');
+      const overlay = document.querySelector('.cart-overlay');
+      if (modal) {
+        modal.classList.add('active');
+        overlay?.classList.add('active');
+        updateCartUI();
+      }
+    }
+
+    function closeCart() {
+      const modal = document.querySelector('.cart-modal');
+      const overlay = document.querySelector('.cart-overlay');
+      if (modal) {
+        modal.classList.remove('active');
+        overlay?.classList.remove('active');
+      }
+    }
+
+    // Event listeners for cart button
+    document.addEventListener('DOMContentLoaded', function() {
+      const cartButton = document.querySelector('.cart-button');
+      const closeBtn = document.querySelector('.close-cart');
+      const overlay = document.querySelector('.cart-overlay');
+
+      if (cartButton) {
+        cartButton.addEventListener('click', openCart);
+      }
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeCart);
+      }
+      if (overlay) {
+        overlay.addEventListener('click', closeCart);
+      }
+    });
+  </script>
 </body>
 </html>

@@ -63,9 +63,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 });
 
 // POS API routes (for barcode scanning and product lookup)
+// GET /products is public (for frontend product display), others require auth
+Route::prefix('api/pos')->group(function () {
+    Route::get('/products', [App\Http\Controllers\PosController::class, 'getProducts']); // Public product listing
+});
+
 Route::middleware('auth')->prefix('api/pos')->group(function () {
     Route::get('/barcode/{barcode}', [App\Http\Controllers\PosController::class, 'lookupBarcode']);
-    Route::get('/products', [App\Http\Controllers\PosController::class, 'getProducts']);
     Route::get('/search/{query}', [App\Http\Controllers\PosController::class, 'searchProducts']);
     Route::post('/complete-sale', [App\Http\Controllers\PosController::class, 'completeSale']);
 });
