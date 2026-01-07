@@ -1318,10 +1318,16 @@
       const productName = product.name.replace(/'/g, "\\'");
       const productDesc = (product.description || 'Enterprise-grade product').replace(/'/g, "\\'");
       
+      // Build image URL - prepend /storage/ if it's a local file path
+      let imageUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80';
+      if (product.image) {
+        imageUrl = product.image.startsWith('http') ? product.image : '/storage/' + product.image;
+      }
+      
       return `
         <div class="product-card">
           <div class="product-image">
-            <img src="${product.image || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(product.name)}'">
+            <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(product.name)}'">
           </div>
           <div class="product-info">
             <h3 class="product-name">${product.name}</h3>
