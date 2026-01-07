@@ -32,9 +32,9 @@ Your Laravel POS system now supports both Docker containerization and Nginx web 
     ┌──────────▴──────────────┐
     │                         │
 ┌───▼─────────┐      ┌───────▼────────┐
-│   MySQL     │      │     Redis      │
+│   Postgres     │      │     Redis      │
 │   Database  │      │     Cache      │
-│   Port 3306 │      │   Port 6379    │
+│   Port 5432 │      │   Port 6379    │
 └─────────────┘      └────────────────┘
 ```
 
@@ -43,7 +43,7 @@ Your Laravel POS system now supports both Docker containerization and Nginx web 
 ### Files Created for Docker
 
 1. **Dockerfile** - Defines PHP-FPM image with all Laravel dependencies
-2. **docker-compose.yml** - Orchestrates 4 services: PHP, Nginx, MySQL, Redis
+2. **docker-compose.yml** - Orchestrates 4 services: PHP, Nginx, Postgres, Redis
 3. **docker/nginx.conf** - Nginx configuration for Docker environment
 4. **.dockerignore** - Files excluded from Docker build
 5. **DOCKER_SETUP.md** - Complete Docker guide with troubleshooting
@@ -59,7 +59,7 @@ cd /home/codecps/Desktop/security/laravel-app
 
 This script:
 - ✅ Builds Docker images
-- ✅ Starts all containers (PHP, Nginx, MySQL, Redis)
+- ✅ Starts all containers (PHP, Nginx, Postgres, Redis)
 - ✅ Runs database migrations
 - ✅ Seeds sample data
 - ✅ Displays service status
@@ -93,7 +93,7 @@ nginx -c /home/codecps/Desktop/security/laravel-app/nginx.conf
 | Feature | Docker | Nginx |
 |---------|--------|-------|
 | **Setup Time** | 5-10 min | 3-5 min |
-| **Database** | Containerized MySQL | Requires local MySQL |
+| **Database** | Containerized Postgres | Requires local Postgres |
 | **Environment** | Isolated containers | Local system |
 | **Portability** | Run anywhere | System-dependent |
 | **Production-Ready** | Yes | Requires additional setup |
@@ -104,7 +104,7 @@ nginx -c /home/codecps/Desktop/security/laravel-app/nginx.conf
 ## Docker Services Included
 
 ### 1. Laravel App (PHP-FPM)
-- Image: Custom Dockerfile (Alpine 8.2-fpm)
+- Image: Custom Dockerfile (Alpine 8.3-fpm)
 - Port: 9000 (internal)
 - Volume: Full project sync
 - Features: Auto-restart, health checks
@@ -115,12 +115,12 @@ nginx -c /home/codecps/Desktop/security/laravel-app/nginx.conf
 - Config: docker/nginx.conf
 - Features: Gzip, caching, security headers
 
-### 3. MySQL Database
-- Image: mysql:8.0
-- Port: 3306
+### 3. Postgres Database
+- Image: postgres:15-alpine
+- Port: 5432
 - Database: laravel_pos
 - User: laravel / password: laravel_password
-- Data: docker/mysql-data/ (persistent)
+- Data: docker/postgres-data/ (persistent)
 
 ### 4. Redis Cache
 - Image: redis:alpine
@@ -155,7 +155,7 @@ docker-compose logs app        # View app logs only
 docker-compose exec app php artisan migrate
 docker-compose exec app php artisan db:seed
 docker-compose exec app php artisan tinker
-docker-compose exec mysql mysql -u laravel -p
+docker-compose exec postgres psql -U laravel -d laravel_pos
 docker-compose exec app bash   # Access container shell
 ```
 
@@ -190,13 +190,13 @@ tail -f /var/log/nginx/laravel_error.log
 
 ### Docker Environment
 ```
-Web Traffic → Nginx Container → PHP-FPM Container → MySQL Container
+Web Traffic → Nginx Container → PHP-FPM Container → Postgres Container
 All isolated, consistent, production-like
 ```
 
 ### Nginx Environment
 ```
-Web Traffic → Nginx (local) → PHP-FPM (local) → MySQL (local/required)
+Web Traffic → Nginx (local) → PHP-FPM (local) → Postgres (local/required)
 Direct on system, minimal overhead
 ```
 
@@ -213,7 +213,7 @@ Direct on system, minimal overhead
 ### Use Nginx When:
 ✅ Quick local development
 ✅ Minimal resource usage needed
-✅ Already have local MySQL/PHP
+✅ Already have local Postgres/PHP
 ✅ Single developer setup
 ✅ Testing Nginx configuration
 

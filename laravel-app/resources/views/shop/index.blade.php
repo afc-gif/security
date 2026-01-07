@@ -13,7 +13,7 @@
                 @foreach($products as $product)
                     <div class="product-card">
                         @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="product-image">
+                            <img src="{{ Storage::disk('public')->url($product->image) }}" alt="{{ $product->name }}" class="product-image">
                         @else
                             <div class="product-image-placeholder">
                                 <i class="fas fa-box"></i>
@@ -26,8 +26,8 @@
                             <p class="product-description">{{ Str::limit($product->description, 50) }}</p>
 
                             <div class="product-footer">
-                                <span class="product-price">₦{{ number_format($product->price, 2) }}</span>
-                                @if($product->stock > 0)
+                                <span class="product-price">₦{{ number_format($product->price ?? 0, 2) }}</span>
+                                @if(($product->stock ?? 0) > 0)
                                     <span class="stock-badge in-stock">In Stock</span>
                                 @else
                                     <span class="stock-badge out-of-stock">Out of Stock</span>
@@ -37,7 +37,7 @@
                             <form method="POST" action="{{ route('shop.addToCart', $product) }}" class="add-to-cart-form">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
-                                @if($product->stock > 0)
+                                @if(($product->stock ?? 0) > 0)
                                     <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
                                 @else
                                     <button type="button" class="btn btn-disabled btn-sm" disabled>Out of Stock</button>

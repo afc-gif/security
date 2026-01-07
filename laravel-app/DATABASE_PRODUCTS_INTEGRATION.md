@@ -11,16 +11,16 @@ The `solutions.html` page now displays products directly from the database. Admi
   - `description`: Product description
   - `price`: Product price
   - `stock`: Available quantity
-  - `image`: Product image URL/path
+  - `image_url`: Product image URL/path
   - `barcode`: Product barcode
   - `solution_id`: Associated solution category
   - `active`: Active/inactive status (only active products are shown)
 
 ### 2. **API Endpoint**
-- **Route**: `GET /api/pos/products`
+- **Route**: `GET /api/menu-items?active_only=1`
 - **Access**: Public (no authentication required)
 - **Returns**: JSON array of all active solution items with full details including images
-- **File**: [app/Http/Controllers/PosController.php](app/Http/Controllers/PosController.php#L59-L82)
+- **File**: [app/Http/Controllers/Api/MenuItemController.php](app/Http/Controllers/Api/MenuItemController.php)
 
 ### 3. **Frontend Implementation**
 - **File**: [solutions.html](../../solutions.html) (or `/laravel-app/public/solutions.html`)
@@ -45,7 +45,7 @@ The `solutions.html` page now displays products directly from the database. Admi
 
 ### 5. **User Flow**
 1. User visits `solutions.html`
-2. Page loads and immediately fetches active products from `/api/pos/products`
+2. Page loads and immediately fetches active products from `/api/menu-items?active_only=1`
 3. Products display with images, descriptions, prices, and stock
 4. Every 5 seconds, page polls for product updates
 5. If admin uploads new products, they appear automatically on the page
@@ -54,17 +54,17 @@ The `solutions.html` page now displays products directly from the database. Admi
 
 ## Key Changes Made
 
-### PosController Updates
-**File**: [app/Http/Controllers/PosController.php](app/Http/Controllers/PosController.php)
+### MenuItemController Updates
+**File**: [app/Http/Controllers/Api/MenuItemController.php](app/Http/Controllers/Api/MenuItemController.php)
 
 ```php
-// getProducts() now returns:
+// index() now returns:
 - id
 - name
 - description
 - price (as float)
 - stock
-- image
+- image_url
 - solution (with id and name)
 - barcode
 - category
@@ -74,9 +74,9 @@ The `solutions.html` page now displays products directly from the database. Admi
 **File**: [routes/web.php](routes/web.php)
 
 ```php
-// Made /api/pos/products public (no auth required)
-Route::prefix('api/pos')->group(function () {
-    Route::get('/products', [PosController::class, 'getProducts']); // Public
+// Made /api/menu-items public (no auth required)
+Route::prefix('api')->group(function () {
+    Route::get('/menu-items', [MenuItemController::class, 'index']); // Public
 });
 
 // Other POS endpoints remain authenticated
@@ -96,7 +96,7 @@ Route::middleware('auth')->prefix('api/pos')->group(function () {
 
 ## Admin Workflow
 1. Admin logs in to `/admin/dashboard`
-2. Admin uploads product with image via `/admin/solutions` or `/admin/solutions/items`
+2. Admin uploads product with image via `/admin/dashboard`
 3. Product marked as `active`
 4. Within 5 seconds, product appears on `solutions.html`
 5. Public users can see and purchase the product
@@ -124,7 +124,7 @@ const whatsappNumber = '2347015862018'; // Update this
     "description": "4-camera HD system with cloud storage",
     "price": 85000.00,
     "stock": 10,
-    "image": "/storage/products/cctv-basic.jpg",
+    "image_url": "https://example.com/storage/solutions/cctv-basic.jpg",
     "barcode": "CCT-001",
     "solution": {
       "id": 1,
@@ -139,7 +139,7 @@ const whatsappNumber = '2347015862018'; // Update this
 
 ### Products Not Showing
 1. Check that admin has created and activated products
-2. Verify `/api/pos/products` endpoint is accessible
+2. Verify `/api/menu-items?active_only=1` endpoint is accessible
 3. Check browser console for fetch errors
 4. Ensure `solution_items` table has data
 

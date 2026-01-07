@@ -166,7 +166,7 @@
         @foreach($solutions as $product)
           <div class="product-card">
             @if($product->image)
-              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="product-image">
+              <img src="{{ Storage::disk('public')->url($product->image) }}" alt="{{ $product->name }}" class="product-image">
             @else
               <div class="product-image" style="display: flex; align-items: center; justify-content: center;">
                 <i class="fas fa-box" style="font-size: 64px; color: var(--gray-light);"></i>
@@ -178,12 +178,12 @@
               <p class="product-description">{{ Str::limit($product->description, 80) }}</p>
               <div class="product-footer">
                 <div>
-                  <div class="product-price">₦{{ number_format($product->price, 2) }}</div>
-                  <div class="product-barcode" style="font-size: 12px; color: #666;">{{ $product->barcode }}</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="font-size: 14px; font-weight: 600; color: var(--primary-blue);">Stock: {{ $product->stock }}</div>
-                </div>
+              <div class="product-price">₦{{ number_format($product->price ?? 0, 2) }}</div>
+              <div class="product-barcode" style="font-size: 12px; color: #666;">{{ $product->barcode }}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--primary-blue);">Stock: {{ $product->stock ?? 'N/A' }}</div>
+            </div>
               </div>
             </div>
           </div>

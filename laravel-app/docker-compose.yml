@@ -20,6 +20,7 @@ services:
     networks:
       - laravel_network
     depends_on:
+      - postgres
       - redis
     restart: unless-stopped
     healthcheck:
@@ -44,7 +45,7 @@ services:
       - laravel_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -62,6 +63,27 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Postgres Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: laravel_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./docker/postgres-data:/var/lib/postgresql/data
+    networks:
+      - laravel_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}"]
       interval: 10s
       timeout: 3s
       retries: 3

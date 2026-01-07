@@ -8,7 +8,7 @@ echo "║      ARTSCI POS System - Docker Shutdown Script               ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
-LARAVEL_PATH="/home/codecps/Desktop/security/laravel-app"
+LARAVEL_PATH="/home/codecps/security/laravel-app"
 cd "$LARAVEL_PATH" || exit 1
 
 echo "🛑 Stopping Docker containers..."

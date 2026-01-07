@@ -28,7 +28,7 @@
                 </div>
                 <div class="info-item">
                     <span class="label">Total Amount:</span>
-                    <span class="value amount">${{ number_format($order->total_amount, 2) }}</span>
+                    <span class="value amount">₦{{ number_format($order->total_amount, 2) }}</span>
                 </div>
             </div>
         </div>
@@ -47,10 +47,10 @@
                 <tbody>
                     @foreach($order->items as $item)
                         <tr>
-                            <td>{{ $item->product->name }}</td>
-                            <td>${{ number_format($item->price, 2) }}</td>
+                            <td>{{ $item->solutionItem->name ?? $item->name }}</td>
+                            <td>₦{{ number_format($item->price, 2) }}</td>
                             <td>{{ $item->quantity }}</td>
-                            <td>${{ number_format($item->price * $item->quantity, 2) }}</td>
+                            <td>₦{{ number_format($item->price * $item->quantity, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

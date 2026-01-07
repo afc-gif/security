@@ -5,6 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
+use App\Http\Controllers\Api\MenuItemController as ApiMenuItemController;
+use App\Http\Controllers\Api\OrderController as ApiOrderController;
+use App\Http\Controllers\Api\UserAdminController as ApiUserAdminController;
 
 // Authentication routes only
 Route::middleware('web')->group(function () {
@@ -12,13 +16,54 @@ Route::middleware('web')->group(function () {
         return view('welcome');
     })->name('home');
     Route::get('/solutions', [ShopController::class, 'solutions'])->name('solutions.index');
-    Route::post('/shop/{product}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
+    Route::post('/shop/{solutionItem}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
+    Route::get('/cart', [ShopController::class, 'cart'])->name('cart.index');
+    Route::delete('/cart/{productId}', [ShopController::class, 'removeFromCart'])->name('cart.remove');
+    Route::post('/checkout', [ShopController::class, 'checkout'])->name('checkout');
+    Route::get('/orders', [ShopController::class, 'orders'])->name('orders.index');
+    Route::get('/orders/{order}', [ShopController::class, 'orderDetails'])->name('orders.show');
 
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+});
+
+Route::prefix('api')->group(function () {
+    Route::get('/health', fn () => ['status' => 'ok']);
+    Route::get('/categories', [ApiCategoryController::class, 'index']);
+    Route::get('/menu-items', [ApiMenuItemController::class, 'index']);
+    Route::get('/menu-items/lookup', [ApiMenuItemController::class, 'lookup']);
+});
+
+Route::middleware(['auth', 'admin'])->prefix('api')->group(function () {
+    Route::post('/categories', [ApiCategoryController::class, 'store']);
+    Route::put('/categories/{category}', [ApiCategoryController::class, 'update']);
+    Route::delete('/categories/{category}', [ApiCategoryController::class, 'destroy']);
+
+    Route::post('/menu-items', [ApiMenuItemController::class, 'store']);
+    Route::put('/menu-items/{menuItem}', [ApiMenuItemController::class, 'update']);
+    Route::post('/menu-items/{menuItem}/toggle-sold-out', [ApiMenuItemController::class, 'toggleSoldOut']);
+    Route::post('/menu-items/{menuItem}/regenerate-barcode', [ApiMenuItemController::class, 'regenerateBarcode']);
+    Route::delete('/menu-items/{menuItem}', [ApiMenuItemController::class, 'destroy']);
+
+    Route::get('/orders/summary', [ApiOrderController::class, 'summary']);
+    Route::get('/orders/export', [ApiOrderController::class, 'export']);
+    Route::post('/orders/purge', [ApiOrderController::class, 'purge']);
+
+    Route::get('/users', [ApiUserAdminController::class, 'index']);
+    Route::put('/users/{user}', [ApiUserAdminController::class, 'update']);
+    Route::delete('/users/{user}', [ApiUserAdminController::class, 'destroy']);
+});
+
+Route::middleware(['auth'])->prefix('api')->group(function () {
+    Route::get('/orders', [ApiOrderController::class, 'index']);
+    Route::get('/orders/{order}', [ApiOrderController::class, 'show']);
+    Route::post('/orders', [ApiOrderController::class, 'store']);
+    Route::post('/orders/{order}/send-to-kitchen', [ApiOrderController::class, 'sendToKitchen']);
+    Route::post('/orders/{order}/kitchen-status', [ApiOrderController::class, 'updateKitchenStatus']);
+    Route::post('/orders/{order}/approve', [ApiOrderController::class, 'approve']);
 });
 
 // Admin routes (admin only) - Dashboard, Products & Barcodes
@@ -87,6 +132,10 @@ Route::middleware('auth')->group(function () {
 // POS System (accessible to authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/pos', function () {
+        $user = auth()->user();
+        if (!$user || !in_array($user->role, ['admin', 'pos'], true)) {
+            abort(403, 'Unauthorized');
+        }
         return view('pos.index');
     })->name('pos.index');
     

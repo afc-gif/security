@@ -45,13 +45,7 @@ echo ""
 if [ ! -f "$LARAVEL_PATH/.env" ]; then
     echo "📝 Creating .env file..."
     cp "$LARAVEL_PATH/.env.example" "$LARAVEL_PATH/.env"
-    
-    # Update database connection for Docker
-    sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' "$LARAVEL_PATH/.env"
-    sed -i 's/DB_HOST=.*/DB_HOST=mysql/' "$LARAVEL_PATH/.env"
-    sed -i 's/DB_PORT=.*/DB_PORT=3306/' "$LARAVEL_PATH/.env"
-    sed -i 's/REDIS_HOST=.*/REDIS_HOST=redis/' "$LARAVEL_PATH/.env"
-    echo "✅ .env file created with Docker database settings"
+    echo "✅ .env file created. Please review database settings before running."
 else
     echo "✅ .env file already exists"
 fi
@@ -76,16 +70,16 @@ sleep 8
 echo ""
 echo "🔍 Checking service health..."
 
-# Wait for MySQL to be ready
-echo "   Waiting for MySQL..."
+# Wait for Postgres to be ready
+echo "   Waiting for Postgres..."
 for i in {1..30}; do
-    docker-compose exec -T mysql mysqladmin ping -h localhost &> /dev/null
+    docker-compose exec -T postgres pg_isready -U "${DB_USERNAME:-postgres}" &> /dev/null
     if [ $? -eq 0 ]; then
-        echo "   ✅ MySQL is ready"
+        echo "   ✅ Postgres is ready"
         break
     fi
     if [ $i -eq 30 ]; then
-        echo "   ⚠️  MySQL may still be starting..."
+        echo "   ⚠️  Postgres may still be starting..."
     fi
     sleep 1
 done
@@ -101,20 +95,13 @@ else
     echo "⚠️  Migrations may have already been run"
 fi
 
-# Seed database if tables are empty
+# Ensure storage symlink exists for uploaded images
 echo ""
-echo "🌱 Checking if database needs seeding..."
-USERS_COUNT=$(docker-compose exec -T mysql mysql -u laravel -plaravel_password laravel_pos -e "SELECT COUNT(*) FROM users;" 2>/dev/null | tail -1)
+echo "🖼️  Ensuring storage symlink..."
+docker-compose exec -T app php artisan storage:link --quiet || true
 
-if [ "$USERS_COUNT" -eq 0 ] 2>/dev/null; then
-    echo "   Running database seeder..."
-    docker-compose exec -T app php artisan db:seed --quiet
-    if [ $? -eq 0 ]; then
-        echo "✅ Sample data seeded"
-    fi
-else
-    echo "   Database already has data"
-fi
+echo ""
+echo "🌱 Database seeding skipped (run manually if needed)."
 
 # Generate app key if not set
 if ! grep -q "APP_KEY=base64:" "$LARAVEL_PATH/.env"; then
@@ -148,4 +135,3 @@ echo "   Artisan:       docker-compose exec app php artisan [command]"
 echo ""
 echo "📖 For more info, see DOCKER_SETUP.md"
 echo ""
-

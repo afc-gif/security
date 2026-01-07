@@ -33,10 +33,10 @@
 │                                                                 │
 │  1. Page loads                                                  │
 │  2. loadProducts() called immediately                           │
-│  3. fetch('/api/pos/products') - GET request                   │
+│  3. fetch('/api/menu-items?active_only=1') - GET request       │
 │                                                                 │
 │  4. Polling started:                                            │
-│     Every 5 seconds → fetch('/api/pos/products')               │
+│     Every 5 seconds → fetch('/api/menu-items?active_only=1')   │
 │     Compare new data with cached data                           │
 │     If changed → updateProductGrids()                          │
 └─────────────────────────────────────────────────────────────────┘
@@ -45,14 +45,13 @@
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │     Laravel API Endpoint                                         │
-│     GET /api/pos/products                                        │
+│     GET /api/menu-items?active_only=1                           │
 │                                                                 │
-│  PosController::getProducts()                                   │
+│  Api\\MenuItemController::index()                               │
 │                                                                 │
 │  - Query SolutionItem::where('active', true)                   │
 │  - Load related solution                                        │
-│  - Select: id, name, description, price, stock, image          │
-│  - Map to JSON response                                         │
+│  - Map to JSON response (includes image_url)                    │
 │  - Return with headers: JSON, CORS enabled                      │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
@@ -68,7 +67,7 @@
 │      "description": "HD surveillance system",                   │
 │      "price": 85000.00,                                         │
 │      "stock": 10,                                               │
-│      "image": "/storage/products/cctv.jpg",                    │
+│      "image_url": "https://.../storage/solutions/cctv.jpg",    │
 │      "solution": {                                              │
 │        "id": 1,                                                 │
 │        "name": "CCTV"                                           │

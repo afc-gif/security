@@ -1,1200 +1,920 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>ARTSCI - Point of Sale</title>
+    <title>POS | ARTSCI</title>
+    <link rel="icon" href="{{ asset('Artsci Logo REAL 1.webp') }}" type="image/webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f4f5f7;
-            --surface: #ffffff;
-            --border: #d6d9de;
-            --text: #0f172a;
-            --muted: #6b7280;
-            --accent: #2563eb;
-            --accent-strong: #1d4ed8;
-            --success: #15803d;
-            --error: #b91c1c;
-            --shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+            --brand-blue: #03A9F4;
+            --brand-blue-strong: #0285C2;
+            --brand-dark: #0A1428;
+            --brand-ink: #0f172a;
+            --brand-soft: #F0F4F9;
+            --brand-border: #E0E6EF;
+            --brand-muted: #8A95A8;
+            --brand-shadow: 0 12px 30px rgba(10,20,40,0.06);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
-            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
-        }
-
-        .pos-container {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 20px;
-            padding: 24px;
-            max-width: 1500px;
-            margin: 0 auto;
-            min-height: 100vh;
-        }
-
-        /* SCANNER */
-        .scanner-section {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--surface);
-            color: var(--text);
-            padding: 14px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            width: 320px;
-            z-index: 100;
-            max-height: 440px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .scanner-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .scanner-header h3 {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .scanner-toggle {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .scanner-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .scanner-input:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: #eef2ff;
-        }
-
-        .scanner-status {
-            display: none;
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .scanner-status.show {
-            display: block;
-        }
-
-        .scanner-status.success {
-            background: #ecfdf3;
-            border: 1px solid #bbf7d0;
-            color: var(--success);
-        }
-
-        .scanner-status.error {
-            background: #fef2f2;
-            border: 1px solid #fecdd3;
-            color: var(--error);
-        }
-
-        .scanner-status.loading {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: var(--accent-strong);
-        }
-
-        .scanner-history {
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px;
-            background: var(--bg);
-        }
-
-        .scanner-item {
-            background: var(--surface);
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 11px;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--accent);
-        }
-
-        .scanner-item-name {
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 2px;
-        }
-
-        .scanner-item-code {
-            color: var(--muted);
-            font-family: monospace;
-        }
-
-        .scanner-actions {
-            display: flex;
-            gap: 8px;
-            font-size: 12px;
-        }
-
-        .scanner-actions button {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .scanner-actions button:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 1400px) {
-            .pos-container {
-                grid-template-columns: 1fr 360px;
-            }
-        }
-
-        @media (max-width: 1100px) {
-            .pos-container {
-                grid-template-columns: 1fr;
-            }
-            .cart-section {
-                position: static;
-                max-height: none;
-            }
-            .scanner-section {
-                position: static;
-                width: 100%;
-                max-height: none;
-                box-shadow: none;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .pos-container {
-                padding: 16px;
-            }
-        }
-
-        /* HEADER */
-        .pos-header {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--surface);
-            color: var(--text);
-            padding: 16px 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-        }
-
-        .pos-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .pos-logo {
-            width: 52px;
-            height: 52px;
-            background: var(--bg);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px;
-            border: 1px solid var(--border);
-        }
-
-        .pos-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .pos-title {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .pos-title h1 {
-            font-size: 24px;
-            font-weight: 700;
             margin: 0;
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+            color: var(--brand-ink);
+            background:
+                radial-gradient(circle at 14% 18%, rgba(3,169,244,0.1), transparent 28%),
+                radial-gradient(circle at 88% 12%, rgba(10,20,40,0.08), transparent 22%),
+                var(--brand-soft);
         }
-
-        .pos-title p {
-            font-size: 12px;
-            color: var(--muted);
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; background: #fff; border-bottom: 1px solid var(--brand-border);
+            position: sticky; top:0; z-index: 10;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.05);
         }
-
-        .pos-clock {
-            font-size: 20px;
-            font-weight: 700;
-            background: var(--bg);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            color: var(--text);
+        main { padding: 18px; display: grid; gap: 14px; max-width: 1200px; margin: 0 auto; }
+        .card { background:#fff; border:1px solid var(--brand-border); border-radius:16px; padding:16px; box-shadow:var(--brand-shadow); }
+        h1 { margin:0; font-size:22px; font-family:'Playfair Display', Georgia, serif; }
+        .brand-title { font-family:'Playfair Display', Georgia, serif; font-size:18px; margin:0; }
+        .brand-tag { color: var(--brand-muted); font-size:13px; margin:2px 0 0; }
+        label { font-size:13px; color:var(--brand-muted); display:block; margin-bottom:6px; }
+        input, select {
+            width:100%; padding:12px; border-radius:12px; border:1px solid var(--brand-border);
+            font: inherit; background:#fff;
         }
-
-        /* LEFT SECTION - PRODUCTS */
-        .products-section {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
+        button {
+            border:none; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer;
+            transition: transform 0.1s ease;
         }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .section-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 12px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px 15px 12px 40px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 14px;
-            background: var(--surface);
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .search-box svg {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            color: var(--muted);
-        }
-
-        .categories {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
-        }
-
-        .category-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            color: var(--text);
-        }
-
-        .category-btn:hover,
-        .category-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
-        }
-
-        .product-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow);
-        }
-
-        .product-card:hover {
-            border-color: var(--accent);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 140px;
-            background: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .product-info {
-            padding: 12px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .product-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-
-        .product-sku {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        .product-price {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--accent-strong);
-            margin-bottom: 8px;
-        }
-
-        .product-stock {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 10px;
-        }
-
-        .product-card button {
-            width: 100%;
-            padding: 10px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        .product-card button:hover {
-            background: var(--accent-strong);
-        }
-
-        /* RIGHT SECTION - CART */
-        .cart-section {
-            position: sticky;
-            top: 24px;
-            display: flex;
-            flex-direction: column;
-            height: fit-content;
-            max-height: calc(100vh - 48px);
-        }
-
-        .cart-header {
-            background: var(--surface);
-            color: var(--text);
-            padding: 14px;
-            border-radius: 12px 12px 0 0;
-            font-weight: 700;
-            font-size: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--border);
-        }
-
-        .cart-badge {
-            background: var(--bg);
-            color: var(--text);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid var(--border);
-        }
-
-        .cart-items {
-            flex-grow: 1;
-            overflow-y: auto;
-            background: var(--surface);
-            padding: 14px;
-            border: 1px solid var(--border);
-            border-top: none;
-        }
-
-        .cart-item {
-            background: var(--surface);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .cart-item-info {
-            flex-grow: 1;
-        }
-
-        .cart-item-name {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .cart-item-sku {
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .cart-item-price {
-            font-weight: 700;
-            color: var(--accent-strong);
-            margin: 6px 0;
-        }
-
-        .cart-item-qty {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .cart-item-qty button {
-            width: 28px;
-            height: 28px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .cart-item-qty input {
-            padding: 6px;
-            border-radius: 6px;
-            width: 50px;
-            text-align: center;
-            border: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        .cart-item-remove {
-            background: none;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        .cart-summary {
-            background: var(--surface);
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .summary-row.total {
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        .summary-row.total .summary-value {
-            color: var(--accent-strong);
-        }
-
-        .summary-value {
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .payment-method {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .payment-btn {
-            border: 1px solid var(--border);
-            background: var(--surface);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--text);
-        }
-
-        .payment-btn.active {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-
-        .checkout-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            margin-top: 14px;
-        }
-
-        .checkout-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .checkout-btn:hover:not(:disabled) {
-            background: var(--accent-strong);
-        }
-
-        .clear-cart-btn {
-            width: 100%;
-            padding: 10px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-            color: var(--muted);
-        }
-
-        /* EMPTY STATE */
-        .cart-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            color: var(--muted);
-            padding: 30px 10px;
-        }
-
-        .cart-empty svg {
-            width: 42px;
-            height: 42px;
-        }
-
-        .cart-empty p {
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        .section-header button {
-            border: 1px solid var(--border);
-            background: var(--surface);
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text);
-        }
+        button:active { transform: translateY(1px); }
+        .btn-primary { background: var(--brand-dark); color:#fff; }
+        .btn-ghost { background:#fff; color:var(--brand-dark); border:1px solid var(--brand-border); }
+        .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .muted { color: var(--brand-muted); font-size:13px; }
+        .status { margin-top:6px; }
+        .list { display:grid; gap:10px; max-height:360px; overflow:auto; }
+        .item { border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff; display:flex; justify-content:space-between; gap:10px; align-items:center; }
+        .pill { border:1px solid var(--brand-border); border-radius:999px; padding:6px 10px; font-size:12px; color:rgba(10,20,40,0.7); display:inline-flex; gap:6px; align-items:center; }
+        table { width:100%; border-collapse: collapse; }
+        th, td { padding:6px 4px; text-align:left; font-size:13px; }
+        th { border-bottom:1px solid var(--brand-border); }
     </style>
 </head>
 <body>
-    <div class="pos-container">
-        <!-- HEADER -->
-        <div class="pos-header">
-            <div class="pos-brand">
-                <div class="pos-logo">
-                    <img src="/Artsci Logo REAL 1.webp" alt="ARTSCI Logo">
-                </div>
-                <div class="pos-title">
-                    <h1>ARTSCI</h1>
-                    <p>Professional POS System</p>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <div class="pos-clock" id="clock">00:00:00</div>
-                <div style="display: flex; gap: 8px;">
-                    <a href="{{ route('admin.dashboard') }}" style="border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px;">Admin</a>
-                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                        @csrf
-                        <button type="submit" style="border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer;">Logout</button>
-                    </form>
-                </div>
+    <header>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI" style="width:42px; height:42px; border-radius:12px; object-fit:contain;">
+            <div>
+                <p class="brand-title">POS · ARTSCI</p>
+                <p class="brand-tag">Signed in as {{ auth()->user()->name ?? 'POS User' }}</p>
             </div>
         </div>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="btn-ghost">Logout</button>
+        </form>
+    </header>
 
-        <!-- LEFT: PRODUCTS -->
-        <div class="products-section">
-            <div class="section-header">
-                <h2>Products</h2>
+    <main>
+        <div class="card">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <div>
+                    <h1 style="margin-bottom:4px;">Quick POS</h1>
+                    <p class="muted" style="margin:0;">Scan, add, and print in under a second.</p>
+                </div>
+                <div style="border:1px solid var(--brand-border); border-radius:12px; padding:10px 12px; background:#fff; min-width:180px; text-align:right;">
+                    <div class="muted" style="font-size:12px;">Cart total</div>
+                    <div style="font-weight:800; color:var(--brand-dark); font-size:20px;" id="posCartTotal">₦0</div>
+                </div>
             </div>
 
-            <!-- Search -->
-            <div class="search-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input type="text" id="searchInput" placeholder="Search products...">
+            <div class="grid">
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <label>Scan / Enter barcode</label>
+                    <input id="posBarcodeInput" placeholder="Focus here and scan">
+                    <div id="posScanStatus" class="muted status">Ready to scan.</div>
+                    <div id="posSuggestions" style="margin-top:6px;"></div>
+                    <div id="posLookupResult" style="margin-top:10px;"></div>
+                    <div id="posKitchenFeed" style="margin-top:10px; display:grid; gap:6px;"></div>
+                    <div id="posSavedCustomers" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+                </div>
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                        <h2 style="margin:0; font-size:18px;">Cart</h2>
+                        <span class="pill">Fast print</span>
+                    </div>
+                    <div id="posCartList" class="list" style="margin-top:8px;"></div>
+                    <div style="margin-top:10px; border-top:1px dashed var(--brand-border); padding-top:10px; display:grid; gap:6px;">
+                        <div style="display:flex; justify-content:space-between;"><span class="muted">Subtotal</span><strong id="posSubtotal">₦0</strong></div>
+                        <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+                            <span class="muted">Discount</span>
+                            <input id="posDiscount" type="number" min="0" step="1" value="0" style="width:120px; padding:8px; border-radius:10px; border:1px solid var(--brand-border);" />
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+                            <span class="muted">Tax / Fee</span>
+                            <input id="posTax" type="number" min="0" step="1" value="0" style="width:120px; padding:8px; border-radius:10px; border:1px solid var(--brand-border);" />
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:700;">
+                            <span>Total</span><span id="posGrandTotal">₦0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Categories -->
-            <div class="categories">
-                <button class="category-btn active" data-category="all">All Products</button>
-                <button class="category-btn" data-category="cctv">CCTV Systems</button>
-                <button class="category-btn" data-category="solar">Solar</button>
-                <button class="category-btn" data-category="power">Power</button>
+            <div class="grid" style="margin-top:12px;">
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <label>Customer name (optional)</label>
+                    <input id="posCustomerName" placeholder="Walk-in">
+                </div>
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <label>Customer phone</label>
+                    <input id="posCustomerPhone" placeholder="080...">
+                </div>
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <label>Payment method</label>
+                    <select id="posPaymentMethod">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="transfer">Transfer</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
+                    <label>Dispatch handoff</label>
+                    <label class="pill" style="margin-top:6px; display:flex; gap:8px; align-items:center; border-radius:12px; padding:8px 10px;">
+                        <input id="posSendKitchen" type="checkbox" checked style="width:16px; height:16px; accent-color: var(--brand-dark);">
+                        <span class="muted" style="color:var(--brand-dark);">Send to dispatch immediately</span>
+                    </label>
+                    <div class="muted" style="margin-top:6px;">Uncheck if you need to confirm first.</div>
+                </div>
             </div>
 
-            <!-- Products Grid -->
-            <div class="products-grid" id="productsGrid">
-                <!-- Products will be inserted here by JavaScript -->
+            <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <button class="btn-primary" id="posCheckoutBtn">Complete Sale & Print Receipt</button>
+                <div class="muted">Saves order with seller info and prints a receipt.</div>
+                <button class="btn-ghost" id="posParkBtn">Park ticket</button>
+            </div>
+
+            <div style="margin-top:12px; border:1px solid var(--brand-border); border-radius:12px; padding:10px; background:#fff;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <strong>Parked tickets</strong>
+                    <small class="muted">Hold & resume orders</small>
+                </div>
+                <div id="posParkedList" class="list" style="margin-top:8px;"></div>
             </div>
         </div>
-
-        <!-- RIGHT: CART & CHECKOUT -->
-        <div class="cart-section">
-            <div class="cart-header">
-                <span>Cart</span>
-                <span class="cart-badge" id="cartCount">0</span>
-            </div>
-
-            <div class="cart-items" id="cartItems">
-                <div class="cart-empty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
-                    <p>No items in cart</p>
-                </div>
-            </div>
-
-            <div class="cart-summary">
-                <div class="summary-row subtotal">
-                    <span>Subtotal:</span>
-                    <span class="summary-value" id="subtotal">₦0.00</span>
-                </div>
-                <div class="summary-row tax">
-                    <span>Tax (7.5%):</span>
-                    <span class="summary-value" id="tax">₦0.00</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total:</span>
-                    <span class="summary-value" id="total">₦0.00</span>
-                </div>
-
-                <div class="payment-method">
-                    <button class="payment-btn active" data-method="cash">Cash</button>
-                    <button class="payment-btn" data-method="card">Card</button>
-                    <button class="payment-btn" data-method="mobile">Mobile</button>
-                </div>
-
-                <button class="checkout-btn" id="checkoutBtn" disabled>Complete Sale</button>
-                <button class="clear-cart-btn" id="clearCartBtn">Clear Cart</button>
-            </div>
-        </div>
-
-        <!-- SCANNER SECTION -->
-        <div class="scanner-section" id="scannerSection">
-            <div class="scanner-header">
-                <h3>Barcode Scanner</h3>
-                <button class="scanner-toggle" id="scannerToggle" title="Toggle scanner">−</button>
-            </div>
-
-            <input 
-                type="text" 
-                class="scanner-input" 
-                id="scannerInput" 
-                placeholder="Scan barcode here..."
-                autocomplete="off"
-            >
-
-            <div class="scanner-status" id="scannerStatus"></div>
-
-            <div class="scanner-history" id="scannerHistory">
-                <div style="text-align: center; color: var(--muted); font-size: 12px; padding: 20px;">
-                    No scans yet
-                </div>
-            </div>
-
-            <div class="scanner-actions">
-                <button id="clearScannerBtn">Clear</button>
-                <button id="toggleScannerDbBtn" title="Toggle between sample data and database">Mode</button>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
-        // Products loaded from database
-        let products = [];
-        let cart = [];
-        let selectedPaymentMethod = "cash";
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
 
-        // Initialize
-        async function init() {
-            await loadProducts();
-            updateClock();
-            setInterval(updateClock, 1000);
-            setupEventListeners();
-            // Auto-focus barcode scanner for immediate scanning
-            document.getElementById("scannerInput").focus();
-        }
+        const posBarcodeInput = document.getElementById('posBarcodeInput');
+        const posLookupResult = document.getElementById('posLookupResult');
+        const posScanStatus = document.getElementById('posScanStatus');
+        const posSuggestions = document.getElementById('posSuggestions');
+        const posCartList = document.getElementById('posCartList');
+        const posCartTotal = document.getElementById('posCartTotal');
+        const posSubtotal = document.getElementById('posSubtotal');
+        const posGrandTotal = document.getElementById('posGrandTotal');
+        const posCustomerName = document.getElementById('posCustomerName');
+        const posCustomerPhone = document.getElementById('posCustomerPhone');
+        const posPaymentMethod = document.getElementById('posPaymentMethod');
+        const posCheckoutBtn = document.getElementById('posCheckoutBtn');
+        const posDiscount = document.getElementById('posDiscount');
+        const posTax = document.getElementById('posTax');
+        const posParkBtn = document.getElementById('posParkBtn');
+        const posParkedList = document.getElementById('posParkedList');
+        const posSavedCustomers = document.getElementById('posSavedCustomers');
+        const posSendKitchen = document.getElementById('posSendKitchen');
+        const posKitchenFeed = document.getElementById('posKitchenFeed');
+        const barcodeCache = {};
+        let menuCacheReady = false;
+        let menuCache = [];
+        let menuCachePromise = null;
 
-        // Load products from database API
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/pos/products', {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                    }
-                });
-                const data = await response.json();
-                products = data || [];
-                renderProducts(products);
-            } catch (error) {
-                console.error('Error loading products:', error);
-                alert('Error loading products from database');
-            }
-        }
+        let posCart = [];
+        let lastLookup = null;
+        let scanDebounce = null;
+        let lookupInFlight = false;
+        let menuPoller = null;
+        let ordersPoller = null;
+        let posOrders = [];
 
-        // Render Products
-        function renderProducts(productsToShow) {
-            const grid = document.getElementById("productsGrid");
-            grid.innerHTML = productsToShow.map(product => `
-                <div class="product-card">
-                    <div class="product-image">Item</div>
-                    <div class="product-info">
-                        <div class="product-name">${product.name || product.product_name}</div>
-                        <div class="product-sku">${product.sku || product.barcode || 'N/A'}</div>
-                        <div class="product-price">₦${Number(product.price || 0).toLocaleString()}</div>
-                        <div class="product-stock">Stock: ${product.stock || 0}</div>
-                        <button onclick="addToCart(${product.id})">Add to Cart</button>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        // Add to Cart
-        function addToCart(productId, productData = null) {
-            const product = products.find(p => p.id === productId) || productData;
-            if (!product) {
-                alert("Product unavailable. Please reload products.");
-                return;
-            }
-            const cartItem = cart.find(item => item.id === productId);
-
-            if (cartItem) {
-                cartItem.quantity++;
-            } else {
-                cart.push({
-                    ...product,
-                    quantity: 1
-                });
-            }
-
-            updateCart();
-        }
-
-        // Remove from Cart
-        function removeFromCart(productId) {
-            cart = cart.filter(item => item.id !== productId);
-            updateCart();
-        }
-
-        // Update Quantity
-        function updateQuantity(productId, quantity) {
-            const numericQty = Math.max(1, parseInt(quantity, 10) || 1);
-            const cartItem = cart.find(item => item.id === productId);
-            if (cartItem) {
-                cartItem.quantity = numericQty;
-                updateCart();
-            }
-        }
-
-        // Update Cart Display
-        function updateCart() {
-            const cartItems = document.getElementById("cartItems");
-            const cartCount = document.getElementById("cartCount");
-            const checkoutBtn = document.getElementById("checkoutBtn");
-
-            if (cart.length === 0) {
-                cartItems.innerHTML = `
-                    <div class="cart-empty">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
-                        <p>No items in cart</p>
-                    </div>
-                `;
-                checkoutBtn.disabled = true;
-            } else {
-                cartItems.innerHTML = cart.map(item => `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <div class="cart-item-name">${item.name || item.product_name || 'Item'}</div>
-                            <div class="cart-item-sku">${item.sku || item.barcode || 'N/A'}</div>
-                            <div class="cart-item-price">₦${Number(item.price || 0).toLocaleString()}</div>
-                            <div class="cart-item-qty">
-                                <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
-                                <input type="number" class="qty-input" value="${item.quantity}" onchange="updateQuantity(${item.id}, this.value)">
-                                <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
-                            </div>
-                        </div>
-                        <button class="cart-item-remove" onclick="removeFromCart(${item.id})">✕</button>
-                    </div>
-                `).join("");
-                checkoutBtn.disabled = false;
-            }
-
-            // Update Summary
-            const subtotal = cart.reduce((sum, item) => {
-                const price = Number(item.price || 0);
-                return sum + (price * item.quantity);
-            }, 0);
-            const taxAmount = subtotal * 0.075;
-            const total = subtotal + taxAmount;
-
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById("cartCount").textContent = totalItems;
-            document.getElementById("subtotal").textContent = "₦" + subtotal.toLocaleString();
-            document.getElementById("tax").textContent = "₦" + taxAmount.toLocaleString();
-            document.getElementById("total").textContent = "₦" + total.toLocaleString();
-        }
-
-        // Update Clock
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, "0");
-            const minutes = String(now.getMinutes()).padStart(2, "0");
-            const seconds = String(now.getSeconds()).padStart(2, "0");
-            document.getElementById("clock").textContent = `${hours}:${minutes}:${seconds}`;
-        }
-
-        // Setup Event Listeners
-        function setupEventListeners() {
-            // Category Filter
-            document.querySelectorAll(".category-btn").forEach(btn => {
-                btn.addEventListener("click", function() {
-                    document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
-                    this.classList.add("active");
-
-                    const category = this.dataset.category;
-                    const filtered = category === "all" ? products : products.filter(p => p.category === category);
-                    renderProducts(filtered);
-                });
+        const apiFetch = (url, options = {}) => {
+            const headers = {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                ...(options.headers || {}),
+            };
+            return fetch(url, {
+                credentials: 'same-origin',
+                cache: options.cache ?? 'no-store',
+                ...options,
+                headers,
             });
-
-            // Search
-            document.getElementById("searchInput").addEventListener("input", function(e) {
-                const query = e.target.value.toLowerCase();
-                const filtered = products.filter(p => 
-                    p.name.toLowerCase().includes(query) || 
-                    p.sku.toLowerCase().includes(query)
-                );
-                renderProducts(filtered);
-            });
-
-            // Payment Methods
-            document.querySelectorAll(".payment-btn").forEach(btn => {
-                btn.addEventListener("click", function() {
-                    document.querySelectorAll(".payment-btn").forEach(b => b.classList.remove("active"));
-                    this.classList.add("active");
-                    selectedPaymentMethod = this.dataset.method;
-                });
-            });
-
-            // Checkout
-            document.getElementById("checkoutBtn").addEventListener("click", async function() {
-                if (cart.length === 0) {
-                    alert("Cart is empty!");
-                    return;
-                }
-
-                const totalText = document.getElementById("total").textContent;
-                // Strip currency symbols/commas so backend receives a numeric total
-                const total = parseFloat(totalText.replace(/[^\d.-]/g, ''));
-                if (Number.isNaN(total)) {
-                    alert("Unable to read total amount. Please try again.");
-                    return;
-                }
-
-                try {
-                    // Send sale data to server
-                    const response = await fetch('/api/pos/complete-sale', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                        },
-                        body: JSON.stringify({
-                            items: cart,
-                            total: total,
-                            payment_method: selectedPaymentMethod
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        // Show receipt
-                        alert(`Sale completed!\nOrder #${result.sale_id}\nTotal: ₦${total.toFixed(2)}\nSold by: ${result.salesperson}\n\nThank you for your purchase!`);
-                        
-                        // Redirect to receipt page
-                        window.location.href = `/pos/receipt/${result.sale_id}`;
-                    } else {
-                        alert(`Error: ${result.error}`);
-                    }
-                } catch (error) {
-                    alert(`Error completing sale: ${error.message}`);
-                    console.error('Sale error:', error);
-                }
-            });
-
-            // Clear Cart
-            document.getElementById("clearCartBtn").addEventListener("click", function() {
-                if (confirm("Are you sure you want to clear the cart?")) {
-                    cart = [];
-                    updateCart();
-                }
-            });
-
-            // Scanner functionality
-            setupScannerListeners();
-        }
-
-        // ==================== SCANNER FUNCTIONALITY ====================
-        let scannerHistory = [];
-        let useDatabaseMode = true;
-        let isScannerMinimized = false;
-
-        // Barcode lookup mapping for sample data (simulating product SKUs as barcodes)
-        const barcodeMap = {
-            "HK-001": 1,      // Hikvision Camera
-            "DVR-001": 2,     // CCTV DVR
-            "SOL-001": 3,     // Solar Panel
-            "BAT-001": 4,     // Battery Bank
-            "INV-001": 5,     // Inverter
-            "CBL-001": 6,     // Cable Reel
-            "SMT-001": 7,     // Smart Thermostat
-            "ACC-001": 8,     // Door Access Control
         };
 
-        function setupScannerListeners() {
-            const scannerInput = document.getElementById("scannerInput");
-            const scannerStatus = document.getElementById("scannerStatus");
-            const clearScannerBtn = document.getElementById("clearScannerBtn");
-            const toggleScannerDbBtn = document.getElementById("toggleScannerDbBtn");
-            const scannerToggle = document.getElementById("scannerToggle");
-
-            // Scanner input - captures barcode
-            scannerInput.addEventListener("keydown", async function(e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    const barcode = this.value.trim();
-
-                    if (!barcode) {
-                        showScannerStatus("Please scan a barcode", "error");
-                        return;
-                    }
-
-                    showScannerStatus("Processing barcode...", "loading");
-
-                    try {
-                        let product = null;
-
-                        if (useDatabaseMode) {
-                            // Fetch from database via API
-                            product = await lookupProductByBarcode(barcode);
-                        } else {
-                            // Use sample data mapping
-                            const productId = barcodeMap[barcode];
-                            product = productId ? products.find(p => p.id === productId) : null;
-                        }
-
-                        if (product) {
-                            addToCart(product.id, product);
-                            addToScannerHistory(product.name, barcode, true);
-                            showScannerStatus(`✓ Added: ${product.name}`, "success");
-                        } else {
-                            addToScannerHistory(`Unknown: ${barcode}`, barcode, false);
-                            showScannerStatus("✗ Product not found", "error");
-                        }
-                    } catch (error) {
-                        addToScannerHistory(`Error scanning: ${barcode}`, barcode, false);
-                        showScannerStatus("✗ Scan error", "error");
-                    }
-
-                    // Clear input for next scan
-                    this.value = "";
-                    this.focus();
+        const safeRequest = async (url, options = {}) => {
+            const res = await apiFetch(url, options);
+            if (!res.ok) {
+                let message = `Request failed (${res.status})`;
+                try {
+                    const data = await res.clone().json();
+                    if (data && data.message) message = data.message;
+                } catch (err) {
+                    const text = await res.text().catch(() => '');
+                    if (text) message = text;
                 }
-            });
+                throw new Error(message);
+            }
+            return res;
+        };
 
-            // Clear scanner history
-            clearScannerBtn.addEventListener("click", function() {
-                scannerHistory = [];
-                document.getElementById("scannerHistory").innerHTML = `
-                    <div style="text-align: center; color: var(--muted); font-size: 12px; padding: 20px;">
-                        No scans yet
+        const createPoller = (task, intervalMs, options = {}) => {
+            const { immediate = true, runWhileHidden = false, onError = null } = options;
+            let timer = null;
+            let running = false;
+
+            const shouldRun = () => {
+                if (runWhileHidden) return true;
+                if (document.visibilityState === 'hidden') return false;
+                return true;
+            };
+
+            const tick = async () => {
+                if (running || !shouldRun()) return;
+                running = true;
+                try {
+                    await task();
+                } catch (err) {
+                    if (onError) onError(err);
+                    else console.warn('Poller task failed', err);
+                } finally {
+                    running = false;
+                }
+            };
+
+            const start = () => {
+                if (timer) return;
+                if (immediate) tick();
+                timer = setInterval(tick, intervalMs);
+            };
+            document.addEventListener('visibilitychange', () => {
+                if (timer && shouldRun()) tick();
+            });
+            return { start };
+        };
+
+        function setPosStatus(message, tone = 'muted') {
+            if (!posScanStatus) return;
+            posScanStatus.textContent = message;
+            posScanStatus.style.color = tone === 'error' ? '#b91c1c' : 'rgba(0,0,0,0.7)';
+        }
+
+        const renderPosOrders = () => {
+            if (!posKitchenFeed) return;
+            const active = posOrders
+                .filter(o => (o.kitchen_status || 'queued') !== 'served')
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 5);
+            if (!active.length) {
+                posKitchenFeed.innerHTML = '<div class="muted" style="font-size:12px;">No dispatch updates yet.</div>';
+                return;
+            }
+            posKitchenFeed.innerHTML = active.map(o => {
+                const eta = o.kitchen_eta_minutes
+                    ? `${o.kitchen_eta_minutes}m`
+                    : (o.kitchen_eta_at ? new Date(o.kitchen_eta_at).toLocaleTimeString() : 'ETA pending');
+                return `
+                    <div style="border:1px solid var(--brand-border); border-radius:10px; padding:8px; background:#fff;">
+                        <div style="display:flex; justify-content:space-between; gap:6px; align-items:center;">
+                            <strong>${o.code || 'Order'}</strong>
+                            <span class="pill">${o.kitchen_status || 'queued'}</span>
+                        </div>
+                        <div class="muted" style="font-size:12px;">ETA: ${eta}</div>
                     </div>
                 `;
+            }).join('');
+        };
+
+        const loadPosOrders = async () => {
+            try {
+                const res = await apiFetch('/api/orders?all=1');
+                if (!res.ok) return;
+                const data = await res.json();
+                posOrders = Array.isArray(data) ? data : (data.data || []);
+                renderPosOrders();
+            } catch (e) {
+                console.warn('Could not load orders', e);
+            }
+        };
+
+        const renderSuggestions = (items) => {
+            if (!posSuggestions) return;
+            if (!items.length) {
+                posSuggestions.innerHTML = '';
+                return;
+            }
+            posSuggestions.innerHTML = items.map(item => `
+                <button class="btn-ghost" data-suggest-id="${item.id}" style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
+                    ${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span>
+                </button>
+            `).join('');
+        };
+
+        const loadMenuCacheFromStorage = () => {
+            try {
+                const cached = JSON.parse(localStorage.getItem('pos_menu_cache') || '[]');
+                if (Array.isArray(cached) && cached.length) {
+                    menuCache = cached;
+                    menuCacheReady = true;
+                    Object.keys(barcodeCache).forEach(k => delete barcodeCache[k]);
+                    cached.forEach(item => {
+                        if (item.barcode) barcodeCache[item.barcode] = item;
+                    });
+                }
+            } catch { /* ignore */ }
+        };
+
+        const findNameMatches = (term) => {
+            if (!term || term.length < 2) return [];
+            const t = term.toLowerCase();
+            const source = menuCache.length ? menuCache : Object.values(barcodeCache);
+            return source.filter(item =>
+                (item.name || '').toLowerCase().includes(t) && item.is_sold_out !== true
+            ).slice(0, 5);
+        };
+
+        const ensureMenuCache = async () => {
+            if (menuCacheReady) return menuCache;
+            if (!menuCachePromise) {
+                menuCachePromise = prefetchMenuCache().catch(() => []);
+            }
+            return menuCachePromise;
+        };
+
+        if (posSuggestions) {
+            posSuggestions.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-suggest-id]');
+                if (!btn) return;
+                const id = Number(btn.getAttribute('data-suggest-id'));
+                const item = menuCache.find(i => i.id === id);
+                if (!item) return;
+                renderSuggestions([]);
+                showLookupResult(item);
+                addToPosCart(item);
+                setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                if (posBarcodeInput) {
+                    posBarcodeInput.value = '';
+                    posBarcodeInput.focus();
+                }
             });
+        }
 
-            // Toggle database mode
-            toggleScannerDbBtn.addEventListener("click", function() {
-                useDatabaseMode = !useDatabaseMode;
-                const mode = useDatabaseMode ? "Database" : "Sample";
-                this.title = `Current: ${mode} Mode`;
-                showScannerStatus(`Switched to ${mode} mode`, "success");
-            });
+        function computePosTotal() {
+            return posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        }
 
-            // Toggle scanner visibility
-            scannerToggle.addEventListener("click", function() {
-                isScannerMinimized = !isScannerMinimized;
-                const scannerHistory = document.getElementById("scannerHistory");
-                const scannerActions = document.querySelector(".scanner-actions");
-                const scannerInput = document.getElementById("scannerInput");
+        function computeGrandTotal() {
+            const subtotal = computePosTotal();
+            const discount = Number(posDiscount ? posDiscount.value : 0) || 0;
+            const tax = Number(posTax ? posTax.value : 0) || 0;
+            return Math.max(0, subtotal - discount + tax);
+        }
 
-                if (isScannerMinimized) {
-                    scannerInput.style.display = "none";
-                    scannerHistory.style.display = "none";
-                    scannerActions.style.display = "none";
-                    this.textContent = "+";
+        function renderTotals() {
+            const subtotal = computePosTotal();
+            const grand = computeGrandTotal();
+            if (posSubtotal) posSubtotal.textContent = '₦' + subtotal.toLocaleString();
+            if (posGrandTotal) posGrandTotal.textContent = '₦' + grand.toLocaleString();
+            if (posCartTotal) posCartTotal.textContent = '₦' + grand.toLocaleString();
+        }
+
+        function renderPosCart() {
+            if (!posCartList || !posCartTotal) return;
+            if (!posCart.length) {
+                posCartList.innerHTML = '<div class="item">Cart is empty.</div>';
+                posCartTotal.textContent = '₦0';
+                if (posSubtotal) posSubtotal.textContent = '₦0';
+                if (posGrandTotal) posGrandTotal.textContent = '₦0';
+                return;
+            }
+            const total = computePosTotal();
+            posCartList.innerHTML = posCart.map((item, index) => {
+                const line = item.price * item.qty;
+                return `
+                    <div class="item">
+                        <div>
+                            <strong>${item.name}</strong>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                                <span class="pill">Barcode: ${item.barcode || 'n/a'}</span>
+                                <span class="pill">₦${Number(item.price).toLocaleString()} × ${item.qty}</span>
+                                <span class="pill">Line: ₦${line.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-ghost" onclick="updatePosQty(${index}, 'dec')">-</button>
+                            <button class="btn-ghost" onclick="updatePosQty(${index}, 'inc')">+</button>
+                            <button class="btn-ghost" onclick="updatePosQty(${index}, 'remove')">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            posCartTotal.textContent = '₦' + total.toLocaleString();
+            renderTotals();
+        }
+
+        function addToPosCart(item) {
+            const existing = posCart.find((i) => i.id === item.id);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                posCart.push({
+                    id: item.id,
+                    name: item.name,
+                    price: Number(item.price) || 0,
+                    barcode: item.barcode,
+                    qty: 1,
+                });
+            }
+            renderPosCart();
+        }
+
+        window.updatePosQty = (index, action) => {
+            const item = posCart[index];
+            if (!item) return;
+            if (action === 'inc') item.qty += 1;
+            if (action === 'dec') item.qty = Math.max(1, item.qty - 1);
+            if (action === 'remove') posCart.splice(index, 1);
+            renderPosCart();
+        };
+
+        function showLookupResult(item) {
+            if (!posLookupResult) return;
+            lastLookup = item;
+            posLookupResult.innerHTML = `
+                <div class="item" style="flex-direction:column; align-items:flex-start;">
+                    <strong>${item.name}</strong>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                        <span class="pill">Price: ₦${Number(item.price).toLocaleString()}</span>
+                        <span class="pill">Barcode: ${item.barcode}</span>
+                        <span class="pill">${item.category && item.category.name ? item.category.name : 'Uncategorized'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showLookupError(message) {
+            if (!posLookupResult) return;
+            lastLookup = null;
+            posLookupResult.innerHTML = `<div class="muted">${message}</div>`;
+        }
+
+        async function prefetchMenuCache() {
+            try {
+                const res = await safeRequest('/api/menu-items');
+                const data = await res.json();
+                menuCache = Array.isArray(data) ? data : [];
+                Object.keys(barcodeCache).forEach(k => delete barcodeCache[k]);
+                menuCache.forEach(item => {
+                    if (item.barcode) barcodeCache[item.barcode] = item;
+                });
+                localStorage.setItem('pos_menu_cache', JSON.stringify(menuCache.slice(0, 200)));
+                menuCacheReady = true;
+                menuCachePromise = null;
+            } catch (e) {
+                console.warn('Menu prefetch failed; will fall back to live lookup.', e);
+            }
+        }
+
+        async function lookupBarcode(barcode, { addToCartOnSuccess = false } = {}) {
+            if (!barcode) return;
+
+            const isName = /^[a-zA-Z\s]+$/.test(barcode);
+
+            if (isName) {
+                await ensureMenuCache();
+                const matches = findNameMatches(barcode);
+                renderSuggestions(matches);
+                if (!matches.length) {
+                    showLookupError('No item matches that name.');
+                    setPosStatus('No match found.', 'error');
+                    return;
+                }
+                const item = matches[0];
+                showLookupResult(item);
+                if (addToCartOnSuccess) {
+                    addToPosCart(item);
+                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                    if (posBarcodeInput) {
+                        posBarcodeInput.value = '';
+                        posSuggestions.innerHTML = '';
+                        posBarcodeInput.focus();
+                    }
                 } else {
-                    scannerInput.style.display = "block";
-                    scannerHistory.style.display = "block";
-                    scannerActions.style.display = "flex";
-                    this.textContent = "−";
+                    setPosStatus('Found. Add to cart or scan next.');
                 }
-            });
-
-            // Focus scanner on load
-            scannerInput.focus();
-        }
-
-        function addToScannerHistory(name, barcode, success) {
-            scannerHistory.unshift({ name, barcode, success, time: new Date() });
-            if (scannerHistory.length > 10) scannerHistory.pop();
-            updateScannerDisplay();
-        }
-
-        function updateScannerDisplay() {
-            const historyDiv = document.getElementById("scannerHistory");
-            if (scannerHistory.length === 0) {
-                historyDiv.innerHTML = `
-                    <div style="text-align: center; color: var(--muted); font-size: 12px; padding: 20px;">
-                        No scans yet
-                    </div>
-                `;
                 return;
             }
 
-            historyDiv.innerHTML = scannerHistory.map((item, idx) => `
-                <div class="scanner-item" style="border-left-color: ${item.success ? '#4CAF50' : '#f44336'};">
-                    <div class="scanner-item-name">${item.success ? '✓' : '✗'} ${item.name}</div>
-                    <div class="scanner-item-code">${item.barcode}</div>
-                </div>
-            `).join("");
-        }
-
-        function showScannerStatus(message, type) {
-            const statusDiv = document.getElementById("scannerStatus");
-            statusDiv.textContent = message;
-            statusDiv.className = `scanner-status show ${type}`;
-            setTimeout(() => {
-                statusDiv.classList.remove("show");
-            }, 3000);
-        }
-
-        async function lookupProductByBarcode(barcode) {
-            try {
-                const url = `/api/pos/barcode/${encodeURIComponent(barcode)}`;
-                console.log('Fetching barcode from:', url);
-                const response = await fetch(url, {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                    }
-                });
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    console.log('Response not OK, returning null');
-                    return null;
+            if (barcodeCache[barcode]) {
+                const item = barcodeCache[barcode];
+                if (item.is_sold_out) {
+                    const msg = 'Item found but currently marked sold out.';
+                    showLookupError(msg);
+                    setPosStatus(msg, 'error');
+                    return;
                 }
-                const data = await response.json();
-                console.log('Fetched product:', data);
-                return data;
-            } catch (error) {
-                console.error("Barcode lookup error:", error);
-                return null;
+                showLookupResult(item);
+                if (addToCartOnSuccess) {
+                    addToPosCart(item);
+                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                    if (posBarcodeInput) {
+                        posBarcodeInput.value = '';
+                        posBarcodeInput.focus();
+                    }
+                } else {
+                    setPosStatus('Found. Price pulled live; add to cart.');
+                }
+                return;
+            }
+
+            if (lookupInFlight) return;
+            lookupInFlight = true;
+            setPosStatus('Looking up barcode...');
+            try {
+                const res = await apiFetch(`/api/menu-items/lookup?barcode=${encodeURIComponent(barcode)}`);
+                if (!res.ok) {
+                    const msg = res.status === 404
+                        ? 'No item found for this barcode.'
+                        : res.status === 409
+                            ? 'Item found but currently marked sold out.'
+                            : 'Could not look up this barcode.';
+                    showLookupError(msg);
+                    setPosStatus(msg, 'error');
+                    return;
+                }
+                const item = await res.json();
+                if (item.barcode) barcodeCache[item.barcode] = item;
+                showLookupResult(item);
+                if (addToCartOnSuccess) {
+                    addToPosCart(item);
+                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                    if (posBarcodeInput) {
+                        posBarcodeInput.value = '';
+                        posBarcodeInput.focus();
+                    }
+                } else {
+                    setPosStatus('Found. Price pulled live; add to cart.');
+                }
+            } catch (e) {
+                showLookupError('Lookup failed. Check connection.');
+                setPosStatus('Lookup failed.', 'error');
+            } finally {
+                lookupInFlight = false;
+                if (posBarcodeInput) posBarcodeInput.select();
             }
         }
 
-        // Start
-        init();
+        if (posBarcodeInput) posBarcodeInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const code = e.target.value.trim();
+                if (!code) return;
+                await lookupBarcode(code, { addToCartOnSuccess: true });
+            }
+        });
+
+        if (posBarcodeInput) posBarcodeInput.addEventListener('input', async (e) => {
+            const code = e.target.value.trim();
+            clearTimeout(scanDebounce);
+            if (!code) {
+                setPosStatus('Ready to scan.');
+                renderSuggestions([]);
+                return;
+            }
+            const isName = /^[a-zA-Z\s]+$/.test(code);
+            if (isName) {
+                await ensureMenuCache();
+                const matches = findNameMatches(code);
+                renderSuggestions(matches);
+                setPosStatus(matches.length ? 'Select an item or press Enter to add.' : 'No match found.');
+                return;
+            }
+            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: true }), 10);
+        });
+
+        if (posCheckoutBtn) posCheckoutBtn.addEventListener('click', async () => {
+            if (!posCart.length) {
+                alert('Cart is empty. Scan an item first.');
+                return;
+            }
+            const payload = {
+                channel: 'pos',
+                customer_name: posCustomerName ? posCustomerName.value : null,
+                customer_phone: posCustomerPhone ? posCustomerPhone.value : null,
+                items: posCart.map(item => ({
+                    menu_item_id: item.id,
+                    quantity: item.qty,
+                    price: item.price,
+                })),
+                payment: {
+                    amount: computeGrandTotal(),
+                    method: posPaymentMethod ? posPaymentMethod.value : 'cash',
+                    reference: `POS-${Date.now()}`,
+                },
+                discount: Number(posDiscount ? posDiscount.value : 0) || 0,
+                tax: Number(posTax ? posTax.value : 0) || 0,
+                send_to_kitchen: posSendKitchen ? posSendKitchen.checked : true,
+            };
+
+            const resetBtn = () => {
+                if (!posCheckoutBtn) return;
+                posCheckoutBtn.disabled = false;
+                posCheckoutBtn.textContent = 'Complete Sale & Print Receipt';
+            };
+
+            try {
+                if (posCheckoutBtn) {
+                    posCheckoutBtn.disabled = true;
+                    posCheckoutBtn.textContent = 'Saving...';
+                }
+                const res = await safeRequest('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const order = await res.json();
+                alert(`Sale recorded. Order code: ${order.code || 'pending'}.`);
+                openPosReceipt(order);
+                posCart = [];
+                renderPosCart();
+                saveRecentCustomer(payload.customer_name, payload.customer_phone);
+                if (posBarcodeInput) {
+                    posBarcodeInput.value = '';
+                    posBarcodeInput.focus();
+                }
+            } catch (e) {
+                alert(e.message || 'Could not save sale.');
+            } finally {
+                resetBtn();
+            }
+        });
+
+        if (posDiscount) posDiscount.addEventListener('input', renderTotals);
+        if (posTax) posTax.addEventListener('input', renderTotals);
+
+        const loadSavedCustomers = () => {
+            try {
+                const data = JSON.parse(localStorage.getItem('pos_saved_customers') || '[]');
+                return Array.isArray(data) ? data.slice(0, 6) : [];
+            } catch { return []; }
+        };
+        const persistSavedCustomers = (list) => {
+            localStorage.setItem('pos_saved_customers', JSON.stringify(list.slice(0, 6)));
+        };
+        const saveRecentCustomer = (name, phone) => {
+            if (!name && !phone) return;
+            const list = loadSavedCustomers();
+            const existingIndex = list.findIndex(c => c.name === name && c.phone === phone);
+            if (existingIndex >= 0) list.splice(existingIndex, 1);
+            list.unshift({ name: name || 'Walk-in', phone: phone || '' });
+            persistSavedCustomers(list);
+            renderSavedCustomers();
+        };
+        const renderSavedCustomers = () => {
+            if (!posSavedCustomers) return;
+            const list = loadSavedCustomers();
+            if (!list.length) {
+                posSavedCustomers.innerHTML = '';
+                return;
+            }
+            posSavedCustomers.innerHTML = list.map(c => `
+                <button class="btn-ghost" data-fill-name="${c.name || ''}" data-fill-phone="${c.phone || ''}" style="font-size:12px; padding:6px 10px; border-radius:999px;">
+                    ${c.name || 'Walk-in'}${c.phone ? ' · ' + c.phone : ''}
+                </button>
+            `).join('');
+        };
+        if (posSavedCustomers) posSavedCustomers.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-fill-name]');
+            if (!btn) return;
+            if (posCustomerName) posCustomerName.value = btn.getAttribute('data-fill-name') || '';
+            if (posCustomerPhone) posCustomerPhone.value = btn.getAttribute('data-fill-phone') || '';
+        });
+
+        const loadParkedTickets = () => {
+            try {
+                const data = JSON.parse(localStorage.getItem('pos_parked_tickets') || '[]');
+                return Array.isArray(data) ? data : [];
+            } catch { return []; }
+        };
+        const persistParkedTickets = (list) => {
+            localStorage.setItem('pos_parked_tickets', JSON.stringify(list.slice(0, 10)));
+        };
+        const renderParkedTickets = () => {
+            if (!posParkedList) return;
+            const list = loadParkedTickets();
+            if (!list.length) {
+                posParkedList.innerHTML = '<div class="item">No parked tickets.</div>';
+                return;
+            }
+            posParkedList.innerHTML = list.map((t, idx) => `
+                <div class="item" style="align-items:center;">
+                    <div>
+                        <strong>${t.name || 'Walk-in'}</strong>
+                        <div class="muted" style="font-size:12px;">${new Date(t.created_at).toLocaleTimeString()}</div>
+                        <div class="muted" style="font-size:12px;">Items: ${t.cart.length}</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-ghost" data-resume="${idx}">Resume</button>
+                        <button class="btn-ghost" data-drop="${idx}">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+        const parkCurrentTicket = () => {
+            if (!posCart.length) {
+                alert('Nothing to park.');
+                return;
+            }
+            const list = loadParkedTickets();
+            list.unshift({
+                created_at: Date.now(),
+                cart: posCart.map(i => ({ ...i })),
+                name: posCustomerName ? posCustomerName.value : '',
+                phone: posCustomerPhone ? posCustomerPhone.value : '',
+                method: posPaymentMethod ? posPaymentMethod.value : 'cash',
+                discount: Number(posDiscount ? posDiscount.value : 0) || 0,
+                tax: Number(posTax ? posTax.value : 0) || 0,
+            });
+            persistParkedTickets(list);
+            posCart = [];
+            renderPosCart();
+            if (posBarcodeInput) posBarcodeInput.value = '';
+            renderParkedTickets();
+        };
+        if (posParkBtn) posParkBtn.addEventListener('click', parkCurrentTicket);
+        if (posParkedList) posParkedList.addEventListener('click', (e) => {
+            const resume = e.target.closest('[data-resume]');
+            const drop = e.target.closest('[data-drop]');
+            const list = loadParkedTickets();
+            if (resume) {
+                const idx = Number(resume.getAttribute('data-resume'));
+                const ticket = list[idx];
+                if (ticket) {
+                    posCart = ticket.cart || [];
+                    if (posCustomerName) posCustomerName.value = ticket.name || '';
+                    if (posCustomerPhone) posCustomerPhone.value = ticket.phone || '';
+                    if (posPaymentMethod) posPaymentMethod.value = ticket.method || 'cash';
+                    if (posDiscount) posDiscount.value = ticket.discount || 0;
+                    if (posTax) posTax.value = ticket.tax || 0;
+                    renderPosCart();
+                    renderTotals();
+                    if (posBarcodeInput) posBarcodeInput.focus();
+                }
+            }
+            if (drop) {
+                const idx = Number(drop.getAttribute('data-drop'));
+                if (!Number.isNaN(idx)) {
+                    list.splice(idx, 1);
+                    persistParkedTickets(list);
+                    renderParkedTickets();
+                }
+            }
+        });
+
+        function openPosReceipt(order) {
+            try {
+                const receiptWindow = window.open('', 'pos-receipt');
+                if (!receiptWindow) return;
+                const itemsHtml = (order.items || []).map(item => `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td style="text-align:center;">${item.quantity}</td>
+                        <td style="text-align:right;">₦${Number(item.unit_price || item.price || 0).toLocaleString()}</td>
+                        <td style="text-align:right;">₦${Number(item.total || item.unit_price * item.quantity || 0).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+                receiptWindow.document.write(`
+                    <html>
+                        <head><title>Receipt ${order.code || ''}</title></head>
+                        <body style="font-family: Arial, sans-serif; padding:16px;">
+                            <h2 style="margin:0 0 8px;">ARTSCI Security</h2>
+                            <div style="margin-bottom:10px;">Order Code: <strong>${order.code || ''}</strong></div>
+                            <table style="width:100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; border-bottom:1px solid #ddd;">Item</th>
+                                        <th style="text-align:center; border-bottom:1px solid #ddd;">Qty</th>
+                                        <th style="text-align:right; border-bottom:1px solid #ddd;">Price</th>
+                                        <th style="text-align:right; border-bottom:1px solid #ddd;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                    <tr>
+                                        <td colspan="3" style="text-align:right; border-top:1px solid #ddd;">Total</td>
+                                        <td style="text-align:right; border-top:1px solid #ddd;">₦${Number(order.total || 0).toLocaleString()}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;">Sold by: {{ auth()->user()->name ?? 'POS user' }}</p>
+                            <script>window.onload = function(){ window.print(); };<\/script>
+                        </body>
+                    </html>
+                `);
+                receiptWindow.document.close();
+            } catch (e) {
+                console.error('Could not open receipt', e);
+            }
+        }
+
+        renderPosCart();
+        renderSavedCustomers();
+        renderParkedTickets();
+        loadMenuCacheFromStorage();
+        if (posBarcodeInput) posBarcodeInput.focus();
+        prefetchMenuCache().catch(() => {});
+        menuPoller = createPoller(prefetchMenuCache, 20000, {
+            onError: (err) => console.warn('Menu refresh failed', err),
+        });
+        menuPoller.start();
+        ordersPoller = createPoller(loadPosOrders, 5000, {
+            onError: (err) => console.warn('Orders refresh failed', err),
+        });
+        ordersPoller.start();
+
+        if (posSuggestions) {
+            posSuggestions.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-suggest-id]');
+                if (!btn) return;
+                const id = Number(btn.getAttribute('data-suggest-id'));
+                const item = menuCache.find(i => i.id === id);
+                if (!item) return;
+                addToPosCart(item);
+                renderSuggestions([]);
+                if (posBarcodeInput) {
+                    posBarcodeInput.value = '';
+                    posBarcodeInput.focus();
+                }
+                setPosStatus(`Added ${item.name}. Ready for next scan.`);
+            });
+        }
+
+        const showPosToast = (message, duration = 4000) => {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: #0A1428;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 100;
+                font-size: 14px;
+                font-weight: 600;
+                animation: slideInUp 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOutDown 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+
+        if (!document.querySelector('style[data-toast-animations]')) {
+            const style = document.createElement('style');
+            style.setAttribute('data-toast-animations', 'true');
+            style.textContent = `
+                @keyframes slideInUp {
+                    from { transform: translateY(100px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes slideOutDown {
+                    from { transform: translateY(0); opacity: 1; }
+                    to { transform: translateY(100px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        window.addEventListener('order:eta-assigned', (event) => {
+            const data = event.detail;
+            if (!data) return;
+            const order = posOrders.find(o => o.id === data.id);
+            if (order) {
+                const eta = data.kitchen_eta_minutes ? `${data.kitchen_eta_minutes}m` : 'ETA set';
+                showPosToast(`Order ${data.code}: ${eta}`);
+            }
+        });
     </script>
 </body>
 </html>

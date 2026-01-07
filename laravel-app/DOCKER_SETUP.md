@@ -4,7 +4,7 @@ This guide covers setting up and running your Laravel POS application using Dock
 
 ## What is Docker?
 
-Docker is containerization technology that packages your entire application (Laravel, Nginx, PHP, MySQL, Redis) into isolated containers. This ensures consistent environments across development, testing, and production.
+Docker is containerization technology that packages your entire application (Laravel, Nginx, PHP, Postgres, Redis) into isolated containers. This ensures consistent environments across development, testing, and production.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ docker-compose up -d
 **What this does:**
 - Builds a PHP-FPM image with Laravel
 - Starts Nginx web server (port 8000)
-- Starts MySQL database (port 3306)
+- Starts Postgres database (port 5432)
 - Starts Redis cache server (port 6379)
 
 ### 2. Initialize Database
@@ -61,10 +61,10 @@ Visit: **http://localhost:8000**
 - **Image:** nginx:alpine
 - **Purpose:** Serves requests to the Laravel app
 
-### 3. MySQL Database
-- **Container:** laravel_mysql
-- **Port:** 3306 (accessible)
-- **Image:** mysql:8.0
+### 3. Postgres Database
+- **Container:** laravel_postgres
+- **Port:** 5432 (accessible)
+- **Image:** postgres:15-alpine
 - **Credentials:**
   - Database: laravel_pos
   - User: laravel
@@ -94,7 +94,7 @@ docker-compose logs
 # Specific container
 docker-compose logs app
 docker-compose logs nginx
-docker-compose logs mysql
+docker-compose logs postgres
 
 # Follow logs in real-time
 docker-compose logs -f app
@@ -108,8 +108,8 @@ docker-compose exec app php artisan tinker
 docker-compose exec app php artisan cache:clear
 docker-compose exec app php artisan config:clear
 
-# Access MySQL CLI
-docker-compose exec mysql mysql -u laravel -p laravel_pos
+# Access Postgres CLI
+docker-compose exec postgres psql -U laravel -d laravel_pos
 
 # Access Laravel shell
 docker-compose exec app bash
@@ -157,7 +157,7 @@ laravel-app/
 ├── .dockerignore           # Files to exclude from Docker
 ├── docker/
 │   ├── nginx.conf          # Nginx configuration
-│   ├── mysql-data/         # MySQL database files
+│   ├── postgres-data/         # Postgres database files
 │   ├── redis-data/         # Redis data files
 │   └── nginx-logs/         # Nginx logs
 ├── app/                    # Laravel application code
@@ -172,7 +172,7 @@ The Docker services use these environment variables (in docker-compose.yml):
 
 ```yaml
 Database:
-  DB_HOST=mysql
+  DB_HOST=postgres
   DB_DATABASE=laravel_pos
   DB_USERNAME=laravel
   DB_PASSWORD=laravel_password
@@ -203,12 +203,12 @@ ports:
 
 Then restart: `docker-compose restart nginx`
 
-### Issue: "MySQL connection refused"
+### Issue: "Postgres connection refused"
 
-**Solution:** MySQL container may still be starting. Wait and try again:
+**Solution:** Postgres container may still be starting. Wait and try again:
 ```bash
-docker-compose logs mysql
-docker-compose restart mysql
+docker-compose logs postgres
+docker-compose restart postgres
 ```
 
 ### Issue: "Permission denied in storage directory"
@@ -248,13 +248,13 @@ docker-compose exec app php-fpm -v
 ### Via Docker Container
 
 ```bash
-docker-compose exec mysql mysql -u laravel -p laravel_pos
+docker-compose exec postgres psql -U laravel -d laravel_pos
 ```
 
-### Via Local MySQL Client
+### Via Local Postgres Client
 
 ```bash
-mysql -h 127.0.0.1 -u laravel -p laravel_pos
+psql -h 127.0.0.1 -U laravel -d laravel_pos
 ```
 
 Enter password: `laravel_password`
@@ -262,13 +262,13 @@ Enter password: `laravel_password`
 ### Backup Database
 
 ```bash
-docker-compose exec mysql mysqldump -u laravel -p laravel_pos > backup.sql
+docker-compose exec postgres pg_dump -U laravel -d laravel_pos > backup.sql
 ```
 
 ### Restore Database
 
 ```bash
-docker-compose exec -T mysql mysql -u laravel -p laravel_pos < backup.sql
+docker-compose exec -T postgres psql -U laravel -d laravel_pos < backup.sql
 ```
 
 ## Advanced Configuration

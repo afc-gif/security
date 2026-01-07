@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SolutionItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\SolutionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,22 +12,28 @@ class ShopController extends Controller
 {
     public function index()
     {
-        $products = SolutionItem::where('active', true)->paginate(12);
+        $products = SolutionItem::where('active', true)
+            ->where('is_sold_out', false)
+            ->with('solution')
+            ->paginate(12);
         return view('shop.index', compact('products'));
     }
 
     public function solutions()
     {
-        $solutions = SolutionItem::where('active', true)->with('solution')->get();
+        $solutions = SolutionItem::where('active', true)
+            ->where('is_sold_out', false)
+            ->with('solution')
+            ->get();
         return view('shop.solutions', compact('solutions'));
     }
 
-    public function show(Product $product)
+    public function show(SolutionItem $product)
     {
         return view('shop.show', compact('product'));
     }
 
-    public function addToCart(Request $request, Product $product)
+    public function addToCart(Request $request, SolutionItem $product)
     {
         $quantity = $request->input('quantity', 1);
 
@@ -97,15 +103,18 @@ class ShopController extends Controller
         foreach ($cart as $item) {
             OrderItem::create([
                 'order_id' => $order->id,
-                'product_id' => $item['id'],
+                'solution_item_id' => $item['id'],
+                'name' => $item['name'],
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
             ]);
 
             // Decrease stock
-            $product = Product::find($item['id']);
-            $product->stock -= $item['quantity'];
-            $product->save();
+            $solutionItem = SolutionItem::find($item['id']);
+            if ($solutionItem && $solutionItem->stock !== null) {
+                $solutionItem->stock = max(0, (int) $solutionItem->stock - (int) $item['quantity']);
+                $solutionItem->save();
+            }
         }
 
         session()->forget('cart');
@@ -119,7 +128,7 @@ class ShopController extends Controller
             return redirect('/login');
         }
 
-        $orders = Auth::user()->orders()->with('items')->latest()->paginate(10);
+        $orders = Auth::user()->orders()->with('items.solutionItem')->latest()->paginate(10);
         return view('shop.orders', compact('orders'));
     }
 
@@ -129,7 +138,7 @@ class ShopController extends Controller
             abort(403);
         }
 
-        $order->load('items.product');
+        $order->load('items.solutionItem');
         return view('shop.order-details', compact('order'));
     }
 }

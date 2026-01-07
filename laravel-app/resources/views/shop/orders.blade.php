@@ -30,7 +30,7 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Total</span>
-                                <span class="detail-value">${{ number_format($order->total_amount, 2) }}</span>
+                                <span class="detail-value">₦{{ number_format($order->total_amount, 2) }}</span>
                             </div>
                         </div>
 

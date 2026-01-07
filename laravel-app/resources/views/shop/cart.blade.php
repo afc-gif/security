@@ -14,7 +14,7 @@
                         <div class="cart-item">
                             <div class="item-image">
                                 @if($item['image'])
-                                    <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                                    <img src="{{ Storage::disk('public')->url($item['image']) }}" alt="{{ $item['name'] }}">
                                 @else
                                     <div class="placeholder"><i class="fas fa-box"></i></div>
                                 @endif
@@ -22,7 +22,7 @@
 
                             <div class="item-details">
                                 <h3>{{ $item['name'] }}</h3>
-                                <p class="item-price">${{ number_format($item['price'], 2) }}</p>
+                                <p class="item-price">₦{{ number_format($item['price'], 2) }}</p>
                             </div>
 
                             <div class="item-quantity">
@@ -30,7 +30,7 @@
                             </div>
 
                             <div class="item-total">
-                                <strong>${{ number_format($item['price'] * $item['quantity'], 2) }}</strong>
+                                <strong>₦{{ number_format($item['price'] * $item['quantity'], 2) }}</strong>
                             </div>
 
                             <form action="{{ route('cart.remove', $item['id']) }}" method="POST" class="item-remove">
@@ -48,7 +48,7 @@
                     <h2>Order Summary</h2>
                     <div class="summary-line">
                         <span>Subtotal</span>
-                        <strong>${{ number_format($total, 2) }}</strong>
+                        <strong>₦{{ number_format($total, 2) }}</strong>
                     </div>
                     <div class="summary-line">
                         <span>Shipping</span>
@@ -56,7 +56,7 @@
                     </div>
                     <div class="summary-line total">
                         <span>Total</span>
-                        <strong>${{ number_format($total, 2) }}</strong>
+                        <strong>₦{{ number_format($total, 2) }}</strong>
                     </div>
 
                     <form action="{{ route('checkout') }}" method="POST" class="checkout-form">
