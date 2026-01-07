@@ -15,6 +15,14 @@ yarn-error.log
 storage/debugbar/
 .env.testing
 docker/mysql-data/
+docker/postgres-data/
 docker/redis-data/
 docker/nginx-logs/
 vendor
+.dockerignore
+.railwayignore
+.phpunit.result.cache
+docker-start.sh
+docker-stop.sh
+docker-compose.yml
+.env
