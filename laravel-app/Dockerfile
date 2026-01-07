@@ -2,7 +2,7 @@
 FROM php:8.3-fpm-alpine AS builder
 
 WORKDIR /var/www/html
-ARG APP_DIR=.
+ARG APP_DIR=laravel-app
 
 # Install system dependencies
 RUN apk add --no-cache \
