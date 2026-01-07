@@ -71,6 +71,11 @@
       border-radius: 2px;
     }
 
+    #category-nav {
+      display: flex;
+      gap: 8px;
+    }
+
     .solution-nav-item {
       padding: 12px 20px;
       white-space: nowrap;
@@ -114,6 +119,33 @@
       font-size: 16px;
       color: var(--gray-medium);
       max-width: 700px;
+    }
+
+    .category-section {
+      margin-bottom: 80px;
+      scroll-margin-top: 180px;
+    }
+
+    .category-header {
+      padding: 40px 0 30px;
+      border-bottom: 3px solid var(--primary-blue);
+      margin-bottom: 40px;
+    }
+
+    .category-header h2 {
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .category-header p {
+      font-size: 14px;
+      color: var(--gray-medium);
+      font-weight: 500;
     }
 
     .products-grid {
@@ -499,22 +531,21 @@
   <!-- Solutions Navigation -->
   <nav class="solution-nav">
     <div class="solution-nav-menu">
-      <a href="#products" class="solution-nav-item active">All Products</a>
+      <a href="#all-products" class="solution-nav-item active">All Products</a>
+      <div id="category-nav"></div>
     </div>
   </nav>
 
-  <!-- Products Section - Loaded from Database -->
-  <section class="solution-section" id="products">
+  <!-- Products Section - Loaded from Database by Category -->
+  <section class="solution-section" id="all-products">
     <div class="solution-section-header">
       <div class="container">
         <h2>📦 Our Products</h2>
         <p>All products are loaded from our database in real-time. Check back frequently for new items!</p>
       </div>
     </div>
-    <div class="container">
-      <div class="products-grid">
-        <!-- Products loaded dynamically from database -->
-      </div>
+    <div id="products-by-category" class="container">
+      <!-- Categories and products loaded dynamically -->
     </div>
   </section>
 
@@ -1336,223 +1367,6 @@
   <!-- Cart Modal Overlay -->
   <div class="cart-overlay" id="cartOverlay"></div>
 
-  <script>
-    // ============================================
-    // Shopping Cart System
-    // ============================================
-
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-    const cartButton = document.getElementById('cartButton');
-    const cartModal = document.getElementById('cartModal');
-    const cartOverlay = document.getElementById('cartOverlay');
-    const closeCart = document.getElementById('closeCart');
-    const cartItems = document.getElementById('cartItems');
-    const cartSummary = document.getElementById('cartSummary');
-    const cartCount = document.getElementById('cartCount');
-    const subtotalEl = document.getElementById('subtotal');
-    const totalEl = document.getElementById('total');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    const clearCartBtn = document.getElementById('clearCartBtn');
-
-    // Add to cart functionality
-    const addToCartButtons = document.querySelectorAll('.add-to-cart');
-    addToCartButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const card = this.closest('.product-card');
-        const name = card.querySelector('.product-name').textContent;
-        const priceText = card.querySelector('.product-price').textContent;
-        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
-
-        const existingItem = cart.find(item => item.name === name);
-        if (existingItem) {
-          existingItem.quantity++;
-        } else {
-          cart.push({ name, price, quantity: 1 });
-        }
-
-        saveCart();
-        updateCartUI();
-        showNotification(`${name} added to cart!`);
-      });
-    });
-
-    // Cart button click
-    cartButton.addEventListener('click', () => {
-      cartModal.classList.add('active');
-      cartOverlay.classList.add('active');
-    });
-
-    // Close cart
-    closeCart.addEventListener('click', () => {
-      closeCartModal();
-    });
-
-    cartOverlay.addEventListener('click', () => {
-      closeCartModal();
-    });
-
-    function closeCartModal() {
-      cartModal.classList.remove('active');
-      cartOverlay.classList.remove('active');
-    }
-
-    // Clear cart
-    clearCartBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to clear the cart?')) {
-        cart = [];
-        saveCart();
-        updateCartUI();
-      }
-    });
-
-    // Save cart to localStorage
-    function saveCart() {
-      localStorage.setItem('cart', JSON.stringify(cart));
-    }
-
-    // Update cart UI
-    function updateCartUI() {
-      cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-      if (cart.length === 0) {
-        cartItems.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-bag"></i><p>Your cart is empty</p></div>';
-        cartSummary.style.display = 'none';
-        return;
-      }
-
-      cartSummary.style.display = 'block';
-
-      // Render cart items
-      cartItems.innerHTML = cart.map((item, index) => `
-        <div class="cart-item">
-          <div class="item-details">
-            <h4>${item.name}</h4>
-            <p>₦${item.price.toLocaleString()}</p>
-          </div>
-          <div class="item-quantity">
-            <button class="qty-btn" onclick="updateQuantity(${index}, -1)">−</button>
-            <input type="number" value="${item.quantity}" min="1" onchange="setQuantity(${index}, this.value)">
-            <button class="qty-btn" onclick="updateQuantity(${index}, 1)">+</button>
-          </div>
-          <div class="item-total">
-            <span>₦${(item.price * item.quantity).toLocaleString()}</span>
-          </div>
-          <button class="remove-item" onclick="removeFromCart(${index})">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-      `).join('');
-
-      // Calculate totals
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      subtotalEl.textContent = '₦' + subtotal.toLocaleString();
-      totalEl.textContent = '₦' + subtotal.toLocaleString();
-    }
-
-    // Update quantity
-    window.updateQuantity = function(index, change) {
-      if (cart[index]) {
-        cart[index].quantity += change;
-        if (cart[index].quantity <= 0) {
-          removeFromCart(index);
-        } else {
-          saveCart();
-          updateCartUI();
-        }
-      }
-    };
-
-    // Set quantity
-    window.setQuantity = function(index, value) {
-      const qty = parseInt(value);
-      if (qty > 0) {
-        cart[index].quantity = qty;
-        saveCart();
-        updateCartUI();
-      }
-    };
-
-    // Remove from cart
-    window.removeFromCart = function(index) {
-      cart.splice(index, 1);
-      saveCart();
-      updateCartUI();
-    };
-
-    // Checkout with WhatsApp
-    checkoutBtn.addEventListener('click', function() {
-      const name = document.getElementById('userName').value.trim();
-      const email = document.getElementById('userEmail').value.trim();
-      const location = document.getElementById('userLocation').value.trim();
-
-      // Validate form
-      if (!name || !email || !location) {
-        alert('Please fill in all fields');
-        return;
-      }
-
-      if (cart.length === 0) {
-        alert('Cart is empty');
-        return;
-      }
-
-      // Build order summary
-      let orderSummary = `*ARTSCI Order Summary*\n\n`;
-      orderSummary += `*Customer Details:*\n`;
-      orderSummary += `Name: ${name}\n`;
-      orderSummary += `Email: ${email}\n`;
-      orderSummary += `Location: ${location}\n\n`;
-
-      orderSummary += `*Order Items:*\n`;
-      cart.forEach(item => {
-        orderSummary += `• ${item.name}\n  Qty: ${item.quantity} × ₦${item.price.toLocaleString()} = ₦${(item.price * item.quantity).toLocaleString()}\n`;
-      });
-
-      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      orderSummary += `\n*Total: ₦${total.toLocaleString()}*\n`;
-      orderSummary += `\nPlease confirm this order.`;
-
-      // WhatsApp API (update with your business number)
-      // WhatsApp business number (international format without "+")
-      const whatsappNumber = '2347015862018';
-      const encodedMessage = encodeURIComponent(orderSummary);
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-
-      // Open WhatsApp
-      window.open(whatsappUrl, '_blank');
-
-      // Clear cart after checkout
-      setTimeout(() => {
-        cart = [];
-        saveCart();
-        updateCartUI();
-        closeCartModal();
-        showNotification('Order sent to WhatsApp! We will contact you shortly.');
-      }, 500);
-    });
-
-    // Show notification
-    function showNotification(message) {
-      const notification = document.createElement('div');
-      notification.className = 'cart-notification';
-      notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-      document.body.appendChild(notification);
-
-      setTimeout(() => {
-        notification.classList.add('show');
-      }, 10);
-
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-      }, 3000);
-    }
-
-    // Initialize cart UI on page load
-    updateCartUI();
-  </script>
-
   <style>
     /* ============================================
        FLOATING CART STYLES
@@ -2036,19 +1850,89 @@
     }
 
     function updateProductGrids(products) {
-      const grids = document.querySelectorAll('.products-grid');
-      grids.forEach((grid, index) => {
-        // Keep the first grid (CCTV) and populate it with all products
-        if (index === 0) {
-          grid.innerHTML = '';
-          if (products.length > 0) {
-            products.forEach(product => {
-              grid.innerHTML += createProductCard(product);
-            });
-          } else {
-            grid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No products available. Admin will add products soon.</p></div>';
-          }
+      const container = document.getElementById('products-by-category');
+      const categoryNav = document.getElementById('category-nav');
+      
+      // Group products by solution/category
+      const grouped = {};
+      products.forEach(product => {
+        const category = product.solution?.name || 'Other';
+        if (!grouped[category]) {
+          grouped[category] = [];
         }
+        grouped[category].push(product);
+      });
+
+      // Create category navigation links
+      categoryNav.innerHTML = '';
+      Object.keys(grouped).forEach(category => {
+        const link = document.createElement('a');
+        link.href = '#category-' + category.toLowerCase().replace(/\s+/g, '-');
+        link.className = 'solution-nav-item';
+        link.textContent = category;
+        categoryNav.appendChild(link);
+      });
+
+      // Create HTML for each category
+      let html = '';
+      if (Object.keys(grouped).length === 0) {
+        html = '<div style="text-align: center; padding: 40px;"><p>No products available yet. Admin will add products soon.</p></div>';
+      } else {
+        Object.keys(grouped).forEach((category, idx) => {
+          const categoryId = 'category-' + category.toLowerCase().replace(/\s+/g, '-');
+          const categoryProducts = grouped[category];
+          
+          // Determine category emoji (fallback to generic)
+          const emojiMap = {
+            'cctv': '📹',
+            'solar': '⚡',
+            'access': '🔐',
+            'perimeter': '🔌',
+            'automation': '🏠',
+            'integration': '🔗'
+          };
+          const categoryLower = category.toLowerCase();
+          const emoji = Object.keys(emojiMap).find(key => categoryLower.includes(key)) 
+            ? emojiMap[Object.keys(emojiMap).find(key => categoryLower.includes(key))]
+            : '📦';
+          
+          html += `
+            <section class="category-section" id="${categoryId}">
+              <div class="category-header">
+                <h2>${emoji} ${category}</h2>
+                <p>${categoryProducts.length} product${categoryProducts.length !== 1 ? 's' : ''}</p>
+              </div>
+              <div class="products-grid">
+                ${categoryProducts.map(product => createProductCard(product)).join('')}
+              </div>
+            </section>
+          `;
+        });
+      }
+      
+      container.innerHTML = html;
+      updateNavigation();
+    }
+    
+    function updateNavigation() {
+      const sectionHeight = window.innerHeight / 2;
+      const sections = document.querySelectorAll('.category-section, #all-products');
+      
+      window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          if (window.scrollY >= sectionTop - sectionHeight) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        document.querySelectorAll('.solution-nav-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.getAttribute('href') === '#' + (current || 'all-products')) {
+            item.classList.add('active');
+          }
+        });
       });
     }
 
