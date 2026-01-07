@@ -31,3 +31,4 @@ yarn-error.log
 /storage/framework/views
 /storage/logs
 .history
+/laravel-app/

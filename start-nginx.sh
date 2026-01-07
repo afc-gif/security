@@ -3,7 +3,7 @@
 # Nginx Startup Script for ARTSCI POS System
 # This script starts PHP-FPM and Nginx
 
-LARAVEL_PATH="/home/codecps/security/laravel-app"
+LARAVEL_PATH="/home/codecps/security"
 NGINX_CONFIG="$LARAVEL_PATH/nginx.conf"
 
 echo "╔════════════════════════════════════════════════════════════════╗"

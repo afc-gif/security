@@ -1,11 +1,8 @@
 {
   "build": {
     "builder": "dockerfile",
-    "dockerfilePath": "laravel-app/Dockerfile",
-    "context": ".",
-    "args": {
-      "APP_DIR": "laravel-app"
-    }
+    "dockerfilePath": "Dockerfile",
+    "context": "."
   },
-  "start": "php artisan serve --host=0.0.0.0 --port=$PORT"
+  "start": "php backend/artisan serve --host=0.0.0.0 --port=$PORT"
 }
