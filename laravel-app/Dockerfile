@@ -1,105 +1,75 @@
-# Build stage
-FROM php:8.3-fpm-alpine AS builder
+# syntax=docker/dockerfile:1
 
-WORKDIR /var/www/html
-ARG APP_DIR=laravel-app
+# Builder: install PHP extensions, composer, node, and build assets
+FROM php:8.3-fpm-bullseye AS builder
 
-# Install system dependencies
-RUN apk add --no-cache \
-    autoconf \
-    dpkg-dev \
-    file \
-    g++ \
-    gcc \
-    libc-dev \
-    make \
-    pkgconf \
-    re2c \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    zlib-dev \
-    git \
-    curl \
-    zip \
-    unzip \
-    postgresql-dev \
-    oniguruma-dev
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd \
-    --with-freetype=/usr \
-    --with-jpeg=/usr \
-    && docker-php-ext-install -j$(nproc) \
-    gd \
-    pdo \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    git unzip zip curl libpq-dev libzip-dev libonig-dev \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_pgsql gd zip bcmath mbstring pcntl \
+ && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get update && apt-get install -y --no-install-recommends nodejs \
+ && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+WORKDIR /app/backend
 
-# Copy composer files first for better layer caching
-COPY ${APP_DIR}/composer.json ${APP_DIR}/composer.lock ./
+# Copy app code
+COPY backend /app/backend
 
-# Install dependencies (no-dev for production build)
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+# Prepare writable dirs
+RUN mkdir -p storage/framework/{cache,data,sessions,views} bootstrap/cache \
+ && chmod -R 777 storage bootstrap/cache
 
-# Copy the rest of the application code
-COPY ${APP_DIR}/ ./
+ENV BROADCAST_CONNECTION=log
 
-# Production stage
-FROM php:8.3-fpm-alpine
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-WORKDIR /var/www/html
+# Install PHP deps
+RUN composer install --no-dev --prefer-dist --no-progress --no-interaction
 
-# Install runtime dependencies only
-RUN apk add --no-cache \
-    freetype \
-    libjpeg-turbo \
-    libpng \
-    oniguruma \
-    postgresql-libs \
-    git \
-    curl
+# Install Node deps (with dev for build) and build assets, then clean node_modules
+RUN npm ci --no-progress \
+ && npm run build \
+ && rm -rf node_modules
 
-# Install PHP extensions with build dependencies
-RUN apk add --no-cache $PHPIZE_DEPS \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    zlib-dev \
-    postgresql-dev \
-    oniguruma-dev && \
-    docker-php-ext-configure gd \
-    --with-freetype=/usr \
-    --with-jpeg=/usr \
-    && docker-php-ext-install -j$(nproc) \
-    gd \
-    pdo \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath && \
-    apk del $PHPIZE_DEPS \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    zlib-dev \
-    postgresql-dev \
-    oniguruma-dev
+# Runtime image: Nginx + PHP-FPM with Opcache
+FROM php:8.3-fpm-bullseye
 
-# Copy from builder
-COPY --from=builder /var/www/html /var/www/html
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Create storage directories
-RUN mkdir -p storage bootstrap/cache && \
-    chmod -R 777 storage bootstrap/cache
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    nginx curl libpq-dev libzip-dev libonig-dev gettext-base \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_pgsql gd zip bcmath mbstring pcntl \
+ && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 9000
+# Nginx + PHP config
+COPY docker/nginx.container.conf /etc/nginx/nginx.conf
+COPY docker/php-opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/php-fpm-pool.conf /usr/local/etc/php-fpm.d/zz-custom-pool.conf
 
-CMD ["php-fpm"]
+WORKDIR /app/backend
+
+# Bring built app
+COPY --from=builder /app/backend /app/backend
+
+# Default envs (override in runtime)
+ENV APP_ENV=production \
+    APP_URL=http://localhost \
+    PORT=80
+
+EXPOSE 80
+
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh \
+ && mkdir -p /var/log/nginx \
+ && chown -R www-data:www-data storage bootstrap/cache
+
+CMD ["/start.sh"]
