@@ -2,6 +2,7 @@
 FROM php:8.3-fpm-alpine AS builder
 
 WORKDIR /var/www/html
+ARG APP_DIR=laravel-app
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -42,13 +43,13 @@ RUN docker-php-ext-configure gd \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy composer files first for better layer caching
-COPY composer.json composer.lock ./
+COPY ${APP_DIR}/composer.json ${APP_DIR}/composer.lock ./
 
 # Install dependencies (no-dev for production build)
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 # Copy the rest of the application code
-COPY . ./
+COPY ${APP_DIR}/ ./
 
 # Production stage
 FROM php:8.3-fpm-alpine
