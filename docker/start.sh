@@ -17,6 +17,9 @@ php-fpm -D
 # Give PHP-FPM a moment to start
 sleep 2
 
+# Render Nginx config with the runtime port
+envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
 # Test nginx configuration
 if ! nginx -t 2>&1; then
     echo "ERROR: Nginx configuration test failed"
