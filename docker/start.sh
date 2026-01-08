@@ -19,6 +19,9 @@ sleep 2
 
 # Render Nginx config with the runtime port
 envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+echo "INFO: Runtime PORT is ${PORT}"
+echo "INFO: Nginx listen lines:"
+nginx -T 2>/dev/null | grep -E "listen" || true
 
 # Test nginx configuration
 if ! nginx -t 2>&1; then
