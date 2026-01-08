@@ -33,9 +33,11 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --prefer-dist --no-progress --no-interaction
 
 # Install Node deps (with dev for build) and build assets, then clean node_modules
-RUN npm ci --no-progress \
- && npm run build \
- && rm -rf node_modules
+RUN if [ -f package.json ]; then \
+    npm ci --no-progress \
+    && npm run build \
+    && rm -rf node_modules; \
+  fi
 
 # Runtime image: Nginx + PHP-FPM with Opcache
 FROM php:8.3-fpm-bullseye
