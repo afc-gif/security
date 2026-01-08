@@ -109,8 +109,13 @@ class AdminController extends Controller
             Log::warning("Product validation failed", ['errors' => $e->errors()]);
             throw $e;
         } catch (\Throwable $e) {
-            Log::error("Unexpected error in storeProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()])->withInput();
+            $errorMessage = trim($e->getMessage());
+            if ($errorMessage === '') {
+                $errorMessage = 'Unknown error';
+            }
+            $errorMessage = sprintf('%s: %s', get_class($e), $errorMessage);
+            Log::error("Unexpected error in storeProduct: " . $errorMessage, ['exception' => $e]);
+            return back()->withErrors(['error' => 'Server error: ' . $errorMessage])->withInput();
         }
     }
 
@@ -175,8 +180,13 @@ class AdminController extends Controller
             Log::warning("Product validation failed during update", ['errors' => $e->errors()]);
             throw $e;
         } catch (\Throwable $e) {
-            Log::error("Unexpected error in updateProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()])->withInput();
+            $errorMessage = trim($e->getMessage());
+            if ($errorMessage === '') {
+                $errorMessage = 'Unknown error';
+            }
+            $errorMessage = sprintf('%s: %s', get_class($e), $errorMessage);
+            Log::error("Unexpected error in updateProduct: " . $errorMessage, ['exception' => $e]);
+            return back()->withErrors(['error' => 'Server error: ' . $errorMessage])->withInput();
         }
     }
 

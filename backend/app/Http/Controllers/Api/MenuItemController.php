@@ -55,18 +55,23 @@ class MenuItemController extends Controller
 
         $data['barcode'] = $data['barcode'] ?? $this->generateBarcode();
 
-        $item = SolutionItem::create([
+        $payload = [
             'solution_id' => $data['category_id'] ?? null,
             'name' => $data['name'],
             'barcode' => $data['barcode'],
             'description' => $data['description'] ?? null,
             'price' => $data['price'],
-            'stock' => $data['stock'] ?? null,
             'image' => $data['image'] ?? null,
             'sort_order' => $data['sort_order'] ?? 0,
             'active' => $data['is_active'] ?? true,
             'is_sold_out' => $data['is_sold_out'] ?? false,
-        ]);
+        ];
+
+        if (array_key_exists('stock', $data) && $data['stock'] !== null) {
+            $payload['stock'] = (int) $data['stock'];
+        }
+
+        $item = SolutionItem::create($payload);
 
         $item->load('solution');
 
@@ -97,18 +102,23 @@ class MenuItemController extends Controller
             $data['barcode'] = $this->generateBarcode();
         }
 
-        $menuItem->update([
+        $payload = [
             'solution_id' => $data['category_id'] ?? $menuItem->solution_id,
             'name' => $data['name'] ?? $menuItem->name,
             'barcode' => $data['barcode'] ?? $menuItem->barcode,
             'description' => array_key_exists('description', $data) ? $data['description'] : $menuItem->description,
             'price' => array_key_exists('price', $data) ? $data['price'] : $menuItem->price,
-            'stock' => array_key_exists('stock', $data) ? $data['stock'] : $menuItem->stock,
             'image' => $data['image'] ?? $menuItem->image,
             'sort_order' => $data['sort_order'] ?? $menuItem->sort_order,
             'active' => array_key_exists('is_active', $data) ? $data['is_active'] : $menuItem->active,
             'is_sold_out' => array_key_exists('is_sold_out', $data) ? $data['is_sold_out'] : $menuItem->is_sold_out,
-        ]);
+        ];
+
+        if (array_key_exists('stock', $data)) {
+            $payload['stock'] = $data['stock'] === null ? 0 : (int) $data['stock'];
+        }
+
+        $menuItem->update($payload);
 
         $menuItem->refresh()->load('solution');
 

@@ -25,6 +25,9 @@ class SolutionItem extends Model
             if (empty($item->barcode)) {
                 $item->barcode = static::generateBarcode();
             }
+            if ($item->stock === null) {
+                $item->stock = 0;
+            }
         });
     }
 
