@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -96,18 +97,12 @@ class AdminController extends Controller
                 }
             }
 
-            // Create the product
-            $product = Product::create($validated);
-            Log::info("Product created", ['product_id' => $product->id, 'name' => $product->name]);
-
-            // Sync to solution item
-            try {
+            $product = null;
+            DB::transaction(function () use (&$product, $validated) {
+                $product = Product::create($validated);
+                Log::info("Product created", ['product_id' => $product->id, 'name' => $product->name]);
                 $this->syncProductToSolutionItem($product);
-            } catch (\Exception $e) {
-                Log::error("Failed to sync product to solution item: " . $e->getMessage(), ['product_id' => $product->id]);
-                // Don't fail the request - product was created successfully
-                return redirect('/admin/products')->with('success', 'Product created successfully! (Note: Solution sync encountered an issue)');
-            }
+            });
 
             return redirect('/admin/products')->with('success', 'Product created successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -169,17 +164,11 @@ class AdminController extends Controller
                 }
             }
 
-            // Update the product
-            $product->update($validated);
-            Log::info("Product updated", ['product_id' => $product->id]);
-
-            // Sync to solution item
-            try {
+            DB::transaction(function () use ($product, $validated) {
+                $product->update($validated);
+                Log::info("Product updated", ['product_id' => $product->id]);
                 $this->syncProductToSolutionItem($product);
-            } catch (\Exception $e) {
-                Log::error("Failed to sync updated product to solution item: " . $e->getMessage(), ['product_id' => $product->id]);
-                return redirect('/admin/products')->with('success', 'Product updated successfully! (Note: Solution sync encountered an issue)');
-            }
+            });
 
             return redirect('/admin/products')->with('success', 'Product updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -235,58 +224,33 @@ class AdminController extends Controller
 
     private function syncProductToSolutionItem(Product $product): void
     {
-        try {
-            $solution = Solution::where('name', $product->category)->first();
-            if (!$solution) {
-                Log::warning("Solution not found for category: {$product->category}");
-                // Create a fallback solution if needed
-                return;
-            }
+        $solution = Solution::where('name', $product->category)->first();
+        if (!$solution) {
+            throw new \RuntimeException("Solution not found for category: {$product->category}");
+        }
 
-            $item = SolutionItem::where('product_id', $product->id)->first();
-            $barcode = null;
-            
-            if ($item && !empty($item->barcode)) {
-                $barcode = $item->barcode;
-            } else {
-                // Generate unique barcode - ensure uniqueness
-                $attempts = 0;
-                do {
-                    $barcode = strtoupper(Str::random(10));
-                    $attempts++;
-                } while ($attempts < 10 && SolutionItem::where('barcode', $barcode)->exists());
-                
-                if ($attempts >= 10) {
-                    $barcode = 'BC-' . $product->id . '-' . time();
-                }
-            }
+        $item = SolutionItem::where('product_id', $product->id)->first();
+        $payload = [
+            'solution_id' => $solution->id,
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price' => $product->price,
+            'stock' => $product->stock,
+            'image' => $product->image,
+            'active' => true,
+        ];
 
-            $payload = [
-                'solution_id' => $solution->id,
-                'product_id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->price,
-                'stock' => $product->stock,
-                'barcode' => $barcode,
-                'image' => $product->image,
-                'active' => true,
-            ];
+        if (!$item) {
+            $payload['barcode'] = SolutionItem::generateBarcode();
+        }
 
-            if ($item) {
-                $item->update($payload);
-                Log::info("SolutionItem updated", ['item_id' => $item->id, 'barcode' => $barcode]);
-            } else {
-                $createdItem = SolutionItem::create($payload);
-                Log::info("SolutionItem created", ['item_id' => $createdItem->id, 'barcode' => $barcode]);
-            }
-        } catch (\Exception $e) {
-            Log::error("Error syncing product to solution item: " . $e->getMessage(), [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'exception' => $e
-            ]);
-            throw $e;
+        if ($item) {
+            $item->update($payload);
+            Log::info("SolutionItem updated", ['item_id' => $item->id, 'barcode' => $item->barcode]);
+        } else {
+            $createdItem = SolutionItem::create($payload);
+            Log::info("SolutionItem created", ['item_id' => $createdItem->id, 'barcode' => $createdItem->barcode]);
         }
     }
 
