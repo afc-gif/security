@@ -109,9 +109,9 @@ class AdminController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning("Product validation failed", ['errors' => $e->errors()]);
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("Unexpected error in storeProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors('An unexpected error occurred. Please try again. Error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()]);
         }
     }
 
@@ -178,9 +178,9 @@ class AdminController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning("Product validation failed during update", ['errors' => $e->errors()]);
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("Unexpected error in updateProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors('An unexpected error occurred. Please try again. Error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()]);
         }
     }
 

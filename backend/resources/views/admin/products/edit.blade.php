@@ -18,6 +18,11 @@
             <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                @if($errors->has('error'))
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        {{ $errors->first('error') }}
+                    </div>
+                @endif
 
                 
                     <label for="name">Product Name *</label>

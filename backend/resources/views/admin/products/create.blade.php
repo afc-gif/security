@@ -8,6 +8,11 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
                 @csrf
+                @if($errors->has('error'))
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        {{ $errors->first('error') }}
+                    </div>
+                @endif
 
                 <!-- Product Name -->
                 <div>
