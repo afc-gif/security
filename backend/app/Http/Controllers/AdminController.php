@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -62,6 +63,9 @@ class AdminController extends Controller
 
     public function storeProduct(Request $request)
     {
+        if ($schemaError = $this->ensureProductSchema()) {
+            return $schemaError;
+        }
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -123,6 +127,9 @@ class AdminController extends Controller
 
     public function updateProduct(Request $request, Product $product)
     {
+        if ($schemaError = $this->ensureProductSchema()) {
+            return $schemaError;
+        }
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -289,6 +296,49 @@ class AdminController extends Controller
         if ($item) {
             $item->delete();
         }
+    }
+
+    private function ensureProductSchema(): ?\Illuminate\Http\RedirectResponse
+    {
+        $missingTables = [];
+        foreach (['products', 'solutions', 'solution_items'] as $table) {
+            if (!Schema::hasTable($table)) {
+                $missingTables[] = $table;
+            }
+        }
+
+        if (!empty($missingTables)) {
+            return back()->withErrors([
+                'error' => 'Database is missing required tables: ' . implode(', ', $missingTables) . '. Run migrations.'
+            ])->withInput();
+        }
+
+        $requiredColumns = [
+            'solution_items' => ['solution_id', 'product_id', 'name', 'price', 'stock', 'barcode', 'image', 'active'],
+        ];
+
+        $missingColumns = [];
+        foreach ($requiredColumns as $table => $columns) {
+            foreach ($columns as $column) {
+                if (!Schema::hasColumn($table, $column)) {
+                    $missingColumns[] = $table . '.' . $column;
+                }
+            }
+        }
+
+        if (!empty($missingColumns)) {
+            return back()->withErrors([
+                'error' => 'Database schema is missing required columns: ' . implode(', ', $missingColumns) . '. Run migrations.'
+            ])->withInput();
+        }
+
+        if (Solution::count() === 0) {
+            return back()->withErrors([
+                'error' => 'No solution categories found. Seed the solutions table before creating products.'
+            ])->withInput();
+        }
+
+        return null;
     }
 
     // Orders Management
