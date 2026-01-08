@@ -24,7 +24,7 @@ class SolutionItemController extends Controller
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'sort_order' => 'nullable|integer',
         ]);
 
@@ -58,7 +58,7 @@ class SolutionItemController extends Controller
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'sort_order' => 'nullable|integer',
         ]);
 

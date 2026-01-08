@@ -27,7 +27,7 @@ class MenuItemController extends Controller
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'price' => 'nullable|numeric|min:0',
             'sort_order' => 'integer',
             'available' => 'boolean',
@@ -54,7 +54,7 @@ class MenuItemController extends Controller
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'price' => 'nullable|numeric|min:0',
             'sort_order' => 'integer',
             'available' => 'boolean',
@@ -75,7 +75,7 @@ class MenuItemController extends Controller
     public function uploadImage(Request $request, MenuItem $menuItem)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
         if ($menuItem->image) {

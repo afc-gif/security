@@ -69,7 +69,7 @@ class AdminController extends Controller
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category' => 'required|string|exists:solutions,name',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
 
             // Handle image upload with better error handling
@@ -130,7 +130,7 @@ class AdminController extends Controller
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category' => 'required|string|exists:solutions,name',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
 
             // Handle image upload with better error handling

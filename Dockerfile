@@ -55,6 +55,7 @@ RUN apt-get update \
 # Nginx + PHP config
 COPY docker/nginx.container.conf /etc/nginx/nginx.conf.template
 COPY docker/php-opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/php-uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY docker/php-fpm-pool.conf /usr/local/etc/php-fpm.d/zz-custom-pool.conf
 
 WORKDIR /app/backend
