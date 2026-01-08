@@ -1201,7 +1201,9 @@
     // Load products from admin database on page load
     async function loadProducts() {
       try {
-        const response = await fetch('/api/pos/products');
+        // Get the API URL from localStorage or use default
+        const apiUrl = localStorage.getItem('apiUrl') || 'http://127.0.0.1:8000/api/pos/products';
+        const response = await fetch(apiUrl);
         const products = await response.json();
 
         // Check if products have changed
@@ -1315,9 +1317,6 @@
     });
 
     function createProductCard(product) {
-      const productName = product.name.replace(/'/g, "\\'");
-      const productDesc = (product.description || 'Enterprise-grade product').replace(/'/g, "\\'");
-      
       // Build image URL - prepend /storage/ if it's a local file path
       let imageUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80';
       if (product.image) {
@@ -1337,7 +1336,7 @@
               <span>Stock: ${product.stock}</span>
             </div>
             <div class="product-price">₦${parseFloat(product.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            <button class="btn add-to-cart" onclick="addToCart(${product.id}, '${productName}', ${product.price})">
+            <button class="btn add-to-cart" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}">
               <i class="fas fa-shopping-cart"></i> Add to Cart
             </button>
           </div>
@@ -1383,6 +1382,7 @@
 
     function updateCartUI() {
       const cartItems = document.querySelector('.cart-items');
+      const cartSummary = document.querySelector('.cart-summary');
       if (!cartItems) return;
 
       if (cart.length === 0) {
@@ -1392,25 +1392,31 @@
             <p>Your cart is empty</p>
           </div>
         `;
-      } else {
-        cartItems.innerHTML = cart.map(item => `
-          <div class="cart-item">
-            <div class="item-details">
-              <h4>${item.name}</h4>
-              <p>₦${parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-            </div>
-            <div class="item-quantity">
-              <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
-              <input type="number" value="${item.quantity}" readonly>
-              <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-            </div>
-            <div class="item-total">₦${(parseFloat(item.price) * item.quantity).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            <button class="remove-item" onclick="removeFromCart(${item.id})">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        `).join('');
+        if (cartSummary) {
+          cartSummary.style.display = 'none';
+        }
+        updateCartCount();
+        return;
       }
+
+      // Show cart items
+      cartItems.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="item-details">
+            <h4>${item.name}</h4>
+            <p>₦${parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          </div>
+          <div class="item-quantity">
+            <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
+            <input type="number" value="${item.quantity}" readonly>
+            <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+          </div>
+          <div class="item-total">₦${(parseFloat(item.price) * item.quantity).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          <button class="remove-item" onclick="removeFromCart(${item.id})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
       
       updateCartSummary();
     }
@@ -1424,14 +1430,19 @@
         } else {
           saveCart();
           updateCartUI();
+          showNotification(`Updated "${item.name}" quantity to ${item.quantity}`);
         }
       }
     }
 
     function removeFromCart(id) {
-      cart = cart.filter(item => item.id !== id);
-      saveCart();
-      updateCartUI();
+      const item = cart.find(item => item.id === id);
+      if (item) {
+        cart = cart.filter(item => item.id !== id);
+        saveCart();
+        updateCartUI();
+        showNotification(`Removed "${item.name}" from cart`);
+      }
     }
 
     function updateCartSummary() {
@@ -1467,55 +1478,77 @@
 
     function checkout() {
       if (cart.length === 0) {
-        alert('Your cart is empty');
+        alert('Your cart is empty. Please add products before checking out.');
         return;
       }
 
-      const name = document.getElementById('userName').value.trim();
-      const email = document.getElementById('userEmail').value.trim();
-      const location = document.getElementById('userLocation').value.trim();
+      const name = document.getElementById('userName')?.value.trim();
+      const email = document.getElementById('userEmail')?.value.trim();
+      const location = document.getElementById('userLocation')?.value.trim();
 
       if (!name || !email || !location) {
-        alert('Please fill in all required fields');
+        alert('Please fill in all required fields:\n- Your Name\n- Email Address\n- Delivery Location');
         return;
       }
 
-      let orderSummary = `*ARTSCI Security Solutions - Order*\n\n`;
-      orderSummary += `*Customer Details:*\n`;
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      let orderSummary = `*🛍️ ARTSCI Security Solutions - Order*\n\n`;
+      orderSummary += `*👤 Customer Details:*\n`;
       orderSummary += `Name: ${name}\n`;
       orderSummary += `Email: ${email}\n`;
       orderSummary += `Location: ${location}\n\n`;
-      orderSummary += `*Order Items:*\n`;
+      orderSummary += `*📦 Order Items:*\n`;
 
-      cart.forEach(item => {
+      cart.forEach((item, index) => {
         const itemTotal = parseFloat(item.price) * item.quantity;
-        orderSummary += `• ${item.name}\n  Qty: ${item.quantity} × ₦${parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})} = ₦${itemTotal.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n`;
+        const priceFormatted = parseFloat(item.price).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const totalFormatted = itemTotal.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        orderSummary += `${index + 1}. ${item.name}\n`;
+        orderSummary += `   Qty: ${item.quantity} × ₦${priceFormatted} = ₦${totalFormatted}\n`;
       });
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      orderSummary += `\n*Total Amount: ₦${total.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}*\n`;
-      orderSummary += `\nPlease confirm this order.`;
+      const totalFormatted = total.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      orderSummary += `\n*💰 Order Summary:*\n`;
+      orderSummary += `Subtotal: ₦${totalFormatted}\n`;
+      orderSummary += `*Total Amount: ₦${totalFormatted}*\n`;
+      orderSummary += `\n✅ Please confirm this order and we will respond with payment details and delivery timeline.`;
 
       const whatsappNumber = '2347015862018';
       const encodedMessage = encodeURIComponent(orderSummary);
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
+      // Open WhatsApp
       window.open(whatsappUrl, '_blank');
 
+      // Clear cart after sending
       setTimeout(() => {
         cart = [];
         saveCart();
         updateCartUI();
         closeCart();
-        showNotification('Order sent to WhatsApp! We will contact you shortly.');
-      }, 500);
+        showNotification('✅ Order sent to WhatsApp! Check your messages for confirmation.');
+      }, 1000);
     }
 
     function clearCart() {
-      if (confirm('Are you sure you want to clear your cart?')) {
+      if (cart.length === 0) {
+        showNotification('Cart is already empty');
+        return;
+      }
+      
+      if (confirm(`Are you sure you want to clear your cart? (${cart.reduce((sum, item) => sum + item.quantity, 0)} items)`)) {
         cart = [];
         saveCart();
         updateCartUI();
+        showNotification('Cart cleared successfully');
       }
     }
 
@@ -1544,6 +1577,7 @@
       const cartButton = document.querySelector('.cart-button');
       const closeBtn = document.querySelector('.close-cart');
       const overlay = document.querySelector('.cart-overlay');
+      const productsContainer = document.getElementById('products-by-category');
 
       if (cartButton) {
         cartButton.addEventListener('click', openCart);
@@ -1553,6 +1587,19 @@
       }
       if (overlay) {
         overlay.addEventListener('click', closeCart);
+      }
+      
+      // Event delegation for add-to-cart buttons
+      if (productsContainer) {
+        productsContainer.addEventListener('click', function(e) {
+          if (e.target.closest('.add-to-cart')) {
+            const button = e.target.closest('.add-to-cart');
+            const id = parseInt(button.getAttribute('data-product-id'));
+            const name = button.getAttribute('data-product-name');
+            const price = parseFloat(button.getAttribute('data-product-price'));
+            addToCart(id, name, price);
+          }
+        });
       }
     });
   </script>
