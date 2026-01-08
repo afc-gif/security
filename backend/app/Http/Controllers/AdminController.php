@@ -78,7 +78,7 @@ class AdminController extends Controller
                 
                 if (!$image->isValid()) {
                     Log::error("Invalid image file uploaded", ['error' => $image->getErrorMessage()]);
-                    return back()->withErrors('Invalid image file. Please try again.');
+                    return back()->withErrors(['image' => 'Invalid image file. Please try again.'])->withInput();
                 }
 
                 try {
@@ -88,7 +88,7 @@ class AdminController extends Controller
                     Log::info("Image stored successfully", ['path' => $path]);
                 } catch (\Exception $e) {
                     Log::error("Image storage failed: " . $e->getMessage());
-                    return back()->withErrors('Failed to upload image. Please check server permissions and try again.');
+                    return back()->withErrors(['image' => 'Failed to upload image. Please check server permissions and try again.'])->withInput();
                 }
             }
 
@@ -111,7 +111,7 @@ class AdminController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error("Unexpected error in storeProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -139,7 +139,7 @@ class AdminController extends Controller
                 
                 if (!$image->isValid()) {
                     Log::error("Invalid image file uploaded during update", ['error' => $image->getErrorMessage()]);
-                    return back()->withErrors('Invalid image file. Please try again.');
+                    return back()->withErrors(['image' => 'Invalid image file. Please try again.'])->withInput();
                 }
 
                 // Delete old image if it exists
@@ -158,7 +158,7 @@ class AdminController extends Controller
                     Log::info("New image stored successfully", ['path' => $path]);
                 } catch (\Exception $e) {
                     Log::error("Image storage failed during update: " . $e->getMessage());
-                    return back()->withErrors('Failed to upload image. Please check server permissions and try again.');
+                    return back()->withErrors(['image' => 'Failed to upload image. Please check server permissions and try again.'])->withInput();
                 }
             }
 
@@ -180,7 +180,7 @@ class AdminController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error("Unexpected error in updateProduct: " . $e->getMessage(), ['exception' => $e]);
-            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Server error: ' . $e->getMessage()])->withInput();
         }
     }
 
