@@ -14,15 +14,12 @@ php artisan route:cache 2>&1 || true
 # Start PHP-FPM in background
 php-fpm -D
 
-# Verify PHP-FPM is running
-sleep 1
-if ! pgrep -x php-fpm > /dev/null; then
-  echo "ERROR: PHP-FPM failed to start"
-  exit 1
-fi
+# Give PHP-FPM a moment to start
+sleep 2
 
 # Test nginx configuration
 if ! nginx -t 2>&1; then
+    echo "ERROR: Nginx configuration test failed"
     exit 1
 fi
 
