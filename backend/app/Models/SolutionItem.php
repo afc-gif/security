@@ -10,13 +10,14 @@ class SolutionItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['solution_id', 'product_id', 'name', 'barcode', 'description', 'price', 'stock', 'image', 'sort_order', 'active', 'is_sold_out'];
+    protected $fillable = ['solution_id', 'product_id', 'name', 'barcode', 'description', 'price', 'stock', 'image', 'sort_order', 'active', 'is_sold_out', 'display_on_website'];
 
     protected $casts = [
         'price' => 'decimal:2',
         'stock' => 'integer',
         'active' => 'boolean',
         'is_sold_out' => 'boolean',
+        'display_on_website' => 'boolean',
     ];
 
     protected static function booted(): void

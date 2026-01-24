@@ -26,6 +26,7 @@ class SolutionItemController extends Controller
             'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'sort_order' => 'nullable|integer',
+            'display_on_website' => 'nullable|boolean',
         ]);
 
         if (empty($validated['barcode'])) {
@@ -60,6 +61,7 @@ class SolutionItemController extends Controller
             'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'sort_order' => 'nullable|integer',
+            'display_on_website' => 'nullable|boolean',
         ]);
 
         if (empty($validated['barcode'])) {

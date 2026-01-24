@@ -65,6 +65,15 @@
                 </div>
 
                 
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
+                        <input type="checkbox" id="display_on_website" name="display_on_website" value="1" @if(old('display_on_website', $product->display_on_website ?? true)) checked @endif style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="cursor: pointer;">Display on Website</span>
+                    </label>
+                    <span class="helper-text">Uncheck to hide this product from the public website (will remain in POS)</span>
+                    @error('display_on_website')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                
                     <label for="image">Product Image</label>
                     @if($product->image)
                         <div class="image-preview">

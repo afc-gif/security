@@ -76,6 +76,19 @@
             @enderror
         </div>
 
+        <div class="mb-4">
+            <label for="display_on_website" class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="display_on_website" id="display_on_website" value="1" 
+                       @if(old('display_on_website', $item->display_on_website ?? true)) checked @endif 
+                       class="w-5 h-5 rounded">
+                <span class="text-gray-700 font-bold">Display on Website</span>
+            </label>
+            <p class="text-gray-500 text-sm mt-2">Uncheck to hide this product from the public website (will remain available in POS)</p>
+            @error('display_on_website')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
+        </div>
+
         <div class="flex gap-2">
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 Update Item

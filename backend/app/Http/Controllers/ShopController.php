@@ -23,6 +23,7 @@ class ShopController extends Controller
     {
         $solutions = SolutionItem::where('active', true)
             ->where('is_sold_out', false)
+            ->where('display_on_website', true)
             ->with('solution')
             ->get();
         return view('shop.solutions', compact('solutions'));
