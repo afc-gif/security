@@ -54,75 +54,93 @@
       </div>
       <div class="solutions-grid">
         <a href="solutions.html#cctv" class="solution-card solution-cctv">
-          <div class="solution-icon">📹</div>
-          <h3>SURVEILLANCE</h3>
-          <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
-          <ul>
-            <li>4K IP cameras with AI detection</li>
-            <li>Cloud + local storage</li>
-            <li>Mobile app monitoring</li>
-            <li>Smart alerts & analytics</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/survelliance.webp') }}" alt="CCTV and surveillance systems">
+            <h3>SURVEILLANCE</h3>
+            <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
+            <ul>
+              <li>4K IP cameras with AI detection</li>
+              <li>Cloud + local storage</li>
+              <li>Mobile app monitoring</li>
+              <li>Smart alerts & analytics</li>
+            </ul>
+          </div>
         </a>
 
         <a href="solutions.html#solar" class="solution-card solution-power">
-          <div class="solution-icon">⚡</div>
-          <h3>SOLAR POWER</h3>
-          <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
-          <ul>
-            <li>5-10kVA hybrid systems</li>
-            <li>Lithium battery storage</li>
-            <li>Solar panel integration</li>
-            <li>Energy monitoring</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/solar power.jpg') }}" alt="Solar power systems">
+            <h3>SOLAR POWER</h3>
+            <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
+            <ul>
+              <li>5-10kVA hybrid systems</li>
+              <li>Lithium battery storage</li>
+              <li>Solar panel integration</li>
+              <li>Energy monitoring</li>
+            </ul>
+          </div>
         </a>
 
         <a href="solutions.html#access" class="solution-card solution-access">
-          <div class="solution-icon">🔐</div>
-          <h3>ACCESS CONTROL</h3>
-          <p>Smart gates, biometric locks, and visitor management systems</p>
-          <ul>
-            <li>Automatic gate systems</li>
-            <li>Biometric access control</li>
-            <li>RFID integration</li>
-            <li>Audit trails & reports</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/access-control.webp') }}" alt="Access control solutions">
+            <h3>ACCESS CONTROL</h3>
+            <p>Smart gates, biometric locks, and visitor management systems</p>
+            <ul>
+              <li>Automatic gate systems</li>
+              <li>Biometric access control</li>
+              <li>RFID integration</li>
+              <li>Audit trails & reports</li>
+            </ul>
+          </div>
         </a>
 
         <a href="solutions.html#perimeter" class="solution-card solution-fence">
-          <div class="solution-icon">🔌</div>
-          <h3>PERIMETER SECURITY</h3>
-          <p>High-voltage electric fencing with integrated alarms and monitoring</p>
-          <ul>
-            <li>Multi-zone electric fence</li>
-            <li>Alarm integration</li>
-            <li>Battery backup 24/7</li>
-            <li>Compliance certified</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/Perimeter Security.jpg') }}" alt="Perimeter security and electric fencing">
+            <h3>PERIMETER SECURITY</h3>
+            <p>High-voltage electric fencing with integrated alarms and monitoring</p>
+            <ul>
+              <li>Multi-zone electric fence</li>
+              <li>Alarm integration</li>
+              <li>Battery backup 24/7</li>
+              <li>Compliance certified</li>
+            </ul>
+          </div>
         </a>
 
         <a href="solutions.html#automation" class="solution-card solution-smart">
-          <div class="solution-icon">🏠</div>
-          <h3>SMART AUTOMATION</h3>
-          <p>Unified control for lighting, climate, security, and energy management</p>
-          <ul>
-            <li>Central dashboard control</li>
-            <li>Scheduling & automations</li>
-            <li>Mobile app integration</li>
-            <li>Voice control compatible</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/Smart-Automation.png') }}" alt="Smart automation systems">
+            <h3>SMART AUTOMATION</h3>
+            <p>Unified control for lighting, climate, security, and energy management</p>
+            <ul>
+              <li>Central dashboard control</li>
+              <li>Scheduling & automations</li>
+              <li>Mobile app integration</li>
+              <li>Voice control compatible</li>
+            </ul>
+          </div>
         </a>
 
         <a href="solutions.html#integration" class="solution-card solution-integration">
-          <div class="solution-icon">🔗</div>
-          <h3>FULL INTEGRATION</h3>
-          <p>Complete enterprise stack with unified monitoring and control</p>
-          <ul>
-            <li>All systems integrated</li>
-            <li>Single dashboard</li>
-            <li>API access available</li>
-            <li>White-label options</li>
-          </ul>
+          <span class="solution-bg" aria-hidden="true"></span>
+          <div class="solution-content">
+            <img class="solution-thumb" src="{{ asset('images/smart integration.jpg') }}" alt="System integration and unified dashboards">
+            <h3>FULL INTEGRATION</h3>
+            <p>Complete enterprise stack with unified monitoring and control</p>
+            <ul>
+              <li>All systems integrated</li>
+              <li>Single dashboard</li>
+              <li>API access available</li>
+              <li>White-label options</li>
+            </ul>
+          </div>
         </a>
       </div>
     </div>
