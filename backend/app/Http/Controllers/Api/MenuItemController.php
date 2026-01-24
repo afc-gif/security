@@ -47,6 +47,7 @@ class MenuItemController extends Controller
             'image' => 'nullable|image|max:4096',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'nullable|integer|min:0',
+            'display_on_website' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('image')) {
@@ -92,6 +93,7 @@ class MenuItemController extends Controller
             'image' => 'nullable|image|max:4096',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'nullable|integer|min:0',
+            'display_on_website' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('image')) {

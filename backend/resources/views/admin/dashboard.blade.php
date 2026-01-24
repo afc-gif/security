@@ -256,6 +256,11 @@
                             </select>
                             <label>Image</label>
                             <input name="image" type="file" accept="image/*" />
+                            <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+                                <input name="display_on_website" type="checkbox" value="1" checked style="width:18px; height:18px; cursor:pointer;" />
+                                <span>Display on Website</span>
+                            </label>
+                            <small class="muted" style="display:block; margin-top:4px;">Uncheck to hide from public website (will remain in POS)</small>
                             <button class="btn-primary" type="submit">Add Product</button>
                         </form>
                     </div>
