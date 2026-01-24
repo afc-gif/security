@@ -7,6 +7,10 @@ mkdir -p storage/logs storage/framework/{cache,data,sessions,views} bootstrap/ca
 chmod -R 775 storage bootstrap/cache /run/nginx
 chown -R www-data:www-data storage bootstrap/cache /run/nginx public storage/logs
 
+# Run migrations automatically
+echo "Running database migrations..."
+php artisan migrate --force 2>&1 || echo "Migration warning - continuing startup..."
+
 php artisan storage:link 2>&1 || true
 php artisan config:cache 2>&1 || true
 php artisan route:cache 2>&1 || true

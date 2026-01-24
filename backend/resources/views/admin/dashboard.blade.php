@@ -393,14 +393,6 @@
                                 <option value="other">Other</option>
                             </select>
                         </div>
-                        <div style="display:grid; gap:6px;">
-                            <label style="font-size:13px; color:var(--brand-muted);">Kitchen handoff</label>
-                            <label class="pill" style="padding:8px 10px; display:flex; align-items:center; gap:8px; border-radius:12px; border:1px solid var(--brand-border); background:#fff;">
-                                <input id="posSendKitchen" type="checkbox" checked style="width:16px; height:16px; accent-color: var(--brand-dark);">
-                                <span class="muted" style="color:var(--brand-dark);">Send to kitchen immediately</span>
-                            </label>
-                            <small class="muted">Uncheck if you need to confirm before dispatch.</small>
-                        </div>
                     </div>
 
                     <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
@@ -483,18 +475,10 @@
         const posTax = document.getElementById('posTax');
         const posSubtotal = document.getElementById('posSubtotal');
         const posGrandTotal = document.getElementById('posGrandTotal');
-        const posSendKitchen = document.getElementById('posSendKitchen');
         const posParkBtn = document.getElementById('posParkBtn');
         const posParkedList = document.getElementById('posParkedList');
         const posSavedCustomers = document.getElementById('posSavedCustomers');
         const barcodeCache = {};
-        const kitchenStatusMeta = {
-            pending: { label: 'Awaiting send', color: '#b45309', bg: 'rgba(180,83,9,0.08)' },
-            queued: { label: 'Queued', color: '#0A1428', bg: 'rgba(3,169,244,0.08)' },
-            prepping: { label: 'In progress', color: '#0f5132', bg: 'rgba(15,81,50,0.1)' },
-            ready: { label: 'Ready', color: '#0f5132', bg: 'rgba(15,81,50,0.1)' },
-            served: { label: 'Served', color: 'rgba(0,0,0,0.6)', bg: '#f2f2f2' },
-        };
         let menuCacheReady = false;
         let lastSummary = null;
         let posCart = [];
@@ -786,8 +770,6 @@
             let revenue = 0;
             ordersTableBody.innerHTML = orders.map(o => {
                 revenue += Number(o.total || 0);
-                const kitchenBadge = renderKitchenStatus(o.kitchen_status);
-                const etaText = renderEta(o);
                 return `
                     <tr>
                         <td>${o.code || o.id}</td>
@@ -795,16 +777,6 @@
                         <td>${o.status}</td>
                         <td>₦${Number(o.total).toLocaleString()}</td>
                         <td>${o.channel || 'pos'}</td>
-                        <td>${kitchenBadge}</td>
-                        <td>${etaText}</td>
-                        <td>
-                            <div class="row" style="gap:6px; flex-wrap:wrap;">
-                                ${o.kitchen_status === 'pending' ? `<button class="btn-ghost" onclick="sendOrderToKitchen(${o.id}, this)">Send</button>` : ''}
-                                <button class="btn-ghost" onclick="setKitchenEta(${o.id}, 15, this)">ETA 15m</button>
-                                <button class="btn-ghost" onclick="setKitchenStatus(${o.id}, 'ready', this)">Ready</button>
-                                <button class="btn-ghost" onclick="shareOrderWhatsapp(${o.id})">WhatsApp</button>
-                            </div>
-                        </td>
                         <td>${new Date(o.created_at).toLocaleString()}</td>
                     </tr>
                 `;
@@ -817,53 +789,6 @@
             renderOrders(ordersCache);
         }
 
-        window.sendOrderToKitchen = async (id, btn) => {
-            const note = prompt('Add dispatch note (optional)', '') || null;
-            await runAction(btn, async () => {
-                const res = await safeRequest(`/api/orders/${id}/send-to-kitchen`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ note }),
-                });
-                const updated = await res.json();
-                upsertOrderCache(updated);
-            });
-        };
-
-        window.setKitchenEta = async (id, minutes, btn) => {
-            const order = ordersCache.find(o => o.id === id);
-            await runAction(btn, async () => {
-                const res = await safeRequest(`/api/orders/${id}/kitchen-status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        kitchen_status: order?.kitchen_status || 'queued',
-                        eta_minutes: minutes,
-                        note: order?.kitchen_note || null,
-                    }),
-                });
-                const updated = await res.json();
-                upsertOrderCache(updated);
-            });
-        };
-
-        window.setKitchenStatus = async (id, status, btn) => {
-            const order = ordersCache.find(o => o.id === id);
-            await runAction(btn, async () => {
-                const res = await safeRequest(`/api/orders/${id}/kitchen-status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        kitchen_status: status,
-                        eta_minutes: order?.kitchen_eta_minutes || null,
-                        note: order?.kitchen_note || null,
-                    }),
-                });
-                const updated = await res.json();
-                upsertOrderCache(updated);
-            });
-        };
-
         window.shareOrderWhatsapp = (id) => {
             const order = ordersCache.find(o => o.id === id);
             if (!order) {
@@ -871,13 +796,11 @@
                 return;
             }
             const items = (order.items || []).map(item => `• ${item.quantity}x ${item.name}`).join('\n');
-            const kitchenMeta = kitchenStatusMeta[order.kitchen_status] || {};
             const lines = [
                 `Order ${order.code || order.id} (${order.channel || 'pos'})`,
                 order.customer_name || order.customer_phone ? `Customer: ${order.customer_name || 'Walk-in'}${order.customer_phone ? ' · ' + order.customer_phone : ''}` : '',
                 `Total: ₦${Number(order.total || 0).toLocaleString()} (${order.status})`,
-                `Dispatch: ${kitchenMeta.label || order.kitchen_status || 'pending'}${order.kitchen_eta_minutes ? ` · ETA ${order.kitchen_eta_minutes}m` : ''}`,
-                order.kitchen_note ? `Note: ${order.kitchen_note}` : '',
+                order.customer_name ? `Customer: ${order.customer_name || 'Walk-in'}${order.customer_phone ? ' · ' + order.customer_phone : ''}` : '',
                 items ? 'Items:\n' + items : '',
             ].filter(Boolean).join('\n');
             const url = `https://wa.me/?text=${encodeURIComponent(lines)}`;
@@ -1266,7 +1189,6 @@
                 },
                 discount: Number(posDiscount ? posDiscount.value : 0) || 0,
                 tax: Number(posTax ? posTax.value : 0) || 0,
-                send_to_kitchen: posSendKitchen ? posSendKitchen.checked : true,
             };
 
             await runAction(posCheckoutBtn, async () => {
