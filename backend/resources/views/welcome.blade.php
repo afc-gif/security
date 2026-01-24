@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ARTSCI | Enterprise Security & Power Solutions</title>
-  <link rel="icon" type="image/webp" href="Artsci Logo REAL 1.webp" />
-  <link rel="apple-touch-icon" href="Artsci Logo REAL 1.webp" />
+  <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
+  <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-logo">
-        <img src="{{ asset('Artsci Logo REAL 1.webp" alt="ARTSCI" class="logo-img">
+        <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI" class="logo-img">
         <span class="brand-name">ARTSCI</span>
       </div>
       <button class="nav-toggle" aria-label="Toggle menu">
@@ -38,10 +38,10 @@
   <!-- Hero Section - Security Focus -->
   <section class="hero">
     <div class="hero-media">
-      <img class="hero-slide-bg active" src="{{ asset('Desktop-012.webp" alt="High-tech security operations center" />
-      <img class="hero-slide-bg" src="{{ asset('Desktop-013.webp" alt="Central command station display wall" />
-      <img class="hero-slide-bg" src="{{ asset('Desktop-014.webp" alt="Enterprise surveillance workspace" />
-      <img class="hero-slide-bg" src="{{ asset('Desktop-015.webp" alt="Security network monitoring dashboard" />
+      <img class="hero-slide-bg active" src="{{ asset('Desktop-012.webp') }}" alt="High-tech security operations center" />
+      <img class="hero-slide-bg" src="{{ asset('Desktop-013.webp') }}" alt="Central command station display wall" />
+      <img class="hero-slide-bg" src="{{ asset('Desktop-014.webp') }}" alt="Enterprise surveillance workspace" />
+      <img class="hero-slide-bg" src="{{ asset('Desktop-015.webp') }}" alt="Security network monitoring dashboard" />
     </div>
   </section>
 
@@ -54,180 +54,76 @@
       </div>
       <div class="solutions-grid">
         <a href="solutions.html#cctv" class="solution-card solution-cctv">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/survelliance.webp" alt="CCTV and surveillance systems">
-            <h3>SURVEILLANCE</h3>
-            <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
-            <ul>
-              <li>4K IP cameras with AI detection</li>
-              <li>Cloud + local storage</li>
-              <li>Mobile app monitoring</li>
-              <li>Smart alerts & analytics</li>
-            </ul>
-          </div>
+          <div class="solution-icon">📹</div>
+          <h3>SURVEILLANCE</h3>
+          <p>HD/4K CCTV systems with AI detection, cloud archival, and 24/7 remote monitoring</p>
+          <ul>
+            <li>4K IP cameras with AI detection</li>
+            <li>Cloud + local storage</li>
+            <li>Mobile app monitoring</li>
+            <li>Smart alerts & analytics</li>
+          </ul>
         </a>
 
         <a href="solutions.html#solar" class="solution-card solution-power">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/solar power.jpg" alt="Solar power systems">
-            <h3>SOLAR POWER</h3>
-            <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
-            <ul>
-              <li>5-10kVA hybrid systems</li>
-              <li>Lithium battery storage</li>
-              <li>Solar panel integration</li>
-              <li>Energy monitoring</li>
-            </ul>
-          </div>
+          <div class="solution-icon">⚡</div>
+          <h3>SOLAR POWER</h3>
+          <p>Hybrid inverters with lithium batteries sized for enterprise loads</p>
+          <ul>
+            <li>5-10kVA hybrid systems</li>
+            <li>Lithium battery storage</li>
+            <li>Solar panel integration</li>
+            <li>Energy monitoring</li>
+          </ul>
         </a>
 
         <a href="solutions.html#access" class="solution-card solution-access">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/access-control.webp" alt="Access control solutions">
-            <h3>ACCESS CONTROL</h3>
-            <p>Smart gates, biometric locks, and visitor management systems</p>
-            <ul>
-              <li>Automatic gate systems</li>
-              <li>Biometric access control</li>
-              <li>RFID integration</li>
-              <li>Audit trails & reports</li>
-            </ul>
-          </div>
+          <div class="solution-icon">🔐</div>
+          <h3>ACCESS CONTROL</h3>
+          <p>Smart gates, biometric locks, and visitor management systems</p>
+          <ul>
+            <li>Automatic gate systems</li>
+            <li>Biometric access control</li>
+            <li>RFID integration</li>
+            <li>Audit trails & reports</li>
+          </ul>
         </a>
 
         <a href="solutions.html#perimeter" class="solution-card solution-fence">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/Perimeter Security.jpg" alt="Perimeter security and electric fencing">
-            <h3>PERIMETER SECURITY</h3>
-            <p>High-voltage electric fencing with integrated alarms and monitoring</p>
-            <ul>
-              <li>Multi-zone electric fence</li>
-              <li>Alarm integration</li>
-              <li>Battery backup 24/7</li>
-              <li>Compliance certified</li>
-            </ul>
-          </div>
+          <div class="solution-icon">🔌</div>
+          <h3>PERIMETER SECURITY</h3>
+          <p>High-voltage electric fencing with integrated alarms and monitoring</p>
+          <ul>
+            <li>Multi-zone electric fence</li>
+            <li>Alarm integration</li>
+            <li>Battery backup 24/7</li>
+            <li>Compliance certified</li>
+          </ul>
         </a>
 
         <a href="solutions.html#automation" class="solution-card solution-smart">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/Smart-Automation.png" alt="Smart automation systems">
-            <h3>SMART AUTOMATION</h3>
-            <p>Unified control for lighting, climate, security, and energy management</p>
-            <ul>
-              <li>Central dashboard control</li>
-              <li>Scheduling & automations</li>
-              <li>Mobile app integration</li>
-              <li>Voice control compatible</li>
-            </ul>
-          </div>
+          <div class="solution-icon">🏠</div>
+          <h3>SMART AUTOMATION</h3>
+          <p>Unified control for lighting, climate, security, and energy management</p>
+          <ul>
+            <li>Central dashboard control</li>
+            <li>Scheduling & automations</li>
+            <li>Mobile app integration</li>
+            <li>Voice control compatible</li>
+          </ul>
         </a>
 
         <a href="solutions.html#integration" class="solution-card solution-integration">
-          <span class="solution-bg" aria-hidden="true"></span>
-          <div class="solution-content">
-            <img class="solution-thumb" src="{{ asset('images/smart integration.jpg" alt="System integration and unified dashboards">
-            <h3>FULL INTEGRATION</h3>
-            <p>Complete enterprise stack with unified monitoring and control</p>
-            <ul>
-              <li>All systems integrated</li>
-              <li>Single dashboard</li>
-              <li>API access available</li>
-              <li>White-label options</li>
-            </ul>
-          </div>
+          <div class="solution-icon">🔗</div>
+          <h3>FULL INTEGRATION</h3>
+          <p>Complete enterprise stack with unified monitoring and control</p>
+          <ul>
+            <li>All systems integrated</li>
+            <li>Single dashboard</li>
+            <li>API access available</li>
+            <li>White-label options</li>
+          </ul>
         </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Live Equipment Strip -->
-  <section class="product-strip" aria-label="Equipment and installations">
-    <div class="container">
-      <div class="section-header compact">
-        <h2>What We Install</h2>
-        <p>Real hardware and deployment visuals — CCTV, access control, power systems, and perimeter security.</p>
-      </div>
-    </div>
-    <div class="strip-track">
-      <div class="strip-row">
-        <figure class="strip-item">
-          <img src="cctv.avif" alt="CCTV camera installation">
-          <figcaption>4K CCTV Installations</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="live.jpg" alt="Live monitoring control room">
-          <figcaption>24/7 Control Rooms</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="solar.webp" alt="Solar power system array">
-          <figcaption>Hybrid Solar Systems</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="{{ asset('Desktop-012.webp" alt="Security operations center">
-          <figcaption>Security Operations</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="{{ asset('Desktop-013.webp" alt="Command center wall screens">
-          <figcaption>Command Centers</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="{{ asset('Desktop-014.webp" alt="Enterprise monitoring workspace">
-          <figcaption>Enterprise Monitoring</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="{{ asset('Desktop-015.webp" alt="Surveillance network dashboard">
-          <figcaption>Network Dashboards</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="centurion.png" alt="Centurion access control systems">
-          <figcaption>Access Control</figcaption>
-        </figure>
-        <figure class="strip-item">
-          <img src="nemtek 1.png" alt="Nemtek electric fencing hardware">
-          <figcaption>Electric Fencing</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="cctv.avif" alt="">
-          <figcaption>4K CCTV Installations</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="live.jpg" alt="">
-          <figcaption>24/7 Control Rooms</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="solar.webp" alt="">
-          <figcaption>Hybrid Solar Systems</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="{{ asset('Desktop-012.webp" alt="">
-          <figcaption>Security Operations</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="{{ asset('Desktop-013.webp" alt="">
-          <figcaption>Command Centers</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="{{ asset('Desktop-014.webp" alt="">
-          <figcaption>Enterprise Monitoring</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="{{ asset('Desktop-015.webp" alt="">
-          <figcaption>Network Dashboards</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="centurion.png" alt="">
-          <figcaption>Access Control</figcaption>
-        </figure>
-        <figure class="strip-item" aria-hidden="true">
-          <img src="nemtek 1.png" alt="">
-          <figcaption>Electric Fencing</figcaption>
-        </figure>
       </div>
     </div>
   </section>
@@ -350,28 +246,28 @@
       </div>
       <div class="partners-grid">
         <div class="partner-logo">
-          <img src="dahua png.png" alt="DAHUA">
+          <img src="{{ asset('dahua png.png') }}" alt="DAHUA">
         </div>
         <div class="partner-logo">
-          <img src="hikvision png2.png" alt="HIKVISION">
+          <img src="{{ asset('hikvision png2.png') }}" alt="HIKVISION">
         </div>
         <div class="partner-logo">
-          <img src="amcrest 2.png" alt="AMCREST">
+          <img src="{{ asset('amcrest 2.png') }}" alt="AMCREST">
         </div>
         <div class="partner-logo">
-          <img src="centurion.png" alt="CENTURION">
+          <img src="{{ asset('centurion.png') }}" alt="CENTURION">
         </div>
         <div class="partner-logo">
-          <img src="felicity logo PNG2.png" alt="FELICITY">
+          <img src="{{ asset('felicity logo PNG2.png') }}" alt="FELICITY">
         </div>
         <div class="partner-logo">
-          <img src="deye 1.png" alt="DEYE">
+          <img src="{{ asset('deye 1.png') }}" alt="DEYE">
         </div>
         <div class="partner-logo">
-          <img src="growatt 1.png" alt="GROWATT">
+          <img src="{{ asset('growatt 1.png') }}" alt="GROWATT">
         </div>
         <div class="partner-logo">
-          <img src="nemtek 1.png" alt="NEMTEK">
+          <img src="{{ asset('nemtek 1.png') }}" alt="NEMTEK">
         </div>
       </div>
     </div>
@@ -382,7 +278,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-logo-section">
-          <img src="{{ asset('Artsci Logo REAL 1.webp" alt="ARTSCI Logo" class="footer-logo">
+          <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="footer-logo">
           <div>
             <h3>ARTSCI</h3>
             <p>Enterprise Security & Power Solutions Since 2015</p>
