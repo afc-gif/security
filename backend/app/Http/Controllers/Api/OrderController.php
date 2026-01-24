@@ -61,10 +61,7 @@ class OrderController extends Controller
             'payment.reference' => 'nullable|string|max:255',
             'discount' => 'nullable|numeric|min:0',
             'tax' => 'nullable|numeric|min:0',
-            'send_to_kitchen' => 'sometimes|boolean',
             'note' => 'nullable|string|max:500',
-            'service' => 'nullable|string|max:100',
-            'time' => 'nullable|string|max:100',
         ]);
 
         return DB::transaction(function () use ($data, $request) {
@@ -104,21 +101,6 @@ class OrderController extends Controller
             $tax = $data['tax'] ?? 0;
             $total = max(0, $subtotal + $tax - $discount);
             $hasPayment = ! empty($data['payment']);
-            $sendToKitchen = array_key_exists('send_to_kitchen', $data)
-                ? (bool) $data['send_to_kitchen']
-                : true;
-
-            $kitchenNoteParts = [];
-            if (! empty($data['service'])) {
-                $kitchenNoteParts[] = 'Service: ' . $data['service'];
-            }
-            if (! empty($data['time'])) {
-                $kitchenNoteParts[] = 'Time: ' . $data['time'];
-            }
-            if (! empty($data['note'])) {
-                $kitchenNoteParts[] = 'Note: ' . $data['note'];
-            }
-            $kitchenNote = $kitchenNoteParts ? implode(' | ', $kitchenNoteParts) : null;
 
             $order = Order::create([
                 'code' => $this->generateOrderCode(),
@@ -133,9 +115,6 @@ class OrderController extends Controller
                 'status' => $hasPayment ? 'paid' : 'pending',
                 'payment_method' => $hasPayment ? ($data['payment']['method'] ?? null) : null,
                 'paid_at' => $hasPayment ? now() : null,
-                'kitchen_status' => $sendToKitchen ? 'queued' : 'pending',
-                'kitchen_sent_at' => $sendToKitchen ? now() : null,
-                'kitchen_note' => $kitchenNote,
                 'notes' => $data['note'] ?? null,
             ]);
 
@@ -147,70 +126,13 @@ class OrderController extends Controller
         });
     }
 
-    public function sendToKitchen(Request $request, Order $order)
-    {
-        $this->ensureStaff();
-
-        $data = $request->validate([
-            'note' => 'nullable|string|max:500',
-            'eta_minutes' => 'nullable|integer|min:1|max:240',
-        ]);
-
-        $etaAt = $this->resolveEta($data['eta_minutes'] ?? null);
-
-        $order->fill([
-            'kitchen_status' => 'queued',
-            'kitchen_sent_at' => $order->kitchen_sent_at ?? now(),
-            'kitchen_note' => $data['note'] ?? null,
-            'kitchen_eta_minutes' => $data['eta_minutes'] ?? null,
-            'kitchen_eta_at' => $etaAt,
-        ])->save();
-
-        return $this->transformOrder($order->fresh(['items.solutionItem', 'user']));
-    }
-
-    public function updateKitchenStatus(Request $request, Order $order)
-    {
-        $this->ensureStaff();
-
-        $data = $request->validate([
-            'kitchen_status' => 'required|string|in:pending,queued,prepping,ready,served',
-            'eta_minutes' => 'nullable|integer|min:1|max:240',
-            'note' => 'nullable|string|max:500',
-        ]);
-
-        $etaAt = $this->resolveEta($data['eta_minutes'] ?? $order->kitchen_eta_minutes);
-
-        $order->fill([
-            'kitchen_status' => $data['kitchen_status'],
-            'kitchen_eta_minutes' => $data['eta_minutes'] ?? $order->kitchen_eta_minutes,
-            'kitchen_eta_at' => $etaAt,
-            'kitchen_note' => $data['note'] ?? $order->kitchen_note,
-            'kitchen_sent_at' => $order->kitchen_sent_at ?? now(),
-        ])->save();
-
-        return $this->transformOrder($order->fresh(['items.solutionItem', 'user']));
-    }
-
     public function approve(Request $request, Order $order)
     {
         $this->ensureStaff();
 
-        $data = $request->validate([
-            'note' => 'nullable|string|max:500',
-            'send_to_kitchen' => 'sometimes|boolean',
-        ]);
-
-        $sendToKitchen = array_key_exists('send_to_kitchen', $data)
-            ? (bool) $data['send_to_kitchen']
-            : true;
-
         $order->fill([
             'status' => 'paid',
             'paid_at' => $order->paid_at ?? now(),
-            'kitchen_status' => $sendToKitchen ? 'queued' : 'pending',
-            'kitchen_sent_at' => $sendToKitchen ? ($order->kitchen_sent_at ?? now()) : $order->kitchen_sent_at,
-            'kitchen_note' => $data['note'] ?? $order->kitchen_note,
         ])->save();
 
         return $this->transformOrder($order->fresh(['items.solutionItem', 'user']));
@@ -310,15 +232,6 @@ class OrderController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv',
         ]);
-    }
-
-    protected function resolveEta(?int $minutes): ?Carbon
-    {
-        if (! $minutes) {
-            return null;
-        }
-
-        return Carbon::now()->addMinutes($minutes);
     }
 
     private function ensureAdmin(): void

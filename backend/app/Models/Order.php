@@ -22,11 +22,6 @@ class Order extends Model
         'status',
         'payment_method',
         'paid_at',
-        'kitchen_status',
-        'kitchen_note',
-        'kitchen_eta_minutes',
-        'kitchen_eta_at',
-        'kitchen_sent_at',
         'notes',
     ];
 
@@ -36,8 +31,6 @@ class Order extends Model
         'tax' => 'decimal:2',
         'discount' => 'decimal:2',
         'paid_at' => 'datetime',
-        'kitchen_eta_at' => 'datetime',
-        'kitchen_sent_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

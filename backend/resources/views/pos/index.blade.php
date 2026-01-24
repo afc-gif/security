@@ -99,7 +99,6 @@
                     <div id="posScanStatus" class="muted status">Ready to scan.</div>
                     <div id="posSuggestions" style="margin-top:6px;"></div>
                     <div id="posLookupResult" style="margin-top:10px;"></div>
-                    <div id="posKitchenFeed" style="margin-top:10px; display:grid; gap:6px;"></div>
                     <div id="posSavedCustomers" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
                 </div>
                 <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
@@ -143,14 +142,6 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                <div style="border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff;">
-                    <label>Dispatch handoff</label>
-                    <label class="pill" style="margin-top:6px; display:flex; gap:8px; align-items:center; border-radius:12px; padding:8px 10px;">
-                        <input id="posSendKitchen" type="checkbox" checked style="width:16px; height:16px; accent-color: var(--brand-dark);">
-                        <span class="muted" style="color:var(--brand-dark);">Send to dispatch immediately</span>
-                    </label>
-                    <div class="muted" style="margin-top:6px;">Uncheck if you need to confirm first.</div>
-                </div>
             </div>
 
             <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
@@ -190,8 +181,6 @@
         const posParkBtn = document.getElementById('posParkBtn');
         const posParkedList = document.getElementById('posParkedList');
         const posSavedCustomers = document.getElementById('posSavedCustomers');
-        const posSendKitchen = document.getElementById('posSendKitchen');
-        const posKitchenFeed = document.getElementById('posKitchenFeed');
         const barcodeCache = {};
         let menuCacheReady = false;
         let menuCache = [];
@@ -201,7 +190,6 @@
         let lastLookup = null;
         let scanDebounce = null;
         let lookupInFlight = false;
-        let menuPoller = null;
         let ordersPoller = null;
         let posOrders = [];
 
@@ -276,39 +264,12 @@
             posScanStatus.style.color = tone === 'error' ? '#b91c1c' : 'rgba(0,0,0,0.7)';
         }
 
-        const renderPosOrders = () => {
-            if (!posKitchenFeed) return;
-            const active = posOrders
-                .filter(o => (o.kitchen_status || 'queued') !== 'served')
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 5);
-            if (!active.length) {
-                posKitchenFeed.innerHTML = '<div class="muted" style="font-size:12px;">No dispatch updates yet.</div>';
-                return;
-            }
-            posKitchenFeed.innerHTML = active.map(o => {
-                const eta = o.kitchen_eta_minutes
-                    ? `${o.kitchen_eta_minutes}m`
-                    : (o.kitchen_eta_at ? new Date(o.kitchen_eta_at).toLocaleTimeString() : 'ETA pending');
-                return `
-                    <div style="border:1px solid var(--brand-border); border-radius:10px; padding:8px; background:#fff;">
-                        <div style="display:flex; justify-content:space-between; gap:6px; align-items:center;">
-                            <strong>${o.code || 'Order'}</strong>
-                            <span class="pill">${o.kitchen_status || 'queued'}</span>
-                        </div>
-                        <div class="muted" style="font-size:12px;">ETA: ${eta}</div>
-                    </div>
-                `;
-            }).join('');
-        };
-
         const loadPosOrders = async () => {
             try {
                 const res = await apiFetch('/api/orders?all=1');
                 if (!res.ok) return;
                 const data = await res.json();
                 posOrders = Array.isArray(data) ? data : (data.data || []);
-                renderPosOrders();
             } catch (e) {
                 console.warn('Could not load orders', e);
             }
@@ -630,7 +591,6 @@
                 },
                 discount: Number(posDiscount ? posDiscount.value : 0) || 0,
                 tax: Number(posTax ? posTax.value : 0) || 0,
-                send_to_kitchen: posSendKitchen ? posSendKitchen.checked : true,
             };
 
             const resetBtn = () => {
@@ -840,10 +800,6 @@
         loadMenuCacheFromStorage();
         if (posBarcodeInput) posBarcodeInput.focus();
         prefetchMenuCache().catch(() => {});
-        menuPoller = createPoller(prefetchMenuCache, 20000, {
-            onError: (err) => console.warn('Menu refresh failed', err),
-        });
-        menuPoller.start();
         ordersPoller = createPoller(loadPosOrders, 5000, {
             onError: (err) => console.warn('Orders refresh failed', err),
         });

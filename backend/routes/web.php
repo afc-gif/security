@@ -61,8 +61,6 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::get('/orders', [ApiOrderController::class, 'index']);
     Route::get('/orders/{order}', [ApiOrderController::class, 'show']);
     Route::post('/orders', [ApiOrderController::class, 'store']);
-    Route::post('/orders/{order}/send-to-kitchen', [ApiOrderController::class, 'sendToKitchen']);
-    Route::post('/orders/{order}/kitchen-status', [ApiOrderController::class, 'updateKitchenStatus']);
     Route::post('/orders/{order}/approve', [ApiOrderController::class, 'approve']);
 });
 
