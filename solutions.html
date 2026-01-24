@@ -1128,6 +1128,7 @@
     let isLoadingProducts = false;
     let navScrollHandler = null;
     const POLL_INTERVAL = 5000; // Poll every 5 seconds
+    let cachedSignature = '';
 
     // Load cart from localStorage
     function loadCart() {
@@ -1166,6 +1167,30 @@
       return `${window.location.origin}/api/pos/products`;
     }
 
+    function getProductsSignature(products) {
+      return products
+        .map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          stock: product.stock,
+          image: product.image,
+          solution: product.solution?.name || ''
+        }))
+        .sort((a, b) => (a.id || 0) - (b.id || 0))
+        .map(product => [
+          product.id,
+          product.name,
+          product.description,
+          product.price,
+          product.stock,
+          product.image,
+          product.solution
+        ].join('|'))
+        .join('||');
+    }
+
     async function loadProducts() {
       if (isLoadingProducts) {
         return;
@@ -1179,11 +1204,10 @@
         }
         const payload = await response.json();
         const products = Array.isArray(payload) ? payload : (payload?.data || []);
+        const signature = getProductsSignature(products);
 
-        // Check if products have changed
-        const productsChanged = JSON.stringify(products) !== JSON.stringify(cachedProducts);
-        
-        if (productsChanged) {
+        if (signature !== cachedSignature) {
+          cachedSignature = signature;
           cachedProducts = products;
           updateProductGrids(products);
         }
