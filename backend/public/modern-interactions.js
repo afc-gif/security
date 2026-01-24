@@ -17,8 +17,6 @@ if (heroSlides.length > 0) {
     slide.classList.remove('active', 'prev', 'next');
     if (index === 0) {
       slide.classList.add('active');
-    } else {
-      slide.classList.add('next');
     }
   });
 
@@ -26,17 +24,8 @@ if (heroSlides.length > 0) {
     const nextSlide = (currentSlide + 1) % heroSlides.length;
 
     heroSlides[currentSlide].classList.remove('active');
-    heroSlides[currentSlide].classList.add('prev');
-
     heroSlides[nextSlide].classList.remove('prev', 'next');
     heroSlides[nextSlide].classList.add('active');
-
-    heroSlides.forEach((slide, index) => {
-      if (index !== nextSlide && index !== currentSlide) {
-        slide.classList.remove('active', 'prev');
-        slide.classList.add('next');
-      }
-    });
 
     currentSlide = nextSlide;
   }, 4000); // Change slide every 4 seconds
@@ -264,28 +253,61 @@ if (hero && securityGrid) {
 }
 
 // ============================================
+// ============================================
 // Solution Card Hover Effects
 // ============================================
 
 const solutionCards = document.querySelectorAll('.solution-card');
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
 solutionCards.forEach((card, index) => {
   card.addEventListener('mouseenter', () => {
-    // Add stagger effect
+    // Disable stagger on mobile
+    if (isMobile) return;
+    
+    // Add smooth stagger effect with easing
     solutionCards.forEach((otherCard, otherIndex) => {
       if (otherIndex !== index) {
-        otherCard.style.opacity = '0.6';
-        otherCard.style.transform = 'scale(0.95)';
+        const delay = Math.abs(otherIndex - index) * 30;
+        setTimeout(() => {
+          otherCard.style.opacity = '0.5';
+          otherCard.style.transform = 'scale(0.92) translateY(8px)';
+          otherCard.style.filter = 'blur(0.5px)';
+        }, delay);
       }
     });
   });
 
   card.addEventListener('mouseleave', () => {
+    if (isMobile) return;
+    
     solutionCards.forEach((otherCard) => {
       otherCard.style.opacity = '1';
-      otherCard.style.transform = 'scale(1)';
+      otherCard.style.transform = 'scale(1) translateY(0)';
+      otherCard.style.filter = 'blur(0)';
     });
   });
+
+  // Add tilt effect on mouse move (desktop only)
+  if (!isMobile) {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = (y - centerY) * 0.02;
+      const rotateY = (centerX - x) * 0.02;
+      
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+    });
+  }
 });
 
 // ============================================
@@ -415,6 +437,12 @@ if ('IntersectionObserver' in window) {
 // ============================================
 // Performance Monitoring (Dev Tools)
 // ============================================
+
+// Debug: Track any reload/refresh attempts
+window.addEventListener('beforeunload', () => {
+  console.warn('⚠️ Page is about to reload/refresh');
+  console.trace();
+});
 
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
   console.log('%cARTSCI Security Platform', 'font-size: 20px; font-weight: bold; color: #03A9F4;');
