@@ -195,7 +195,7 @@ class MenuItemController extends Controller
 
     private function storeImage(Request $request): string
     {
-        $path = $request->file('image')->store('solutions', 'public');
+        $path = $request->file('image')->store('solution-items', 'public');
 
         return $path;
     }
