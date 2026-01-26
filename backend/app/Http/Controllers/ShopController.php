@@ -129,7 +129,7 @@ class ShopController extends Controller
             return redirect('/login');
         }
 
-        $orders = Auth::user()->orders()->with('items.solutionItem')->latest()->paginate(10);
+        $orders = Order::where('user_id', Auth::id())->with('items.solutionItem')->latest()->paginate(10);
         return view('shop.orders', compact('orders'));
     }
 

@@ -213,7 +213,7 @@ class MenuItemController extends Controller
             'stock' => $item->stock,
             'is_active' => (bool) $item->active,
             'sort_order' => $item->sort_order,
-            'image_url' => $item->image ? Storage::disk('public')->url($item->image) : null,
+            'image_url' => $item->image ? Storage::url($item->image) : null,
             'category' => $item->solution ? [
                 'id' => $item->solution->id,
                 'name' => $item->solution->name,
