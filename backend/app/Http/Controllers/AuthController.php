@@ -76,7 +76,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => null, // Will be assigned by admin
+            // role will use database default value
             'status' => 'pending', // Waiting for approval
         ]);
 

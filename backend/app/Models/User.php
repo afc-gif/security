@@ -29,6 +29,18 @@ class User extends Model implements AuthenticatableContract
         'updated_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->role)) {
+                $user->role = 'user';
+            }
+            if (empty($user->status)) {
+                $user->status = 'approved';
+            }
+        });
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);
