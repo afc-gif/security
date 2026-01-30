@@ -282,7 +282,7 @@
                 return;
             }
             posSuggestions.innerHTML = items.map(item => `
-                <button class="btn-ghost" data-suggest-id="${item.id}" style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
+                <button class="btn-ghost" data-suggest-id="${item.id}" data-suggest-item='${JSON.stringify(item)}' style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
                     ${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span>
                 </button>
             `).join('');
@@ -327,9 +327,13 @@
             posSuggestions.addEventListener('click', (e) => {
                 const btn = e.target.closest('[data-suggest-id]');
                 if (!btn) return;
-                const id = Number(btn.getAttribute('data-suggest-id'));
-                const item = menuCache.find(i => i.id === id);
-                if (!item) return;
+                const itemData = btn.getAttribute('data-suggest-item');
+                let item;
+                try {
+                    item = JSON.parse(itemData);
+                } catch {
+                    return;
+                }
                 renderSuggestions([]);
                 showLookupResult(item);
                 addToPosCart(item);
