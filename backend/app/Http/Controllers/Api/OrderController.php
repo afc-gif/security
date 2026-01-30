@@ -293,10 +293,6 @@ class OrderController extends Controller
             'tax' => $order->tax,
             'discount' => $order->discount,
             'total' => $order->total_amount,
-            'kitchen_status' => $order->kitchen_status,
-            'kitchen_eta_minutes' => $order->kitchen_eta_minutes,
-            'kitchen_eta_at' => $order->kitchen_eta_at,
-            'kitchen_note' => $order->kitchen_note,
             'created_at' => $order->created_at,
             'creator' => $order->user ? [
                 'id' => $order->user->id,

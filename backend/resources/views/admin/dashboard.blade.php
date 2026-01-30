@@ -323,9 +323,6 @@
                                         <th>Status</th>
                                         <th>Total</th>
                                         <th>Channel</th>
-                                        <th>Kitchen</th>
-                                        <th>ETA</th>
-                                        <th>Action</th>
                                         <th>When</th>
                                     </tr>
                                 </thead>
@@ -742,18 +739,6 @@
             });
             menuList.innerHTML = cards.join('');
             statItems.textContent = items.length;
-        }
-
-        function renderKitchenStatus(status) {
-            const meta = kitchenStatusMeta[status] ?? { label: status || 'pending', color: '#0A1428', bg: 'rgba(10,20,40,0.12)' };
-            return `<span class="pill" style="background:${meta.bg}; color:${meta.color}; border-color:${meta.bg};">${meta.label}</span>`;
-        }
-
-        function renderEta(order) {
-            if (!order.kitchen_eta_minutes && !order.kitchen_eta_at) return '<span class="muted">—</span>';
-            const eta = order.kitchen_eta_minutes ? `${order.kitchen_eta_minutes}m` : '';
-            const at = order.kitchen_eta_at ? ` · ${new Date(order.kitchen_eta_at).toLocaleTimeString()}` : '';
-            return `<span class="pill" style="background:#fff; border-color:var(--brand-border);">${eta}${at}</span>`;
         }
 
         if (menuList) {
