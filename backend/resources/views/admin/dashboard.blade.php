@@ -1052,12 +1052,6 @@
 
             if (barcodeCache[barcode]) {
                 const item = barcodeCache[barcode];
-                if (item.is_sold_out || item.stock === 0) {
-                    const msg = 'Item found but currently marked sold out.';
-                    showLookupError(msg);
-                    setPosStatus(msg, 'error');
-                    return;
-                }
                 showLookupResult(item);
                 if (addToCartOnSuccess) {
                     addToPosCart(item);
@@ -1080,9 +1074,7 @@
                 if (!res.ok) {
                     const msg = res.status === 404
                         ? 'No item found for this barcode.'
-                        : res.status === 409
-                            ? 'Item found but currently marked sold out.'
-                            : 'Could not look up this barcode.';
+                        : 'Could not look up this barcode.';
                     showLookupError(msg);
                     setPosStatus(msg, 'error');
                     return;
