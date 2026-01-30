@@ -302,13 +302,17 @@
             } catch { /* ignore */ }
         };
 
-        const findNameMatches = (term) => {
+        const findNameMatches = async (term) => {
             if (!term || term.length < 2) return [];
-            const t = term.toLowerCase();
-            const source = menuCache.length ? menuCache : Object.values(barcodeCache);
-            return source.filter(item =>
-                (item.name || '').toLowerCase().includes(t) && item.is_sold_out !== true
-            ).slice(0, 5);
+            try {
+                const res = await apiFetch(`/api/menu-items/search?q=${encodeURIComponent(term)}`);
+                if (!res.ok) return [];
+                const items = await res.json();
+                return Array.isArray(items) ? items.slice(0, 5) : [];
+            } catch (e) {
+                console.warn('Name search failed', e);
+                return [];
+            }
         };
 
         const ensureMenuCache = async () => {
@@ -459,8 +463,7 @@
             const isName = /^[a-zA-Z\s]+$/.test(barcode);
 
             if (isName) {
-                await ensureMenuCache();
-                const matches = findNameMatches(barcode);
+                const matches = await findNameMatches(barcode);
                 renderSuggestions(matches);
                 if (!matches.length) {
                     showLookupError('No item matches that name.');
@@ -485,12 +488,6 @@
 
             if (barcodeCache[barcode]) {
                 const item = barcodeCache[barcode];
-                if (item.is_sold_out) {
-                    const msg = 'Item found but currently marked sold out.';
-                    showLookupError(msg);
-                    setPosStatus(msg, 'error');
-                    return;
-                }
                 showLookupResult(item);
                 if (addToCartOnSuccess) {
                     addToPosCart(item);
@@ -513,9 +510,7 @@
                 if (!res.ok) {
                     const msg = res.status === 404
                         ? 'No item found for this barcode.'
-                        : res.status === 409
-                            ? 'Item found but currently marked sold out.'
-                            : 'Could not look up this barcode.';
+                        : 'Could not look up this barcode.';
                     showLookupError(msg);
                     setPosStatus(msg, 'error');
                     return;
@@ -561,8 +556,7 @@
             }
             const isName = /^[a-zA-Z\s]+$/.test(code);
             if (isName) {
-                await ensureMenuCache();
-                const matches = findNameMatches(code);
+                const matches = await findNameMatches(code);
                 renderSuggestions(matches);
                 setPosStatus(matches.length ? 'Select an item or press Enter to add.' : 'No match found.');
                 return;

@@ -157,11 +157,31 @@ class MenuItemController extends Controller
             return response()->json(['message' => 'Item is inactive'], 404);
         }
 
-        if ($item->is_sold_out) {
-            return response()->json(['message' => 'Item is sold out'], 409);
+        return response()->json($this->transformItem($item));
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->validate([
+            'q' => 'required|string|min:2',
+        ]);
+
+        try {
+            $items = SolutionItem::with('solution')
+                ->where('active', true)
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'like', '%' . $query['q'] . '%')
+                      ->orWhere('barcode', 'like', '%' . $query['q'] . '%');
+                })
+                ->orderBy('name')
+                ->limit(10)
+                ->get();
+        } catch (QueryException $e) {
+            report($e);
+            return response()->json(['message' => 'Search unavailable (database not ready).'], 503);
         }
 
-        return response()->json($this->transformItem($item));
+        return response()->json($items->map(fn (SolutionItem $item) => $this->transformItem($item)));
     }
 
     public function toggleSoldOut(SolutionItem $menuItem)

@@ -35,6 +35,7 @@ Route::prefix('api')->group(function () {
     Route::get('/categories', [ApiCategoryController::class, 'index']);
     Route::get('/menu-items', [ApiMenuItemController::class, 'index']);
     Route::get('/menu-items/lookup', [ApiMenuItemController::class, 'lookup']);
+    Route::get('/menu-items/search', [ApiMenuItemController::class, 'search']);
 });
 
 Route::middleware(['auth', 'admin'])->prefix('api')->group(function () {
