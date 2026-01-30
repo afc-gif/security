@@ -76,12 +76,6 @@ class OrderController extends Controller
                     ]);
                 }
 
-                if ($menuItem->is_sold_out) {
-                    throw ValidationException::withMessages([
-                        'items' => ["{$menuItem->name} is sold out."],
-                    ]);
-                }
-
                 $price = (float) $menuItem->price;
                 $lineTotal = $price * $itemInput['quantity'];
 
@@ -120,6 +114,25 @@ class OrderController extends Controller
 
             foreach ($itemsData as $item) {
                 $order->items()->create($item);
+
+                // Track stock transaction and create alerts
+                $solutionItem = \App\Models\SolutionItem::find($item['solution_item_id']);
+                if ($solutionItem) {
+                    $solutionItem->recordStockTransaction(
+                        -$item['quantity'],
+                        'sale',
+                        'order',
+                        $order->id,
+                        $request->user()?->id,
+                        "Sale in order #{$order->code}"
+                    );
+
+                    // Decrement stock
+                    $solutionItem->decrement('stock', $item['quantity']);
+                    
+                    // Check and create alerts if needed
+                    $solutionItem->checkAndCreateStockAlert();
+                }
             }
 
             return $this->transformOrder($order->load(['items.solutionItem', 'user']));

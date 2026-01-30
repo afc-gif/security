@@ -45,4 +45,62 @@ class SolutionItem extends Model
     {
         return $this->belongsTo(Solution::class);
     }
+
+    public function stockTransactions()
+    {
+        return $this->hasMany(StockTransaction::class);
+    }
+
+    public function stockAlerts()
+    {
+        return $this->hasMany(StockAlert::class);
+    }
+
+    public function recordStockTransaction($quantity, $type, $referenceType = null, $referenceId = null, $userId = null, $notes = null)
+    {
+        return StockTransaction::create([
+            'solution_item_id' => $this->id,
+            'quantity_changed' => $quantity,
+            'transaction_type' => $type,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'user_id' => $userId,
+            'notes' => $notes,
+        ]);
+    }
+
+    public function checkAndCreateStockAlert()
+    {
+        if ($this->stock === 0) {
+            // Check if alert already exists and is not acknowledged
+            $existingAlert = $this->stockAlerts()
+                ->where('alert_type', 'out_of_stock')
+                ->whereNull('acknowledged_at')
+                ->first();
+
+            if (!$existingAlert) {
+                StockAlert::create([
+                    'solution_item_id' => $this->id,
+                    'alert_type' => 'out_of_stock',
+                    'threshold' => 0,
+                    'current_stock' => 0,
+                ]);
+            }
+        } elseif ($this->stock <= 5) {
+            // Low stock alert
+            $existingAlert = $this->stockAlerts()
+                ->where('alert_type', 'low_stock')
+                ->whereNull('acknowledged_at')
+                ->first();
+
+            if (!$existingAlert) {
+                StockAlert::create([
+                    'solution_item_id' => $this->id,
+                    'alert_type' => 'low_stock',
+                    'threshold' => 5,
+                    'current_stock' => $this->stock,
+                ]);
+            }
+        }
+    }
 }

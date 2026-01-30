@@ -63,6 +63,11 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::get('/orders/{order}', [ApiOrderController::class, 'show']);
     Route::post('/orders', [ApiOrderController::class, 'store']);
     Route::post('/orders/{order}/approve', [ApiOrderController::class, 'approve']);
+
+    // Stock alerts endpoints (accessible to authenticated users)
+    Route::get('/stock-alerts', [App\Http\Controllers\Api\StockAlertController::class, 'getActiveAlerts']);
+    Route::post('/stock-alerts/{alert}/acknowledge', [App\Http\Controllers\Api\StockAlertController::class, 'acknowledge']);
+    Route::get('/stock-status/{item}', [App\Http\Controllers\Api\StockAlertController::class, 'getStockStatus']);
 });
 
 // Admin routes (admin only) - Dashboard, Products & Barcodes
