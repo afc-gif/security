@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class SolutionItem extends Model
 {
@@ -28,6 +29,28 @@ class SolutionItem extends Model
             }
             if ($item->stock === null) {
                 $item->stock = 0;
+            }
+        });
+
+        static::created(function (SolutionItem $item) {
+            // Check and create stock alerts after item is created
+            $item->checkAndCreateStockAlert();
+            // Update is_sold_out flag
+            if ($item->stock === 0) {
+                $item->update(['is_sold_out' => true]);
+            }
+        });
+
+        static::updated(function (SolutionItem $item) {
+            // Check and create stock alerts when stock is updated
+            if ($item->isDirty('stock')) {
+                $item->checkAndCreateStockAlert();
+                // Update is_sold_out flag
+                if ($item->stock === 0) {
+                    $item->update(['is_sold_out' => true]);
+                } elseif ($item->stock > 0 && $item->is_sold_out) {
+                    $item->update(['is_sold_out' => false]);
+                }
             }
         });
     }
@@ -71,36 +94,44 @@ class SolutionItem extends Model
 
     public function checkAndCreateStockAlert()
     {
-        if ($this->stock === 0) {
-            // Check if alert already exists and is not acknowledged
-            $existingAlert = $this->stockAlerts()
-                ->where('alert_type', 'out_of_stock')
-                ->whereNull('acknowledged_at')
-                ->first();
+        try {
+            if ($this->stock === 0) {
+                // Check if alert already exists and is not acknowledged
+                $existingAlert = $this->stockAlerts()
+                    ->where('alert_type', 'out_of_stock')
+                    ->whereNull('acknowledged_at')
+                    ->first();
 
-            if (!$existingAlert) {
-                StockAlert::create([
-                    'solution_item_id' => $this->id,
-                    'alert_type' => 'out_of_stock',
-                    'threshold' => 0,
-                    'current_stock' => 0,
-                ]);
-            }
-        } elseif ($this->stock <= 5) {
-            // Low stock alert
-            $existingAlert = $this->stockAlerts()
-                ->where('alert_type', 'low_stock')
-                ->whereNull('acknowledged_at')
-                ->first();
+                if (!$existingAlert) {
+                    StockAlert::create([
+                        'solution_item_id' => $this->id,
+                        'alert_type' => 'out_of_stock',
+                        'threshold' => 0,
+                        'current_stock' => 0,
+                    ]);
+                }
+            } elseif ($this->stock <= 2 && $this->stock > 0) {
+                // Low stock alert for stock 1-2
+                $existingAlert = $this->stockAlerts()
+                    ->where('alert_type', 'low_stock')
+                    ->where('threshold', 2)
+                    ->whereNull('acknowledged_at')
+                    ->first();
 
-            if (!$existingAlert) {
-                StockAlert::create([
-                    'solution_item_id' => $this->id,
-                    'alert_type' => 'low_stock',
-                    'threshold' => 5,
-                    'current_stock' => $this->stock,
-                ]);
+                if (!$existingAlert) {
+                    StockAlert::create([
+                        'solution_item_id' => $this->id,
+                        'alert_type' => 'low_stock',
+                        'threshold' => 2,
+                        'current_stock' => $this->stock,
+                    ]);
+                }
             }
+        } catch (\Throwable $e) {
+            Log::error("Error in checkAndCreateStockAlert: " . $e->getMessage(), [
+                'item_id' => $this->id,
+                'exception' => $e,
+            ]);
         }
     }
 }

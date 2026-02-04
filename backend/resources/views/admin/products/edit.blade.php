@@ -53,8 +53,10 @@
                 </div>
 
                 
-                    <label for="stock">Stock *</label>
-                    <input type="number" id="stock" name="stock" value="{{ old('stock', $product->stock) }}" required>
+                    <label for="stock">Stock Quantity *</label>
+                    <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', $product->stock) }}" required placeholder="Enter stock quantity"
+                        style="border: 2px solid #4ade80; background-color: #f0fdf4;">
+                    <span style="color: #16a34a; font-size: 12px; font-weight: bold; display: block; margin-top: 4px;">⭐ Stock field - Update inventory here</span>
                     @error('stock')<span class="error-text">{{ $message }}</span>@enderror
                 </div>
 

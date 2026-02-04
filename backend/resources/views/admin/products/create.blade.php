@@ -50,9 +50,11 @@
                     </div>
 
                     <div>
-                        <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
-                        <input type="number" id="stock" name="stock" value="{{ old('stock', 0) }}" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('stock') border-red-500 @enderror">
+                        <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
+                        <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', 0) }}" required placeholder="Enter stock quantity"
+                            class="w-full px-4 py-2 border-2 border-green-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 @error('stock') border-red-500 @enderror"
+                            style="background-color: #f0fdf4;">
+                        <span class="text-green-600 text-xs mt-1 block font-semibold">⭐ Stock field - required for inventory</span>
                         @error('stock')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                     </div>
                 </div>
