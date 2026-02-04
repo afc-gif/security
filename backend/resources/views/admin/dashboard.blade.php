@@ -250,6 +250,8 @@
                             <textarea name="description" rows="2" placeholder="Optional"></textarea>
                             <label>Price (NGN)</label>
                             <input name="price" type="number" step="0.01" min="0" required />
+                            <label>Stock Quantity</label>
+                            <input name="stock" type="number" min="0" value="0" />
                             <label>Category</label>
                             <select name="category_id" id="menuCategorySelect" required>
                                 <option value="" disabled selected>Select category</option>
@@ -718,6 +720,7 @@
                                         <span class="menu-pill">₦${Number(item.price).toLocaleString()}</span>
                                         <span class="menu-pill">${item.category && item.category.name ? item.category.name : 'Uncategorized'}</span>
                                         <span class="menu-pill ${item.is_sold_out ? 'sold' : 'active'}">${item.is_sold_out ? 'Sold Out' : 'Available'}</span>
+                                        <span class="menu-pill">${item.stock === 0 ? 'Sold Out' : `Stock: ${item.stock}`}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1495,6 +1498,12 @@
                 alert('Invalid price');
                 return;
             }
+            const stockInput = prompt('Stock Quantity', item.stock ?? 0);
+            const stockValue = stockInput === null || stockInput === '' ? 0 : Number(stockInput);
+            if (Number.isNaN(stockValue) || stockValue < 0) {
+                alert('Invalid stock quantity');
+                return;
+            }
             const descriptionPrompt = prompt('Description', item.description || '');
             const description = descriptionPrompt === null ? '' : descriptionPrompt;
             const category_id = prompt('Category ID (leave blank to unset)', item.category_id || '') || null;
@@ -1505,6 +1514,7 @@
                     body: JSON.stringify({
                         name,
                         price,
+                        stock: stockValue,
                         description: description || null,
                         category_id: category_id || null,
                     }),
