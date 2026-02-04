@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\Solution;
 use App\Models\SolutionItem;
+use App\Models\StockAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -104,6 +105,11 @@ class AdminController extends Controller
                 $this->syncProductToSolutionItem($product);
             });
 
+            // Check stock level and create alerts if needed
+            if ($product) {
+                $this->checkAndCreateStockAlert($product->stock, $product->id);
+            }
+
             return redirect('/admin/products')->with('success', 'Product created successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning("Product validation failed", ['errors' => $e->errors()]);
@@ -131,6 +137,8 @@ class AdminController extends Controller
             return $schemaError;
         }
         try {
+            $oldStock = $product->stock;
+            
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -174,6 +182,11 @@ class AdminController extends Controller
                 Log::info("Product updated", ['product_id' => $product->id]);
                 $this->syncProductToSolutionItem($product);
             });
+
+            // Check if stock was changed and create alerts if needed
+            if ($oldStock != $validated['stock']) {
+                $this->checkAndCreateStockAlert($validated['stock'], $product->id);
+            }
 
             return redirect('/admin/products')->with('success', 'Product updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -391,5 +404,91 @@ class AdminController extends Controller
     {
         $user->delete();
         return redirect('/admin/users')->with('success', 'User deleted successfully!');
+    }
+
+    /**
+     * Check stock level and create alerts for admin and POS
+     * - Alert when stock is 2 or below (low stock)
+     * - Alert when stock is 0 (out of stock)
+     */
+    private function checkAndCreateStockAlert($stock, $productId): void
+    {
+        try {
+            // Get the SolutionItem for this product
+            $solutionItem = SolutionItem::where('product_id', $productId)->first();
+            
+            if (!$solutionItem) {
+                Log::warning("SolutionItem not found for product", ['product_id' => $productId]);
+                return;
+            }
+
+            // Check for out of stock (stock = 0)
+            if ($stock === 0) {
+                // Mark item as sold out
+                $solutionItem->update(['is_sold_out' => true]);
+
+                // Create out of stock alert if one doesn't already exist
+                $existingAlert = $solutionItem->stockAlerts()
+                    ->where('alert_type', 'out_of_stock')
+                    ->whereNull('acknowledged_at')
+                    ->first();
+
+                if (!$existingAlert) {
+                    StockAlert::create([
+                        'solution_item_id' => $solutionItem->id,
+                        'alert_type' => 'out_of_stock',
+                        'threshold' => 0,
+                        'current_stock' => 0,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    Log::info("Out of stock alert created", [
+                        'solution_item_id' => $solutionItem->id,
+                        'product_name' => $solutionItem->name,
+                    ]);
+                }
+            }
+            // Check for low stock (stock is 1 or 2)
+            elseif ($stock <= 2 && $stock > 0) {
+                // Mark item as not sold out (if it was)
+                if ($solutionItem->is_sold_out) {
+                    $solutionItem->update(['is_sold_out' => false]);
+                }
+
+                // Create low stock alert if one doesn't already exist
+                $existingAlert = $solutionItem->stockAlerts()
+                    ->where('alert_type', 'low_stock')
+                    ->where('threshold', 2)
+                    ->whereNull('acknowledged_at')
+                    ->first();
+
+                if (!$existingAlert) {
+                    StockAlert::create([
+                        'solution_item_id' => $solutionItem->id,
+                        'alert_type' => 'low_stock',
+                        'threshold' => 2,
+                        'current_stock' => $stock,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    Log::info("Low stock alert created", [
+                        'solution_item_id' => $solutionItem->id,
+                        'product_name' => $solutionItem->name,
+                        'current_stock' => $stock,
+                    ]);
+                }
+            }
+            // If stock is above 2, clear the is_sold_out flag
+            elseif ($stock > 2) {
+                if ($solutionItem->is_sold_out) {
+                    $solutionItem->update(['is_sold_out' => false]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Error in checkAndCreateStockAlert: " . $e->getMessage(), [
+                'product_id' => $productId,
+                'exception' => $e,
+            ]);
+        }
     }
 }
