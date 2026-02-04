@@ -47,7 +47,7 @@
                     @error('price')<span class="error-text">{{ $message }}</span>@enderror
                 </div>
 
-                
+                <div>
                     <label for="stock">Stock Quantity *</label>
                     <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', 0) }}" required placeholder="Enter stock quantity"
                         style="border: 2px solid #22c55e; background-color: #f0fdf4;">
