@@ -36,6 +36,15 @@
         </div>
 
         <div class="mb-4">
+            <label for="stock" class="block text-sm font-semibold mb-2">Stock Quantity *</label>
+            <input type="number" id="stock" name="stock" min="0" class="w-full border-2 border-green-400 rounded px-3 py-2 @error('stock') border-red-500 @enderror" 
+                value="{{ old('stock', $menuItem->stock) }}" required placeholder="Enter stock quantity"
+                style="background-color: #f0fdf4;">
+            <span style="color: #16a34a; font-size: 12px; font-weight: bold; display: block; margin-top: 4px;">⭐ Stock field - required for inventory</span>
+            @error('stock')<span class="text-red-600 text-sm">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="mb-4">
             <label for="image" class="block text-sm font-semibold mb-2">Image</label>
             @if($menuItem->image)
                 <div class="mb-2">

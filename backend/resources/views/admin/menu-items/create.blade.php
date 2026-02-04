@@ -48,6 +48,14 @@
                 </div>
 
                 
+                    <label for="stock">Stock Quantity *</label>
+                    <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', 0) }}" required placeholder="Enter stock quantity"
+                        style="border: 2px solid #22c55e; background-color: #f0fdf4;">
+                    <span style="color: #16a34a; font-size: 12px; font-weight: bold; display: block; margin-top: 4px;">⭐ Stock field - required for inventory</span>
+                    @error('stock')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                
                     <label for="image">Product Image</label>
                     <input type="file" id="image" name="image" accept="image/*">
                     @error('image')<span class="error-text">{{ $message }}</span>@enderror

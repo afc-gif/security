@@ -7,6 +7,7 @@ use App\Models\Solution;
 use App\Models\SolutionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SolutionItemController extends Controller
@@ -18,6 +19,12 @@ class SolutionItemController extends Controller
 
     public function store(Request $request, Solution $solution)
     {
+        Log::info("SolutionItemController.store - Raw request data", [
+            'all_input' => $request->all(),
+            'stock_input' => $request->input('stock'),
+            'post_data' => $_POST ?? 'not available',
+        ]);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'barcode' => 'nullable|string|max:64|unique:solution_items,barcode',
@@ -27,6 +34,11 @@ class SolutionItemController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'sort_order' => 'nullable|integer',
             'display_on_website' => 'nullable|boolean',
+        ]);
+
+        Log::info("SolutionItemController.store - Validated data", [
+            'validated' => $validated,
+            'stock_value' => $validated['stock'] ?? 'missing',
         ]);
 
         if (empty($validated['barcode'])) {

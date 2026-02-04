@@ -66,11 +66,8 @@ class MenuItemController extends Controller
             'sort_order' => $data['sort_order'] ?? 0,
             'active' => $data['is_active'] ?? true,
             'is_sold_out' => $data['is_sold_out'] ?? false,
+            'stock' => (int) ($data['stock'] ?? 0),
         ];
-
-        if (array_key_exists('stock', $data) && $data['stock'] !== null) {
-            $payload['stock'] = (int) $data['stock'];
-        }
 
         $item = SolutionItem::create($payload);
 
