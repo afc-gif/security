@@ -233,7 +233,7 @@
                                     </div>
                                     <div style="color:var(--brand-muted); font-size:11px; margin-top:2px; font-family:monospace;">${alert.barcode}</div>
                                 </div>
-                                <button data-ack-alert="${alert.id}" style="border:none; background:transparent; color:#2563eb; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;">Acknowledge</button>
+                                <button data-ack-alert="${alert.id}" style="border:none; background:transparent; color:#2563eb; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;">Mark as read</button>
                             </div>
                         </div>
                     `;

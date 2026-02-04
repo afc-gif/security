@@ -107,7 +107,7 @@
                                 <div class="text-xs text-gray-500 mt-1">${alert.barcode}</div>
                             </div>
                             <button onclick="acknowledgeAlert(${alert.id})" class="text-blue-600 hover:text-blue-800 text-xs font-semibold whitespace-nowrap">
-                                ✓ Acknowledge
+                                ✓ Mark as read
                             </button>
                         </div>
                     </div>

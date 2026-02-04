@@ -672,7 +672,7 @@
                                 <div class="alert-meta">${alert.barcode || ''}</div>
                             </div>
                             <div class="alert-actions">
-                                <button class="alert-btn" data-ack-alert="${alert.id}">Acknowledge</button>
+                                <button class="alert-btn" data-ack-alert="${alert.id}">Mark as read</button>
                             </div>
                         </div>
                     `).join('');

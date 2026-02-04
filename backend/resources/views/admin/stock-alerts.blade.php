@@ -152,13 +152,13 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="status-badge ${alert.acknowledged_at ? 'status-acknowledged' : 'status-unacknowledged'}">
-                            ${alert.acknowledged_at ? '✓ Acknowledged' : '⏳ Pending'}
+                            ${alert.acknowledged_at ? '✓ Read' : '⏳ Unread'}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         ${!alert.acknowledged_at ? `
                             <button onclick="acknowledgeAlert(${alert.id})" class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                                Acknowledge
+                                Mark as read
                             </button>
                         ` : '<span class="text-gray-400">—</span>'}
                     </td>
