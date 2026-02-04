@@ -163,10 +163,18 @@ class PosController extends Controller
                     'price' => $item['price']
                 ]);
 
-                // Optional: Update stock
+                // Update stock + alerts
                 $solutionItem = SolutionItem::find($item['id']);
-                if ($solutionItem && $solutionItem->stock) {
-                    $solutionItem->decrement('stock', $item['quantity']);
+                if ($solutionItem && $solutionItem->stock !== null) {
+                    $currentStock = (int) $solutionItem->stock;
+                    $newStock = max(0, $currentStock - (int) $item['quantity']);
+
+                    $solutionItem->update([
+                        'stock' => $newStock,
+                        'is_sold_out' => $newStock === 0,
+                    ]);
+
+                    $solutionItem->checkAndCreateStockAlert();
                 }
             }
 

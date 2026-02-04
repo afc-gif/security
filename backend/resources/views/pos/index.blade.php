@@ -59,6 +59,7 @@
         .list { display:grid; gap:10px; max-height:360px; overflow:auto; }
         .item { border:1px solid var(--brand-border); border-radius:14px; padding:12px; background:#fff; display:flex; justify-content:space-between; gap:10px; align-items:center; }
         .pill { border:1px solid var(--brand-border); border-radius:999px; padding:6px 10px; font-size:12px; color:rgba(10,20,40,0.7); display:inline-flex; gap:6px; align-items:center; }
+        .hidden { display: none; }
         table { width:100%; border-collapse: collapse; }
         th, td { padding:6px 4px; text-align:left; font-size:13px; }
         th { border-bottom:1px solid var(--brand-border); }
@@ -232,12 +233,40 @@
                                     </div>
                                     <div style="color:var(--brand-muted); font-size:11px; margin-top:2px; font-family:monospace;">${alert.barcode}</div>
                                 </div>
+                                <button data-ack-alert="${alert.id}" style="border:none; background:transparent; color:#2563eb; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;">Acknowledge</button>
                             </div>
                         </div>
                     `;
                 }).join('');
             })
             .catch(err => console.error('Error loading POS alerts:', err));
+        }
+
+        function acknowledgePosAlert(alertId) {
+            fetch(`/api/stock-alerts/${alertId}/acknowledge`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                }
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result && result.success) {
+                    loadPOSAlerts();
+                }
+            })
+            .catch(err => console.error('Error acknowledging POS alert:', err));
+        }
+
+        if (posAlertList) {
+            posAlertList.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-ack-alert]');
+                if (!btn) return;
+                const alertId = btn.getAttribute('data-ack-alert');
+                if (!alertId) return;
+                acknowledgePosAlert(alertId);
+            });
         }
 
         // Load alerts on page load and every 20 seconds

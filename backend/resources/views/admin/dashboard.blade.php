@@ -133,6 +133,7 @@
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--brand-border); }
         th { color: var(--brand-muted); font-weight: 700; background: #f8fbff; }
         tr:last-child td { border-bottom: none; }
+        .hidden { display: none; }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
         .frame-wrap { border: 1px solid var(--brand-border); border-radius: 14px; overflow: hidden; box-shadow: var(--brand-shadow); background: #fff; }
         iframe { width: 100%; height: 70vh; border: none; }
@@ -145,6 +146,22 @@
         .menu-pill.active { border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
         .menu-meta { font-size:13px; color: rgba(10,20,40,0.7); }
         .menu-actions { display:flex; gap:6px; flex-wrap:wrap; }
+        .alert-wrap { position: relative; }
+        .alert-bell { background: #fff; border: 1px solid var(--brand-border); border-radius: 12px; padding: 8px 10px; font-size: 18px; cursor: pointer; position: relative; }
+        .alert-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+        .alert-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: 320px; background: #fff; border: 1px solid var(--brand-border); border-radius: 14px; box-shadow: var(--brand-shadow); display: none; z-index: 40; max-height: 420px; overflow: auto; }
+        .alert-wrap.open .alert-dropdown { display: block; }
+        .alert-head { padding: 12px 14px; font-weight: 700; border-bottom: 1px solid var(--brand-border); position: sticky; top: 0; background: #fff; }
+        .alert-list { display: grid; }
+        .alert-item { padding: 12px 14px; border-bottom: 1px solid var(--brand-border); display: flex; gap: 10px; align-items: flex-start; }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-title { font-weight: 700; font-size: 13px; }
+        .alert-meta { font-size: 12px; color: var(--brand-muted); margin-top: 4px; }
+        .alert-actions { margin-left: auto; }
+        .alert-btn { border: none; background: transparent; color: #2563eb; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .alert-empty { padding: 12px 14px; color: var(--brand-muted); font-size: 12px; }
+        .alert-footer { padding: 10px 14px; border-top: 1px solid var(--brand-border); text-align: center; background: #f8fafc; }
+        .alert-footer a { color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none; }
         @media (max-width: 960px) {
             body { grid-template-columns: 1fr; }
             .sidebar { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-110%); z-index: 20; }
@@ -194,6 +211,21 @@
                     <h1 style="margin:0; font-family:'Playfair Display', Georgia, serif;">Today at a glance</h1>
                 </div>
                 <div class="actions">
+                    <div class="alert-wrap" id="adminAlertWrap">
+                        <button class="alert-bell" id="adminAlertBell" title="Stock Alerts">
+                            🔔
+                            <span id="adminAlertBadge" class="alert-badge hidden">0</span>
+                        </button>
+                        <div id="adminAlertDropdown" class="alert-dropdown">
+                            <div class="alert-head">📦 Stock Alerts</div>
+                            <div id="adminAlertList" class="alert-list">
+                                <div class="alert-empty">Loading alerts...</div>
+                            </div>
+                            <div class="alert-footer">
+                                <a href="/admin/stock-alerts">View All</a>
+                            </div>
+                        </div>
+                    </div>
                     <button class="btn-ghost" onclick="switchTab('pos')">Open POS</button>
                     <button class="btn-primary" onclick="switchTab('menu')">Add Product</button>
                 </div>
@@ -570,6 +602,10 @@
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
+        const adminAlertWrap = document.getElementById('adminAlertWrap');
+        const adminAlertBell = document.getElementById('adminAlertBell');
+        const adminAlertBadge = document.getElementById('adminAlertBadge');
+        const adminAlertList = document.getElementById('adminAlertList');
 
         const escapeAttr = (value = '') => String(value)
             .replace(/&/g, '&amp;')
@@ -590,6 +626,70 @@
                 ...options,
                 headers,
             });
+        };
+
+        if (adminAlertBell && adminAlertWrap) {
+            adminAlertBell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                adminAlertWrap.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (!adminAlertWrap.contains(e.target)) {
+                    adminAlertWrap.classList.remove('open');
+                }
+            });
+        }
+
+        if (adminAlertList) {
+            adminAlertList.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-ack-alert]');
+                if (!btn) return;
+                const alertId = btn.getAttribute('data-ack-alert');
+                if (!alertId) return;
+                acknowledgeAdminAlert(alertId);
+            });
+        }
+
+        const loadAdminAlerts = () => {
+            if (!adminAlertList) return;
+            apiFetch('/api/stock-alerts')
+                .then(r => r.json())
+                .then(alerts => {
+                    if (!Array.isArray(alerts) || alerts.length === 0) {
+                        adminAlertBadge?.classList.add('hidden');
+                        adminAlertList.innerHTML = '<div class="alert-empty">✅ No active alerts</div>';
+                        return;
+                    }
+                    adminAlertBadge?.classList.remove('hidden');
+                    if (adminAlertBadge) adminAlertBadge.textContent = alerts.length;
+                    adminAlertList.innerHTML = alerts.map(alert => `
+                        <div class="alert-item">
+                            <div>
+                                <div class="alert-title">${alert.product_name}</div>
+                                <div class="alert-meta">
+                                    ${alert.alert_type === 'out_of_stock' ? '🔴 Out of Stock' : '🟡 Low Stock (' + alert.current_stock + ' left)'}
+                                </div>
+                                <div class="alert-meta">${alert.barcode || ''}</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="alert-btn" data-ack-alert="${alert.id}">Acknowledge</button>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(err => console.error('Error loading alerts:', err));
+        };
+
+        const acknowledgeAdminAlert = (id) => {
+            return apiFetch(`/api/stock-alerts/${id}/acknowledge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result && result.success) loadAdminAlerts();
+            })
+            .catch(err => console.error('Error acknowledging alert:', err));
         };
 
         const setBusy = (btn, busy) => {
@@ -1560,6 +1660,8 @@
             await Promise.all([loadCategories(), loadMenu(), loadOrders(), loadOrderSummary(), loadUsers()]);
             renderSavedCustomers();
             renderParkedTickets();
+            loadAdminAlerts();
+            setInterval(loadAdminAlerts, 30000);
 
             const refresh = async () => {
                 if (isInteracting) return;
