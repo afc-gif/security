@@ -43,9 +43,12 @@
         </div>
 
         <div class="mb-4">
-            <label for="stock" class="block text-gray-700 font-bold mb-2">Stock</label>
-            <input type="number" name="stock" id="stock" class="w-full px-4 py-2 border rounded @error('stock') border-red-500 @enderror" 
-                   value="{{ old('stock', 0) }}" min="0">
+            <label for="stock" class="block text-gray-700 font-bold mb-2">Stock Quantity *</label>
+            <input type="number" name="stock" id="stock" min="0" required 
+                   class="w-full px-4 py-2 border-2 border-green-400 rounded @error('stock') border-red-500 @enderror"
+                   style="background-color: #f0fdf4;"
+                   value="{{ old('stock', 0) }}" placeholder="Enter stock quantity">
+            <span style="color: #16a34a; font-size: 12px; font-weight: bold; display: block; margin-top: 4px;">⭐ Stock quantity - required for inventory</span>
             @error('stock')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
