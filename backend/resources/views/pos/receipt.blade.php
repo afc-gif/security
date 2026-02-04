@@ -32,6 +32,14 @@
             margin-bottom: 15px;
         }
 
+        .receipt-logo {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            margin: 0 auto 6px;
+            display: block;
+        }
+
         .receipt-header h1 {
             font-size: 18px;
             font-weight: bold;
@@ -41,6 +49,13 @@
         .receipt-header p {
             font-size: 11px;
             color: #666;
+        }
+
+        .receipt-company {
+            font-size: 10px;
+            color: #444;
+            margin-top: 6px;
+            line-height: 1.4;
         }
 
         .receipt-info {
@@ -85,6 +100,7 @@
         .item-name {
             flex: 1;
             word-break: break-word;
+            padding-right: 6px;
         }
 
         .item-qty {
@@ -138,6 +154,11 @@
             margin-bottom: 15px;
         }
 
+        .receipt-divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+
         .print-button {
             display: block;
             width: 100%;
@@ -179,11 +200,11 @@
                 padding: 0;
             }
 
-            .receipt-container {
-                width: 100%;
-                box-shadow: none;
-                padding: 0;
-            }
+        .receipt-container {
+            width: 100%;
+            box-shadow: none;
+            padding: 0;
+        }
 
             .print-button,
             .back-button {
@@ -196,8 +217,14 @@
     <div class="receipt-container">
         <!-- Header -->
         <div class="receipt-header">
+            <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="receipt-logo">
             <h1>ARTSCI</h1>
             <p>Receipt</p>
+            <div class="receipt-company">
+                Beside Anti-cultism Sars Road, PortHarcourt, Rivers State, Nigeria<br>
+                Phone: 090160450776 · Email: support@artsci.com.ng<br>
+                Instagram: @artsci_official
+            </div>
             <p>Order #{{ $order->id }}</p>
         </div>
 
@@ -257,6 +284,8 @@
                 <span>${{ number_format($order->total_amount, 2) }}</span>
             </div>
         </div>
+
+        <div class="receipt-divider"></div>
 
         <!-- Footer -->
         <div class="receipt-footer">
