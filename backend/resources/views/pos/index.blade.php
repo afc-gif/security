@@ -73,10 +73,24 @@
                 <p class="brand-tag">Signed in as {{ auth()->user()->name ?? 'POS User' }}</p>
             </div>
         </div>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="btn-ghost">Logout</button>
-        </form>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <!-- Stock Alerts Bell -->
+            <div style="position:relative;">
+                <button id="posAlertBell" style="background:none; border:none; font-size:24px; cursor:pointer; padding:0; position:relative;" title="Stock Alerts">
+                    🔔
+                    <span id="posAlertBadge" style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:12px; font-weight:bold; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white;" class="hidden">0</span>
+                </button>
+                <!-- Dropdown -->
+                <div id="posAlertDropdown" style="display:none; position:absolute; top:100%; right:0; background:white; border:1px solid var(--brand-border); border-radius:12px; box-shadow:var(--brand-shadow); width:320px; max-height:400px; overflow-y:auto; z-index:100; margin-top:8px;">
+                    <div style="padding:12px; font-weight:700; border-bottom:1px solid var(--brand-border); position:sticky; top:0; background:white;">📦 Stock Alerts</div>
+                    <div id="posAlertList" style="padding:0;"></div>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                @csrf
+                <button type="submit" class="btn-ghost">Logout</button>
+            </form>
+        </div>
     </header>
 
     <main>
@@ -163,6 +177,72 @@
     <script>
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
+
+        // Stock Alerts for POS
+        const posAlertBell = document.getElementById('posAlertBell');
+        const posAlertDropdown = document.getElementById('posAlertDropdown');
+        const posAlertBadge = document.getElementById('posAlertBadge');
+        const posAlertList = document.getElementById('posAlertList');
+
+        posAlertBell.addEventListener('click', () => {
+            posAlertDropdown.style.display = posAlertDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!posAlertBell.contains(e.target) && !posAlertDropdown.contains(e.target)) {
+                posAlertDropdown.style.display = 'none';
+            }
+        });
+
+        function loadPOSAlerts() {
+            fetch('/api/stock-alerts', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                }
+            })
+            .then(r => r.json())
+            .then(alerts => {
+                // Show only unacknowledged alerts to POS
+                const unacknowledged = alerts.filter(a => !a.acknowledged_at);
+                
+                if (unacknowledged.length === 0) {
+                    posAlertBadge.classList.add('hidden');
+                    posAlertList.innerHTML = '<div style="padding:12px; color:var(--brand-muted); font-size:13px;">✅ No active alerts</div>';
+                    return;
+                }
+                
+                posAlertBadge.classList.remove('hidden');
+                posAlertBadge.textContent = unacknowledged.length;
+                
+                posAlertList.innerHTML = unacknowledged.map(alert => {
+                    const isOutOfStock = alert.alert_type === 'out_of_stock';
+                    const icon = isOutOfStock ? '🔴' : '🟡';
+                    const bgColor = isOutOfStock ? '#fef2f2' : '#fffbeb';
+                    
+                    return `
+                        <div style="padding:12px; border-bottom:1px solid var(--brand-border); background:${bgColor};">
+                            <div style="display:flex; align-items:start; gap:8px;">
+                                <span style="font-size:18px;">${icon}</span>
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:600; color:var(--brand-ink); font-size:13px; word-break:break-word;">${alert.product_name}</div>
+                                    <div style="color:var(--brand-muted); font-size:12px; margin-top:4px;">
+                                        ${isOutOfStock ? 'OUT OF STOCK - DO NOT SELL' : `LOW STOCK: ${alert.current_stock} units remaining`}
+                                    </div>
+                                    <div style="color:var(--brand-muted); font-size:11px; margin-top:2px; font-family:monospace;">${alert.barcode}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            })
+            .catch(err => console.error('Error loading POS alerts:', err));
+        }
+
+        // Load alerts on page load and every 20 seconds
+        document.addEventListener('DOMContentLoaded', loadPOSAlerts);
+        setInterval(loadPOSAlerts, 20000);
 
         const posBarcodeInput = document.getElementById('posBarcodeInput');
         const posLookupResult = document.getElementById('posLookupResult');

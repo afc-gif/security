@@ -73,6 +73,11 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 // Admin routes (admin only) - Dashboard, Products & Barcodes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    
+    // Stock Alerts
+    Route::get('/stock-alerts', function () {
+        return view('admin.stock-alerts');
+    })->name('admin.stock-alerts');
 
     // Products & Barcodes
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products.index');
