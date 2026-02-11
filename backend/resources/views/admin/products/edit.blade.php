@@ -67,6 +67,13 @@
                 </div>
 
                 
+                    <label for="barcode">Barcode</label>
+                    <input type="text" id="barcode" name="barcode" placeholder="Scan or enter new barcode to update">
+                    <span class="helper-text">Scan or manually enter a new barcode to replace the current one. The barcode must be unique across all products.</span>
+                    @error('barcode')<span class="error-text">{{ $message }}</span>@enderror
+                </div>
+
+                
                     <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
                         <input type="checkbox" id="display_on_website" name="display_on_website" value="1" @if(old('display_on_website', $product->display_on_website ?? true)) checked @endif style="width: 18px; height: 18px; cursor: pointer;">
                         <span style="cursor: pointer;">Display on Website</span>

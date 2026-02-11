@@ -67,6 +67,16 @@
                     @error('description')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
                 </div>
 
+                <!-- Barcode -->
+                <div>
+                    <label for="barcode" class="block text-sm font-medium text-gray-700 mb-2">Barcode (Optional)</label>
+                    <input type="text" id="barcode" name="barcode" value="{{ old('barcode') }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('barcode') border-red-500 @enderror"
+                        placeholder="Scan or enter existing barcode (leave blank to auto-generate)">
+                    <p class="text-gray-600 text-sm mt-1">If your product has a manufacturer barcode, scan or enter it here. Otherwise, a unique code will be generated automatically.</p>
+                    @error('barcode')<span class="text-red-600 text-sm mt-1">{{ $message }}</span>@enderror
+                </div>
+
                 <!-- Image -->
                 <div>
                     <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>

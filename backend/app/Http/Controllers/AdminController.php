@@ -75,6 +75,7 @@ class AdminController extends Controller
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category' => 'required|string|exists:solutions,name',
+                'barcode' => 'nullable|string|max:255|unique:solution_items,barcode',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
 
@@ -102,7 +103,7 @@ class AdminController extends Controller
             DB::transaction(function () use (&$product, $validated) {
                 $product = Product::create($validated);
                 Log::info("Product created", ['product_id' => $product->id, 'name' => $product->name]);
-                $this->syncProductToSolutionItem($product);
+                $this->syncProductToSolutionItem($product, $validated['barcode'] ?? null);
             });
 
             // Check stock level and create alerts if needed
@@ -139,12 +140,17 @@ class AdminController extends Controller
         try {
             $oldStock = $product->stock;
             
+            // Get the SolutionItem to validate barcode uniqueness properly
+            $solutionItem = SolutionItem::where('product_id', $product->id)->first();
+            $solutionItemId = $solutionItem ? $solutionItem->id : null;
+            
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category' => 'required|string|exists:solutions,name',
+                'barcode' => $solutionItemId ? 'nullable|string|max:255|unique:solution_items,barcode,' . $solutionItemId . ',id' : 'nullable|string|max:255',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
 
@@ -180,7 +186,7 @@ class AdminController extends Controller
             DB::transaction(function () use ($product, $validated) {
                 $product->update($validated);
                 Log::info("Product updated", ['product_id' => $product->id]);
-                $this->syncProductToSolutionItem($product);
+                $this->syncProductToSolutionItem($product, $validated['barcode'] ?? null);
             });
 
             // Check if stock was changed and create alerts if needed
@@ -245,7 +251,7 @@ class AdminController extends Controller
         })->toArray();
     }
 
-    private function syncProductToSolutionItem(Product $product): void
+    private function syncProductToSolutionItem(Product $product, ?string $barcode = null): void
     {
         $solution = Solution::where('name', $product->category)->first();
         if (!$solution) {
@@ -264,9 +270,14 @@ class AdminController extends Controller
             'active' => true,
         ];
 
+        // Use provided barcode if given, otherwise auto-generate for new items
         if (!$item) {
-            $payload['barcode'] = SolutionItem::generateBarcode();
+            $payload['barcode'] = !empty($barcode) ? $barcode : SolutionItem::generateBarcode();
+        } elseif (!empty($barcode)) {
+            // Update barcode if provided for existing item
+            $payload['barcode'] = $barcode;
         }
+        // If updating and no barcode provided, keep the existing one
 
         if ($item) {
             $item->update($payload);
