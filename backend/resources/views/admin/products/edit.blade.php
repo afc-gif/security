@@ -68,7 +68,7 @@
 
                 
                     <label for="barcode">Barcode</label>
-                    <input type="text" id="barcode" name="barcode" placeholder="Scan or enter new barcode to update">
+                    <input type="text" id="barcode" name="barcode" value="{{ old('barcode', $solutionItem->barcode ?? '') }}" placeholder="Scan or enter new barcode to update">
                     <span class="helper-text">Scan or manually enter a new barcode to replace the current one. The barcode must be unique across all products.</span>
                     @error('barcode')<span class="error-text">{{ $message }}</span>@enderror
                 </div>

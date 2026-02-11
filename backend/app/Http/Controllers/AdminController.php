@@ -129,7 +129,8 @@ class AdminController extends Controller
     public function editProduct(Product $product)
     {
         $categories = Solution::orderBy('sort_order')->get();
-        return view('admin.products.edit', compact('product', 'categories'));
+        $solutionItem = SolutionItem::where('product_id', $product->id)->first();
+        return view('admin.products.edit', compact('product', 'categories', 'solutionItem'));
     }
 
     public function updateProduct(Request $request, Product $product)

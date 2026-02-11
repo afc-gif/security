@@ -278,6 +278,8 @@
                         <form id="menuForm">
                             <label>Name</label>
                             <input name="name" placeholder="Product name" required />
+                            <label>Barcode (Optional)</label>
+                            <input name="barcode" placeholder="Scan or enter barcode (leave blank to auto-generate)" />
                             <label>Description</label>
                             <textarea name="description" rows="2" placeholder="Optional"></textarea>
                             <label>Price (NGN)</label>
@@ -385,6 +387,7 @@
                             <label style="display:block; font-size:13px; color:var(--brand-muted); margin-bottom:6px;">Scan / Enter barcode</label>
                             <input id="posBarcodeInput" placeholder="Focus here and scan" style="width:100%; padding:12px; border-radius:12px; border:1px solid var(--brand-border); font-size:16px;" />
                             <small class="muted" id="posScanStatus" style="display:block; margin-top:6px;">Ready to scan.</small>
+                            <div id="posSuggestions" style="margin-top:8px;"></div>
                             <div id="posLookupResult" class="item" style="display:none; flex-direction:column; align-items:flex-start; margin-top:10px;"></div>
                             <div id="posSavedCustomers" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
                         </div>
@@ -501,6 +504,7 @@
         const posBarcodeInput = document.getElementById('posBarcodeInput');
         const posLookupResult = document.getElementById('posLookupResult');
         const posScanStatus = document.getElementById('posScanStatus');
+        const posSuggestions = document.getElementById('posSuggestions');
         const posCartList = document.getElementById('posCartList');
         const posCartTotal = document.getElementById('posCartTotal');
         const posCustomerName = document.getElementById('posCustomerName');
@@ -1135,6 +1139,32 @@
             posLookupResult.innerHTML = `<div class="muted">${message}</div>`;
         }
 
+        const renderSuggestions = (items) => {
+            if (!posSuggestions) return;
+            if (!items.length) {
+                posSuggestions.innerHTML = '';
+                return;
+            }
+            posSuggestions.innerHTML = items.map(item => `
+                <button class="btn-ghost" data-suggest-id="${item.id}" data-suggest-item='${JSON.stringify(item)}' style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
+                    ${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span>
+                </button>
+            `).join('');
+        };
+
+        const findNameMatches = async (term) => {
+            if (!term || term.length < 2) return [];
+            try {
+                const res = await apiFetch(`/api/menu-items/search?q=${encodeURIComponent(term)}`);
+                if (!res.ok) return [];
+                const items = await res.json();
+                return Array.isArray(items) ? items.slice(0, 5) : [];
+            } catch (e) {
+                console.warn('Name search failed', e);
+                return [];
+            }
+        };
+
         async function lookupBarcode(barcode, { addToCartOnSuccess = false } = {}) {
             if (!barcode) return;
 
@@ -1215,6 +1245,9 @@
             if (form.get('image') && form.get('image').size === 0) {
                 form.delete('image');
             }
+            if ((form.get('barcode') || '').trim() === '') {
+                form.delete('barcode');
+            }
             if (!form.get('category_id')) {
                 toast('Select a category before saving.', 'error');
                 return;
@@ -1234,11 +1267,47 @@
             addToPosCart(lastLookup);
         });
 
+        if (posSuggestions) {
+            posSuggestions.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-suggest-id]');
+                if (!btn) return;
+                const itemData = btn.getAttribute('data-suggest-item');
+                let item;
+                try {
+                    item = JSON.parse(itemData);
+                } catch {
+                    return;
+                }
+                renderSuggestions([]);
+                showLookupResult(item);
+                addToPosCart(item);
+                setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                if (posBarcodeInput) {
+                    posBarcodeInput.value = '';
+                    posBarcodeInput.focus();
+                }
+            });
+        }
+
         if (posBarcodeInput) posBarcodeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const code = e.target.value.trim();
                 if (!code) return;
+                const isName = /^[a-zA-Z\s]+$/.test(code);
+                if (isName) {
+                    if (lastLookup) {
+                        addToPosCart(lastLookup);
+                        setPosStatus(`Added ${lastLookup.name}. Ready for next scan.`);
+                        if (posBarcodeInput) {
+                            posBarcodeInput.value = '';
+                            posBarcodeInput.focus();
+                        }
+                    } else {
+                        setPosStatus('No match yet. Keep typing the product name.', 'error');
+                    }
+                    return;
+                }
                 lookupBarcode(code, { addToCartOnSuccess: true });
             }
         });
@@ -1248,9 +1317,36 @@
             clearTimeout(scanDebounce);
             if (!code) {
                 setPosStatus('Ready to scan.');
+                renderSuggestions([]);
                 return;
             }
-            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: true }), 50);
+            const isName = /^[a-zA-Z\s]+$/.test(code);
+            if (isName) {
+                if (code.length < 2) {
+                    setPosStatus('Keep typing the product name.');
+                    renderSuggestions([]);
+                    return;
+                }
+                scanDebounce = setTimeout(async () => {
+                    const matches = await findNameMatches(code);
+                    if (!matches.length) {
+                        showLookupError('No item matches that name.');
+                        setPosStatus('No match found.', 'error');
+                        renderSuggestions([]);
+                        return;
+                    }
+                    showLookupResult(matches[0]);
+                    setPosStatus('Found. Press Enter or click Add to cart.');
+                    renderSuggestions(matches);
+                }, 200);
+                return;
+            }
+            if (code.length < 3) {
+                setPosStatus('Keep typing or scan the barcode.');
+                renderSuggestions([]);
+                return;
+            }
+            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: false }), 200);
         });
 
         if (posCheckoutBtn) posCheckoutBtn.addEventListener('click', async () => {
@@ -1784,6 +1880,9 @@
         window.editMenuItem = async (id, item, btn) => {
             const name = prompt('Name', item.name);
             if (name === null || name.trim() === '') return;
+            const barcodePrompt = prompt('Barcode (leave blank to keep)', item.barcode || '');
+            if (barcodePrompt === null) return;
+            const barcode = barcodePrompt.trim();
             const priceInput = prompt('Price (NGN)', item.price);
             const price = Number(priceInput);
             if (Number.isNaN(price)) {
@@ -1799,17 +1898,21 @@
             const descriptionPrompt = prompt('Description', item.description || '');
             const description = descriptionPrompt === null ? '' : descriptionPrompt;
             const category_id = prompt('Category ID (leave blank to unset)', item.category_id || '') || null;
+            const payload = {
+                name,
+                price,
+                stock: stockValue,
+                description: description || null,
+                category_id: category_id || null,
+            };
+            if (barcode) {
+                payload.barcode = barcode;
+            }
             await runAction(btn, async () => {
                 await safeRequest(`/api/menu-items/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        price,
-                        stock: stockValue,
-                        description: description || null,
-                        category_id: category_id || null,
-                    }),
+                    body: JSON.stringify(payload),
                 });
                 await loadMenu();
             });

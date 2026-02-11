@@ -674,7 +674,11 @@
                 setPosStatus(matches.length ? 'Select an item or press Enter to add.' : 'No match found.');
                 return;
             }
-            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: true }), 10);
+            if (code.length < 3) {
+                setPosStatus('Keep typing or scan the barcode.');
+                return;
+            }
+            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: false }), 200);
         });
 
         if (posCheckoutBtn) posCheckoutBtn.addEventListener('click', async () => {
