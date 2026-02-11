@@ -1602,6 +1602,7 @@
                         <div class="receipt-container">
                             <!-- Header -->
                             <div class="receipt-header">
+                                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="receipt-logo">
                                 <h1>ARTSCI</h1>
                                 <p>Receipt</p>
                                 <div class="receipt-company">

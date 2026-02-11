@@ -900,6 +900,13 @@
                                 padding-bottom: 10px;
                                 margin-bottom: 15px;
                             }
+                            .receipt-logo {
+                                width: 48px;
+                                height: 48px;
+                                object-fit: contain;
+                                margin: 0 auto 6px;
+                                display: block;
+                            }
                             .receipt-header h1 {
                                 font-size: 18px;
                                 font-weight: bold;
@@ -1017,6 +1024,7 @@
                         <div class="receipt-container">
                             <!-- Header -->
                             <div class="receipt-header">
+                                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="receipt-logo">
                                 <h1>ARTSCI</h1>
                                 <p>Receipt</p>
                                 <div class="receipt-company">
