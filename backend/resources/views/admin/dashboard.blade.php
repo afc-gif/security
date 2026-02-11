@@ -1584,7 +1584,7 @@
                                 z-index: 1;
                                 pointer-events: none;
                             }
-                            .receipt-container > * {
+                            .receipt-container > :not(.receipt-watermark) {
                                 position: relative;
                                 z-index: 2;
                             }
@@ -1719,7 +1719,7 @@
                             <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="" class="receipt-watermark">
                             <!-- Header -->
                             <div class="receipt-header">
-                                <img src="{{ asset('head.jpeg') }}" alt="ARTSCI" class="receipt-title">
+                                <img src="{{ asset('head.png') }}" alt="ARTSCI" class="receipt-title">
                                 <p>Receipt</p>
                                 <div class="receipt-company">
                                     Beside Anti-cultism Sars Road, PortHarcourt, Rivers State, Nigeria<br>
