@@ -1438,39 +1438,230 @@
                 const receiptWindow = window.open('', 'pos-receipt');
                 if (!receiptWindow) return;
                 const itemsHtml = (order.items || []).map(item => `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td style="text-align:center;">${item.quantity}</td>
-                        <td style="text-align:right;">₦${Number(item.unit_price || item.price || 0).toLocaleString()}</td>
-                        <td style="text-align:right;">₦${Number(item.total || item.unit_price * item.quantity || 0).toLocaleString()}</td>
-                    </tr>
+                    <div class="item-row">
+                        <span class="item-name">${item.name || 'Product #' + item.product_id}</span>
+                        <span class="item-qty">${item.quantity}</span>
+                        <span class="item-price">₦${Number(item.unit_price || item.price || 0).toLocaleString()}</span>
+                    </div>
                 `).join('');
+                const totalAmount = Number(order.total_amount || order.total || 0);
+                const orderDate = new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
                 receiptWindow.document.write(`
-                    <html>
-                        <head><title>Receipt ${order.code || ''}</title></head>
-                        <body style="font-family: Arial, sans-serif; padding:16px;">
-                            <h2 style="margin:0 0 8px;">ARTSCI Security</h2>
-                            <div style="margin-bottom:10px;">Order Code: <strong>${order.code || ''}</strong></div>
-                            <table style="width:100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align:left; border-bottom:1px solid #ddd;">Item</th>
-                                        <th style="text-align:center; border-bottom:1px solid #ddd;">Qty</th>
-                                        <th style="text-align:right; border-bottom:1px solid #ddd;">Price</th>
-                                        <th style="text-align:right; border-bottom:1px solid #ddd;">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${itemsHtml}
-                                    <tr>
-                                        <td colspan="3" style="text-align:right; border-top:1px solid #ddd;">Total</td>
-                                        <td style="text-align:right; border-top:1px solid #ddd;">₦${Number(order.total || 0).toLocaleString()}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <p style="margin-top:12px;">Sold by: {{ auth()->user()->name ?? 'POS user' }}</p>
-                            <script>window.onload = function(){ window.print(); };<\/script>
-                        </body>
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Receipt - Order #${order.id}</title>
+                        <style>
+                            * {
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            body {
+                                font-family: "Courier New", monospace;
+                                background: #f5f5f5;
+                                padding: 20px;
+                            }
+                            .receipt-container {
+                                width: 80mm;
+                                background: white;
+                                margin: 0 auto;
+                                padding: 20px;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            }
+                            .receipt-header {
+                                text-align: center;
+                                border-bottom: 2px solid #000;
+                                padding-bottom: 10px;
+                                margin-bottom: 15px;
+                            }
+                            .receipt-logo {
+                                width: 48px;
+                                height: 48px;
+                                object-fit: contain;
+                                margin: 0 auto 6px;
+                                display: block;
+                            }
+                            .receipt-header h1 {
+                                font-size: 18px;
+                                font-weight: bold;
+                                margin-bottom: 5px;
+                            }
+                            .receipt-header p {
+                                font-size: 11px;
+                                color: #666;
+                            }
+                            .receipt-company {
+                                font-size: 10px;
+                                color: #444;
+                                margin-top: 6px;
+                                line-height: 1.4;
+                            }
+                            .receipt-info {
+                                font-size: 11px;
+                                margin-bottom: 15px;
+                                border-bottom: 1px dotted #000;
+                                padding-bottom: 10px;
+                            }
+                            .receipt-info div {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 5px;
+                            }
+                            .receipt-info label {
+                                font-weight: bold;
+                            }
+                            .receipt-salesperson {
+                                background: #f0f0f0;
+                                padding: 10px;
+                                border-radius: 5px;
+                                margin-bottom: 15px;
+                                font-size: 11px;
+                                text-align: center;
+                            }
+                            .receipt-salesperson strong {
+                                display: block;
+                                margin-bottom: 3px;
+                                font-size: 12px;
+                            }
+                            .receipt-items {
+                                font-size: 11px;
+                                margin-bottom: 15px;
+                                border-bottom: 1px dotted #000;
+                                padding-bottom: 10px;
+                            }
+                            .item-header {
+                                display: flex;
+                                justify-content: space-between;
+                                border-bottom: 1px solid #000;
+                                padding-bottom: 5px;
+                                margin-bottom: 5px;
+                                font-weight: bold;
+                            }
+                            .item-row {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 5px;
+                            }
+                            .item-name {
+                                flex: 1;
+                                word-break: break-word;
+                                padding-right: 6px;
+                            }
+                            .item-qty {
+                                width: 30px;
+                                text-align: center;
+                            }
+                            .item-price {
+                                width: 50px;
+                                text-align: right;
+                            }
+                            .receipt-totals {
+                                font-size: 12px;
+                                margin-bottom: 15px;
+                                border-bottom: 2px solid #000;
+                                padding-bottom: 10px;
+                            }
+                            .total-row {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 5px;
+                            }
+                            .total-row.grand-total {
+                                font-weight: bold;
+                                font-size: 13px;
+                                margin-top: 5px;
+                            }
+                            .receipt-footer {
+                                text-align: center;
+                                font-size: 10px;
+                                color: #666;
+                                margin-bottom: 15px;
+                            }
+                            .receipt-divider {
+                                border-top: 1px dashed #000;
+                                margin: 10px 0;
+                            }
+                            @media print {
+                                body {
+                                    background: white;
+                                    padding: 0;
+                                }
+                                .receipt-container {
+                                    width: 100%;
+                                    box-shadow: none;
+                                    padding: 0;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="receipt-container">
+                            <!-- Header -->
+                            <div class="receipt-header">
+                                <h1>ARTSCI</h1>
+                                <p>Receipt</p>
+                                <div class="receipt-company">
+                                    Beside Anti-cultism Sars Road, PortHarcourt, Rivers State, Nigeria<br>
+                                    Phone: 090160450776 · Email: support@artsci.com.ng<br>
+                                    Instagram: @artsci_official
+                                </div>
+                                <p>Order #${order.id}</p>
+                            </div>
+
+                            <!-- Order Info -->
+                            <div class="receipt-info">
+                                <div>
+                                    <label>Date:</label>
+                                    <span>${orderDate}</span>
+                                </div>
+                                <div>
+                                    <label>Payment:</label>
+                                    <span>${(order.payment_method || 'CASH').toUpperCase()}</span>
+                                </div>
+                            </div>
+
+                            <!-- Salesperson Info -->
+                            <div class="receipt-salesperson">
+                                <strong>Sold By:</strong>
+                                {{ auth()->user()->name ?? 'POS user' }}
+                            </div>
+
+                            <!-- Items -->
+                            <div class="receipt-items">
+                                <div class="item-header">
+                                    <span class="item-name">Item</span>
+                                    <span class="item-qty">Qty</span>
+                                    <span class="item-price">Total</span>
+                                </div>
+                                ${itemsHtml}
+                            </div>
+
+                            <!-- Totals -->
+                            <div class="receipt-totals">
+                                <div class="total-row grand-total">
+                                    <span>TOTAL:</span>
+                                    <span>₦${totalAmount.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div class="receipt-divider"></div>
+
+                            <!-- Footer -->
+                            <div class="receipt-footer">
+                                <p>Thank you for your purchase!</p>
+                                <p>${new Date().toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <script>
+                            window.onload = function(){ 
+                                setTimeout(() => window.print(), 300); 
+                            };
+                        <\/script>
+                    </body>
                     </html>
                 `);
                 receiptWindow.document.close();
