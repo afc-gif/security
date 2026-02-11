@@ -9,6 +9,7 @@ use App\Models\SolutionItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Validation\ValidationException;
@@ -118,14 +119,20 @@ class OrderController extends Controller
                 // Track stock transaction and create alerts
                 $solutionItem = \App\Models\SolutionItem::find($item['solution_item_id']);
                 if ($solutionItem) {
-                    $solutionItem->recordStockTransaction(
-                        -$item['quantity'],
-                        'sale',
-                        'order',
-                        $order->id,
-                        $request->user()?->id,
-                        "Sale in order #{$order->code}"
-                    );
+                    if (Schema::hasTable('stock_transactions')) {
+                        try {
+                            $solutionItem->recordStockTransaction(
+                                -$item['quantity'],
+                                'sale',
+                                'order',
+                                $order->id,
+                                $request->user()?->id,
+                                "Sale in order #{$order->code}"
+                            );
+                        } catch (\Throwable $e) {
+                            report($e);
+                        }
+                    }
 
                     // Decrement stock
                     $solutionItem->decrement('stock', $item['quantity']);
