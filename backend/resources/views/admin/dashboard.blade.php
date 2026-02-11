@@ -1628,7 +1628,7 @@
                             <!-- Salesperson Info -->
                             <div class="receipt-salesperson">
                                 <strong>Sold By:</strong>
-                                {{ auth()->user()->name ?? 'POS user' }}
+                                {{ auth()->user()->name || 'POS user' }}
                             </div>
 
                             <!-- Items -->
