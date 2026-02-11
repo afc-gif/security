@@ -324,6 +324,7 @@
                                 <option value="monthly" selected>Last 30 days</option>
                             </select>
                             <button class="btn-ghost" id="ordersExportBtn" style="white-space:nowrap;">Download CSV</button>
+                            <button class="btn-ghost" id="deleteSelectedOrdersBtn" style="white-space:nowrap;" disabled>Delete Selected</button>
                             <button class="btn-ghost" id="purgeOrdersBtn" style="white-space:nowrap;">Delete test orders</button>
                         </div>
                     </div>
@@ -354,6 +355,9 @@
                             <table id="ordersTable" style="margin:0;">
                                 <thead>
                                     <tr>
+                                        <th style="width:28px;">
+                                            <input type="checkbox" id="ordersSelectAll" />
+                                        </th>
                                         <th>Code</th>
                                         <th>Seller</th>
                                         <th>Status</th>
@@ -365,6 +369,20 @@
                                 <tbody></tbody>
                             </table>
                         </div>
+                    </div>
+                    <div id="deleteOrdersModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:9999;">
+                        <div style="background:#fff; padding:18px 20px; border-radius:14px; width:min(420px, 92vw); box-shadow:0 18px 40px rgba(0,0,0,0.25);">
+                            <div style="font-weight:800; font-size:16px; margin-bottom:6px;">Delete selected orders?</div>
+                            <div id="deleteOrdersModalText" class="muted" style="font-size:13px; margin-bottom:14px;">This action cannot be undone.</div>
+                            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                                <button class="btn-ghost" id="deleteOrdersCancelBtn">Cancel</button>
+                                <button class="btn-primary" id="deleteOrdersConfirmBtn">Yes, delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ordersUndoToast" style="position:fixed; right:16px; bottom:16px; z-index:9999; padding:12px 14px; border-radius:10px; font-weight:700; box-shadow:0 16px 38px rgba(0,0,0,0.18); background:#0A1428; color:#fff; display:none; align-items:center; gap:10px;">
+                        <span id="ordersUndoText">Orders will be deleted.</span>
+                        <button id="ordersUndoBtn" style="border:none; background:#fff; color:#111; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer;">Undo</button>
                     </div>
                 </div>
             </section>
@@ -495,6 +513,15 @@
         const purgeOrdersBtn = document.getElementById('purgeOrdersBtn');
         const ordersExportBtn = document.getElementById('ordersExportBtn');
         const ordersExportRange = document.getElementById('ordersExportRange');
+        const ordersSelectAll = document.getElementById('ordersSelectAll');
+        const deleteSelectedOrdersBtn = document.getElementById('deleteSelectedOrdersBtn');
+        const deleteOrdersModal = document.getElementById('deleteOrdersModal');
+        const deleteOrdersModalText = document.getElementById('deleteOrdersModalText');
+        const deleteOrdersCancelBtn = document.getElementById('deleteOrdersCancelBtn');
+        const deleteOrdersConfirmBtn = document.getElementById('deleteOrdersConfirmBtn');
+        const ordersUndoToast = document.getElementById('ordersUndoToast');
+        const ordersUndoText = document.getElementById('ordersUndoText');
+        const ordersUndoBtn = document.getElementById('ordersUndoBtn');
         const statCategories = document.getElementById('statCategories');
         const statItems = document.getElementById('statItems');
         const statOrders = document.getElementById('statOrders');
@@ -528,6 +555,10 @@
         let posLookupInFlight = false;
         let scanDebounce = null;
         let ordersCache = [];
+        const selectedOrderIds = new Set();
+        let deletePending = false;
+        let deleteOrdersTimer = null;
+        let pendingDeleteIds = [];
 
         const createPoller = (task, intervalMs, options = {}) => {
             const { immediate = true, runWhileHidden = false, onError = null } = options;
@@ -867,8 +898,10 @@
             let revenue = 0;
             ordersTableBody.innerHTML = orders.map(o => {
                 revenue += Number(o.total || 0);
+                const checked = selectedOrderIds.has(o.id) ? 'checked' : '';
                 return `
                     <tr>
+                        <td><input type="checkbox" class="order-select" data-order-id="${o.id}" ${checked}></td>
                         <td>${o.code || o.id}</td>
                         <td>${o.creator && o.creator.name ? o.creator.name : '—'}</td>
                         <td>${o.status}</td>
@@ -878,6 +911,51 @@
                     </tr>
                 `;
             }).join('');
+            updateSelectAllState();
+            updateSelectedOrdersUI();
+        }
+
+        const updateSelectAllState = () => {
+            if (!ordersSelectAll) return;
+            const visibleIds = ordersCache.map(o => o.id);
+            const selectedVisible = visibleIds.filter(id => selectedOrderIds.has(id));
+            ordersSelectAll.checked = visibleIds.length > 0 && selectedVisible.length === visibleIds.length;
+            ordersSelectAll.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visibleIds.length;
+        };
+
+        const updateSelectedOrdersUI = () => {
+            if (!deleteSelectedOrdersBtn) return;
+            const count = selectedOrderIds.size;
+            deleteSelectedOrdersBtn.disabled = count === 0 || deletePending;
+            deleteSelectedOrdersBtn.textContent = count ? `Delete Selected (${count})` : 'Delete Selected';
+        };
+
+        if (ordersSelectAll) {
+            ordersSelectAll.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    ordersCache.forEach(o => selectedOrderIds.add(o.id));
+                } else {
+                    ordersCache.forEach(o => selectedOrderIds.delete(o.id));
+                }
+                renderOrders(ordersCache);
+            });
+        }
+
+        if (ordersTableBody) {
+            ordersTableBody.addEventListener('change', (e) => {
+                const checkbox = e.target.closest('.order-select');
+                if (!checkbox) return;
+                const id = Number(checkbox.getAttribute('data-order-id'));
+                if (!Number.isNaN(id)) {
+                    if (checkbox.checked) {
+                        selectedOrderIds.add(id);
+                    } else {
+                        selectedOrderIds.delete(id);
+                    }
+                    updateSelectAllState();
+                    updateSelectedOrdersUI();
+                }
+            });
         }
 
         function upsertOrderCache(order) {
@@ -976,7 +1054,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                ordersTableBody.innerHTML = '<tr><td colspan="6">Could not load orders.</td></tr>';
+                ordersTableBody.innerHTML = '<tr><td colspan="7">Could not load orders.</td></tr>';
             }
         }
 
@@ -1509,6 +1587,77 @@
             });
         });
 
+        const openDeleteOrdersModal = () => {
+            if (!deleteOrdersModal || !deleteOrdersModalText) return;
+            deleteOrdersModalText.textContent = `Delete ${selectedOrderIds.size} selected order(s)? This action cannot be undone.`;
+            deleteOrdersModal.style.display = 'flex';
+        };
+
+        const closeDeleteOrdersModal = () => {
+            if (!deleteOrdersModal) return;
+            deleteOrdersModal.style.display = 'none';
+        };
+
+        const showUndoToast = (count) => {
+            if (!ordersUndoToast || !ordersUndoText) return;
+            ordersUndoText.textContent = `${count} order(s) will be deleted.`;
+            ordersUndoToast.style.display = 'flex';
+        };
+
+        const hideUndoToast = () => {
+            if (!ordersUndoToast) return;
+            ordersUndoToast.style.display = 'none';
+        };
+
+        const scheduleDeleteOrders = () => {
+            if (deleteOrdersTimer) clearTimeout(deleteOrdersTimer);
+            const count = pendingDeleteIds.length;
+            deletePending = true;
+            updateSelectedOrdersUI();
+            showUndoToast(count);
+            deleteOrdersTimer = setTimeout(async () => {
+                await runAction(deleteSelectedOrdersBtn, async () => {
+                    for (const id of pendingDeleteIds) {
+                        await safeRequest(`/api/orders/${id}`, { method: 'DELETE' });
+                        selectedOrderIds.delete(id);
+                    }
+                    pendingDeleteIds = [];
+                    await Promise.all([loadOrders(), loadOrderSummary()]);
+                });
+                deletePending = false;
+                updateSelectedOrdersUI();
+                hideUndoToast();
+            }, 5000);
+        };
+
+        const undoDeleteOrders = () => {
+            if (deleteOrdersTimer) clearTimeout(deleteOrdersTimer);
+            deleteOrdersTimer = null;
+            pendingDeleteIds = [];
+            deletePending = false;
+            updateSelectedOrdersUI();
+            hideUndoToast();
+        };
+
+        if (deleteSelectedOrdersBtn) deleteSelectedOrdersBtn.addEventListener('click', () => {
+            if (selectedOrderIds.size === 0) return;
+            openDeleteOrdersModal();
+        });
+
+        if (deleteOrdersCancelBtn) deleteOrdersCancelBtn.addEventListener('click', closeDeleteOrdersModal);
+        if (deleteOrdersModal) deleteOrdersModal.addEventListener('click', (e) => {
+            if (e.target === deleteOrdersModal) closeDeleteOrdersModal();
+        });
+
+        if (deleteOrdersConfirmBtn) deleteOrdersConfirmBtn.addEventListener('click', () => {
+            closeDeleteOrdersModal();
+            pendingDeleteIds = Array.from(selectedOrderIds);
+            if (!pendingDeleteIds.length) return;
+            scheduleDeleteOrders();
+        });
+
+        if (ordersUndoBtn) ordersUndoBtn.addEventListener('click', undoDeleteOrders);
+
         if (ordersExportBtn) ordersExportBtn.addEventListener('click', async () => {
             const range = ordersExportRange ? ordersExportRange.value : 'monthly';
             const url = `/api/orders/export?range=${encodeURIComponent(range)}`;
@@ -1578,8 +1727,11 @@
                                 top: 50%;
                                 left: 50%;
                                 transform: translate(-50%, -50%);
-                                width: 140mm;
-                                max-width: 140mm;
+                                width: 70mm;
+                                max-width: 85%;
+                                max-height: 60%;
+                                height: auto;
+                                object-fit: contain;
                                 opacity: 0.08;
                                 z-index: 1;
                                 pointer-events: none;
@@ -1736,6 +1888,10 @@
                                     <span>${orderDate}</span>
                                 </div>
                                 <div>
+                                    <label>Order:</label>
+                                    <span>#${order.id}</span>
+                                </div>
+                                <div>
                                     <label>Payment:</label>
                                     <span>${(order.payment_method || 'CASH').toUpperCase()}</span>
                                 </div>
@@ -1744,7 +1900,7 @@
                             <!-- Salesperson Info -->
                             <div class="receipt-salesperson">
                                 <strong>Sold By:</strong>
-                                {{ auth()->user()->name || 'POS user' }}
+                                {{ auth()->user()->name ?? 'POS user' }}
                             </div>
 
                             <!-- Items -->

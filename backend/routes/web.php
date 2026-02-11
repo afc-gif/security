@@ -63,6 +63,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::get('/orders/{order}', [ApiOrderController::class, 'show']);
     Route::post('/orders', [ApiOrderController::class, 'store']);
     Route::post('/orders/{order}/approve', [ApiOrderController::class, 'approve']);
+    Route::delete('/orders/{order}', [ApiOrderController::class, 'destroy']);
 
     // Stock alerts endpoints (accessible to authenticated users)
     Route::get('/stock-alerts', [App\Http\Controllers\Api\StockAlertController::class, 'getActiveAlerts']);

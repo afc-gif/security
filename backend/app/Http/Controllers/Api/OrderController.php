@@ -197,6 +197,18 @@ class OrderController extends Controller
         return response()->json(['message' => 'All orders cleared.']);
     }
 
+    public function destroy(Order $order)
+    {
+        $this->ensureAdmin();
+
+        DB::transaction(function () use ($order) {
+            $order->items()->delete();
+            $order->delete();
+        });
+
+        return response()->json(['message' => 'Order deleted.']);
+    }
+
     public function export(Request $request): StreamedResponse
     {
         $this->ensureAdmin();

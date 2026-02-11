@@ -35,8 +35,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 140mm;
-            max-width: 140mm;
+            width: 70mm;
+            max-width: 85%;
+            max-height: 60%;
+            height: auto;
+            object-fit: contain;
             opacity: 0.08;
             z-index: 1;
             pointer-events: none;
@@ -255,6 +258,10 @@
             <div>
                 <label>Date:</label>
                 <span>{{ $order->created_at->format('M d, Y H:i') }}</span>
+            </div>
+            <div>
+                <label>Order:</label>
+                <span>#{{ $order->id }}</span>
             </div>
             <div>
                 <label>Payment:</label>
