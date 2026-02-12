@@ -128,4 +128,32 @@ class SolutionItemController extends Controller
 
         return $code;
     }
+
+    public function search(Request $request)
+    {
+        $q = $request->query('q', '');
+        
+        if (empty($q)) {
+            return response()->json([]);
+        }
+
+        $products = SolutionItem::where('name', 'like', "%$q%")
+            ->orWhere('barcode', 'like', "%$q%")
+            ->select('id', 'name', 'price', 'barcode', 'stock', 'solution_id')
+            ->with('solution:id,name')
+            ->limit(10)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'category' => $product->solution ? $product->solution->name : 'Uncategorized',
+                    'price' => number_format($product->price, 2),
+                    'barcode' => $product->barcode,
+                    'stock' => $product->stock,
+                ];
+            });
+
+        return response()->json($products);
+    }
 }

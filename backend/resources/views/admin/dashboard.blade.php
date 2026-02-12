@@ -1313,15 +1313,66 @@
         });
 
 
-        // Dashboard Products Search
+
+        // Dashboard Products Search with Autocomplete
         const productSearchDashboard = document.getElementById('productSearchDashboard');
-        productSearchDashboard?.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const items = menuList?.querySelectorAll('.item');
-            items?.forEach(item => {
-                const itemText = item.textContent.toLowerCase();
-                item.style.display = itemText.includes(searchTerm) ? '' : 'none';
-            });
+        let suggestionsContainer = null;
+        
+        productSearchDashboard?.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            
+            // Remove previous suggestions
+            suggestionsContainer?.remove();
+            
+            if (!query) return;
+            
+            try {
+                // Fetch matching products from database
+                const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const products = await response.json();
+                
+                if (products.length === 0) return;
+                
+                // Create suggestions container
+                suggestionsContainer = document.createElement('div');
+                suggestionsContainer.style.cssText = 'position:absolute; background:#fff; border:1px solid var(--brand-border); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-height:300px; overflow-y:auto; min-width:300px; z-index:1000;';
+                
+                products.forEach(product => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding:12px; border-bottom:1px solid var(--brand-border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
+                    item.innerHTML = `<div><strong>${product.name}</strong><br><small style="color:var(--brand-muted);">${product.category || 'Uncategorized'}</small></div><div style="font-weight:700; color:var(--brand-dark);">${product.price}</div>`;
+                    
+                    item.addEventListener('mouseenter', () => item.style.backgroundColor = '#f0f4f9');
+                    item.addEventListener('mouseleave', () => item.style.backgroundColor = '#fff');
+                    
+                    item.addEventListener('click', () => {
+                        productSearchDashboard.value = '';
+                        suggestionsContainer?.remove();
+                        suggestionsContainer = null;
+                        // Populate form with selected product data (optional)
+                        console.log('Selected:', product);
+                    });
+                    
+                    suggestionsContainer.appendChild(item);
+                });
+                
+                if (suggestionsContainer.children.length > 0) {
+                    productSearchDashboard.parentElement.style.position = 'relative';
+                    productSearchDashboard.parentElement.appendChild(suggestionsContainer);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        });
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== productSearchDashboard) {
+                suggestionsContainer?.remove();
+                suggestionsContainer = null;
+            }
         });
         menuForm.addEventListener('submit', async (e) => {
             e.preventDefault();
