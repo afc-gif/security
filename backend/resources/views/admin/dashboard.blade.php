@@ -2117,29 +2117,26 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.style.display = 'none';
+            input.style.position = 'fixed';
+            input.style.left = '-9999px';
+            input.style.width = '1px';
+            input.style.height = '1px';
+            input.style.opacity = '0';
             document.body.appendChild(input);
             let resolved = false;
             const finish = (file = null) => {
                 if (resolved) return;
                 resolved = true;
-                window.removeEventListener('focus', onWindowFocus);
                 input.remove();
                 resolve(file);
-            };
-            const onWindowFocus = () => {
-                // If file picker is closed without selection, some browsers never fire "change".
-                setTimeout(() => {
-                    const file = input.files && input.files[0] ? input.files[0] : null;
-                    if (!file) finish(null);
-                }, 300);
             };
             input.addEventListener('change', () => {
                 const file = input.files && input.files[0] ? input.files[0] : null;
                 finish(file);
             }, { once: true });
             input.addEventListener('cancel', () => finish(null), { once: true });
-            window.addEventListener('focus', onWindowFocus, { once: true });
+            // Fallback so we never hang if browser doesn't emit cancel/change.
+            setTimeout(() => finish(null), 30000);
             input.click();
         });
 
