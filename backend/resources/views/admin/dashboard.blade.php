@@ -2114,30 +2114,81 @@
         };
 
         const pickImageFile = () => new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.45);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 16px;
+            `;
+
+            const panel = document.createElement('div');
+            panel.style.cssText = `
+                background: #fff;
+                border-radius: 12px;
+                width: min(460px, 100%);
+                padding: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+                display: grid;
+                gap: 12px;
+            `;
+
+            const title = document.createElement('h3');
+            title.textContent = 'Replace Product Image';
+            title.style.margin = '0';
+
+            const help = document.createElement('p');
+            help.textContent = 'Select a new image file, then click "Use Selected Image".';
+            help.style.cssText = 'margin:0; color:#64748b; font-size:14px;';
+
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.style.position = 'fixed';
-            input.style.left = '-9999px';
-            input.style.width = '1px';
-            input.style.height = '1px';
-            input.style.opacity = '0';
-            document.body.appendChild(input);
-            let resolved = false;
+            input.style.cssText = 'border:1px solid #d1d5db; border-radius:10px; padding:10px;';
+
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex; justify-content:flex-end; gap:8px;';
+
+            const keepBtn = document.createElement('button');
+            keepBtn.type = 'button';
+            keepBtn.textContent = 'Keep Current';
+            keepBtn.className = 'btn-ghost';
+
+            const useBtn = document.createElement('button');
+            useBtn.type = 'button';
+            useBtn.textContent = 'Use Selected Image';
+            useBtn.className = 'btn-primary';
+
+            actions.appendChild(keepBtn);
+            actions.appendChild(useBtn);
+            panel.appendChild(title);
+            panel.appendChild(help);
+            panel.appendChild(input);
+            panel.appendChild(actions);
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+            input.focus();
+
+            let done = false;
             const finish = (file = null) => {
-                if (resolved) return;
-                resolved = true;
-                input.remove();
+                if (done) return;
+                done = true;
+                overlay.remove();
                 resolve(file);
             };
-            input.addEventListener('change', () => {
+
+            keepBtn.addEventListener('click', () => finish(null));
+            useBtn.addEventListener('click', () => {
                 const file = input.files && input.files[0] ? input.files[0] : null;
                 finish(file);
-            }, { once: true });
-            input.addEventListener('cancel', () => finish(null), { once: true });
-            // Fallback so we never hang if browser doesn't emit cancel/change.
-            setTimeout(() => finish(null), 30000);
-            input.click();
+            });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) finish(null);
+            });
         });
 
         window.editMenuItem = async (id, item, btn) => {
