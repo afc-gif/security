@@ -311,6 +311,45 @@
                     <div><h3 style="margin:0 0 12px; font-size:16px;">Recent Products</h3><div class="list" id="menuList" style="border:1px solid var(--brand-border); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);"></div><div style="text-align:center; margin-top:12px;"><a href="{{ route('admin.products.index') }}" style="color:#2563eb; font-weight:600; font-size:13px; text-decoration:none;">View complete products list →</a></div></div>
                 </div>
             </section>
+            <section class="panel" data-section="users">
+                <div class="card">
+                    <h2>Users</h2>
+                    <p class="muted">Approve accounts and assign roles.</p>
+                    <div class="list" id="usersList"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-section="orders">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Orders</h2>
+                            <p class="muted" style="margin:0;">Today and recent sales. Seller is recorded per order.</p>
+                        </div>
+                        <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap;">
+                            <select id="ordersExportRange" style="padding:8px 10px; border-radius:10px; border:1px solid var(--brand-border);">
+                                <option value="weekly">Last 7 days</option>
+                                <option value="monthly" selected>Last 30 days</option>
+                            </select>
+                            <button class="btn-ghost" id="ordersExportBtn" style="white-space:nowrap;">Download CSV</button>
+                            <button class="btn-ghost" id="deleteSelectedOrdersBtn" style="white-space:nowrap;" disabled>Delete Selected</button>
+                            <button class="btn-ghost" id="purgeOrdersBtn" style="white-space:nowrap;">Delete test orders</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top:12px;">
+                        <div style="border:1px solid var(--brand-border); border-radius:12px; padding:12px; background:#fff;">
+                            <div class="muted" style="font-size:12px; margin-bottom:6px;">Revenue (last 7 days)</div>
+                            <div id="ordersChart" >
+                                <div id="ordersChartBars" style="display:flex; align-items:flex-end; gap:8px; height:120px;"></div>
+                                <div id="ordersChartLabels" style="display:flex; gap:8px; justify-content:space-between; font-size:11px; color:var(--brand-muted); margin-top:6px;"></div>
+                            </div>
+                        </div>
+                        <div style="border:1px solid var(--brand-border); border-radius:12px; padding:12px; background:#fff;">
+                            <div class="muted" style="font-size:12px;">Snapshot</div>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
+                                <div class="stat" style="margin:0; box-shadow:none; border-color:var(--brand-border);">
+                                    <h3 id="statOrders">0</h3><span>Orders today</span>
                                 </div>
                                 <div class="stat" style="margin:0; box-shadow:none; border-color:var(--brand-border);">
                                     <h3 id="statRevenue">₦0</h3><span>Revenue today</span>
