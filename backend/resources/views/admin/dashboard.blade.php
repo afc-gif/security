@@ -2072,6 +2072,22 @@
             });
         };
 
+        const pickImageFile = () => new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0] ? input.files[0] : null;
+                input.remove();
+                resolve(file);
+            }, { once: true });
+
+            input.click();
+        });
+
         window.editMenuItem = async (id, item, btn) => {
             const name = prompt('Name', item.name);
             if (name === null || name.trim() === '') return;
@@ -2093,21 +2109,29 @@
             const descriptionPrompt = prompt('Description', item.description || '');
             const description = descriptionPrompt === null ? '' : descriptionPrompt;
             const category_id = prompt('Category ID (leave blank to unset)', item.category_id || '') || null;
-            const payload = {
-                name,
-                price,
-                stock: stockValue,
-                description: description || null,
-                category_id: category_id || null,
-            };
-            if (barcode) {
-                payload.barcode = barcode;
+            let imageFile = null;
+            const shouldReplaceImage = confirm('Do you want to replace the product image? Click OK to choose a new image, or Cancel to keep current image.');
+            if (shouldReplaceImage) {
+                imageFile = await pickImageFile();
+                if (!imageFile) {
+                    alert('No image selected. Keeping current image.');
+                }
             }
+
+            const form = new FormData();
+            form.append('_method', 'PUT');
+            form.append('name', name);
+            form.append('price', String(price));
+            form.append('stock', String(stockValue));
+            if (description) form.append('description', description);
+            if (category_id) form.append('category_id', String(category_id));
+            if (barcode) form.append('barcode', barcode);
+            if (imageFile) form.append('image', imageFile);
+
             await runAction(btn, async () => {
                 await safeRequest(`/api/menu-items/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                    method: 'POST',
+                    body: form,
                 });
                 await loadMenu();
             });
