@@ -144,6 +144,8 @@
         .menu-pill { border: 1px solid var(--brand-border); border-radius: 999px; padding: 4px 10px; font-size:12px; color: rgba(10,20,40,0.7); background:#fff; }
         .menu-pill.sold { border-color:#fca5a5; color:#b91c1c; background:#fef2f2; }
         .menu-pill.active { border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
+        .menu-pill.web-on { border-color:#bfdbfe; color:#1d4ed8; background:#eff6ff; }
+        .menu-pill.web-off { border-color:#d1d5db; color:#4b5563; background:#f3f4f6; }
         .menu-meta { font-size:13px; color: rgba(10,20,40,0.7); }
         .menu-actions { display:flex; gap:6px; flex-wrap:wrap; }
         .alert-wrap { position: relative; }
@@ -641,6 +643,7 @@
         const adminAlertBell = document.getElementById('adminAlertBell');
         const adminAlertBadge = document.getElementById('adminAlertBadge');
         const adminAlertList = document.getElementById('adminAlertList');
+        const REQUEST_TIMEOUT_MS = 20000;
 
         const escapeAttr = (value = '') => String(value)
             .replace(/&/g, '&amp;')
@@ -650,17 +653,21 @@
             .replace(/>/g, '&gt;');
 
         const apiFetch = (url, options = {}) => {
+            const { timeoutMs = REQUEST_TIMEOUT_MS, ...restOptions } = options;
             const headers = {
                 Accept: 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
-                ...(options.headers || {}),
+                ...(restOptions.headers || {}),
             };
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
             return fetch(url, {
                 credentials: 'same-origin',
-                cache: options.cache ?? 'no-store',
-                ...options,
+                cache: restOptions.cache ?? 'no-store',
+                ...restOptions,
+                signal: restOptions.signal || controller.signal,
                 headers,
-            });
+            }).finally(() => clearTimeout(timeout));
         };
 
         if (adminAlertBell && adminAlertWrap) {
@@ -756,7 +763,15 @@
         };
 
         const safeRequest = async (url, options = {}) => {
-            const res = await apiFetch(url, options);
+            let res;
+            try {
+                res = await apiFetch(url, options);
+            } catch (e) {
+                if (e && e.name === 'AbortError') {
+                    throw new Error('Request timed out. Please try again.');
+                }
+                throw e;
+            }
             if (!res.ok) {
                 let message = `Request failed (${res.status})`;
                 try {
@@ -856,6 +871,7 @@
                                         <span class="menu-pill">${item.category && item.category.name ? item.category.name : 'Uncategorized'}</span>
                                         <span class="menu-pill ${item.is_sold_out ? 'sold' : 'active'}">${item.is_sold_out ? 'Sold Out' : 'Available'}</span>
                                         <span class="menu-pill">${item.stock === 0 ? 'Sold Out' : `Stock: ${item.stock}`}</span>
+                                        <span class="menu-pill ${item.display_on_website ? 'web-on' : 'web-off'}">${item.display_on_website ? 'Website: ON' : 'Website: OFF'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -869,6 +885,7 @@
                         <p class="menu-meta">${item.description || 'No description yet.'}</p>
                         <div class="menu-actions">
                             <button class="btn-ghost" onclick="toggleSoldOut(${item.id}, this)">${item.is_sold_out ? 'Mark Available' : 'Mark Sold Out'}</button>
+                            <button class="btn-ghost" onclick="toggleWebsiteDisplay(${item.id}, this)">${item.display_on_website ? 'Hide from Website' : 'Show on Website'}</button>
                             <button class="btn-ghost" onclick="editMenuItem(${item.id}, ${JSON.stringify(item).replace(/"/g, '&quot;')}, this)">Edit</button>
                             <button class="btn-ghost" onclick="deleteMenuItem(${item.id}, this)">Delete</button>
                         </div>
@@ -1455,6 +1472,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
+                    timeoutMs: 30000,
                 });
                 const order = await res.json();
                 alert(`Sale recorded. Order code: ${order.code || 'pending'}.`);
@@ -1466,7 +1484,9 @@
                     posBarcodeInput.value = '';
                     posBarcodeInput.focus();
                 }
-                await Promise.all([loadOrders(), loadOrderSummary()]);
+                Promise.all([loadOrders(), loadOrderSummary()]).catch((err) => {
+                    console.warn('Order refresh failed after checkout', err);
+                });
             });
         });
 
@@ -1681,7 +1701,10 @@
         function openPosReceipt(order) {
             try {
                 const receiptWindow = window.open('', 'pos-receipt');
-                if (!receiptWindow) return;
+                if (!receiptWindow) {
+                    alert('Could not open print window. Please allow pop-ups for this site.');
+                    return;
+                }
                 const itemsHtml = (order.items || []).map(item => `
                     <div class="item-row">
                         <span class="item-name">${item.name || 'Product #' + item.product_id}</span>
@@ -1969,6 +1992,13 @@
             });
         };
 
+        window.toggleWebsiteDisplay = async (id, btn) => {
+            await runAction(btn, async () => {
+                await safeRequest(`/api/menu-items/${id}/toggle-display-on-website`, { method: 'POST' });
+                await loadMenu();
+            });
+        };
+
         window.deleteCategory = async (id, btn) => {
             if (!confirm('Delete this category? Items will remain uncategorized.')) return;
             await runAction(btn, async () => {
@@ -2109,6 +2139,9 @@
             const descriptionPrompt = prompt('Description', item.description || '');
             const description = descriptionPrompt === null ? '' : descriptionPrompt;
             const category_id = prompt('Category ID (leave blank to unset)', item.category_id || '') || null;
+            const websiteDisplayPrompt = prompt('Display on website? (yes/no)', item.display_on_website ? 'yes' : 'no');
+            if (websiteDisplayPrompt === null) return;
+            const display_on_website = ['yes', 'y', 'true', '1', 'on'].includes(String(websiteDisplayPrompt).trim().toLowerCase());
             let imageFile = null;
             const shouldReplaceImage = confirm('Do you want to replace the product image? Click OK to choose a new image, or Cancel to keep current image.');
             if (shouldReplaceImage) {
@@ -2126,6 +2159,7 @@
             if (description) form.append('description', description);
             if (category_id) form.append('category_id', String(category_id));
             if (barcode) form.append('barcode', barcode);
+            form.append('display_on_website', display_on_website ? '1' : '0');
             if (imageFile) form.append('image', imageFile);
 
             await runAction(btn, async () => {

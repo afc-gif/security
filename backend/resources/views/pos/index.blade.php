@@ -301,23 +301,36 @@
         let lookupInFlight = false;
         let ordersPoller = null;
         let posOrders = [];
+        const REQUEST_TIMEOUT_MS = 20000;
 
         const apiFetch = (url, options = {}) => {
+            const { timeoutMs = REQUEST_TIMEOUT_MS, ...restOptions } = options;
             const headers = {
                 Accept: 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
-                ...(options.headers || {}),
+                ...(restOptions.headers || {}),
             };
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
             return fetch(url, {
                 credentials: 'same-origin',
-                cache: options.cache ?? 'no-store',
-                ...options,
+                cache: restOptions.cache ?? 'no-store',
+                ...restOptions,
+                signal: restOptions.signal || controller.signal,
                 headers,
-            });
+            }).finally(() => clearTimeout(timeout));
         };
 
         const safeRequest = async (url, options = {}) => {
-            const res = await apiFetch(url, options);
+            let res;
+            try {
+                res = await apiFetch(url, options);
+            } catch (e) {
+                if (e && e.name === 'AbortError') {
+                    throw new Error('Request timed out. Please try again.');
+                }
+                throw e;
+            }
             if (!res.ok) {
                 let message = `Request failed (${res.status})`;
                 try {
@@ -719,6 +732,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
+                    timeoutMs: 30000,
                 });
                 const order = await res.json();
                 alert(`Sale recorded. Order code: ${order.code || 'pending'}.`);
@@ -862,7 +876,10 @@
         function openPosReceipt(order) {
             try {
                 const receiptWindow = window.open('', 'pos-receipt');
-                if (!receiptWindow) return;
+                if (!receiptWindow) {
+                    alert('Could not open print window. Please allow pop-ups for this site.');
+                    return;
+                }
                 const itemsHtml = (order.items || []).map(item => `
                     <div class="item-row">
                         <span class="item-name">${item.name || 'Product #' + item.product_id}</span>

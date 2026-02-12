@@ -46,6 +46,7 @@ Route::middleware(['auth', 'admin'])->prefix('api')->group(function () {
     Route::post('/menu-items', [ApiMenuItemController::class, 'store']);
     Route::put('/menu-items/{menuItem}', [ApiMenuItemController::class, 'update']);
     Route::post('/menu-items/{menuItem}/toggle-sold-out', [ApiMenuItemController::class, 'toggleSoldOut']);
+    Route::post('/menu-items/{menuItem}/toggle-display-on-website', [ApiMenuItemController::class, 'toggleDisplayOnWebsite']);
     Route::post('/menu-items/{menuItem}/regenerate-barcode', [ApiMenuItemController::class, 'regenerateBarcode']);
     Route::delete('/menu-items/{menuItem}', [ApiMenuItemController::class, 'destroy']);
 

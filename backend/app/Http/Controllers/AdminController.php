@@ -79,7 +79,9 @@ class AdminController extends Controller
                 'category' => 'required|string|exists:solutions,name',
                 'barcode' => 'nullable|string|max:255|unique:solution_items,barcode',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+                'display_on_website' => 'sometimes|boolean',
             ]);
+            $validated['display_on_website'] = $request->boolean('display_on_website');
 
             // Handle image upload with better error handling
             if ($request->hasFile('image')) {
@@ -155,7 +157,9 @@ class AdminController extends Controller
                 'category' => 'required|string|exists:solutions,name',
                 'barcode' => $solutionItemId ? 'nullable|string|max:255|unique:solution_items,barcode,' . $solutionItemId . ',id' : 'nullable|string|max:255',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+                'display_on_website' => 'sometimes|boolean',
             ]);
+            $validated['display_on_website'] = $request->boolean('display_on_website');
 
             // Handle image upload with better error handling
             if ($request->hasFile('image')) {
@@ -251,6 +255,7 @@ class AdminController extends Controller
                 'items' => $solution->items->map(function ($item) {
                     return [
                         'id' => $item->id,
+                        'product_id' => $item->product_id,
                         'solution_id' => $item->solution_id,
                         'barcode' => $item->barcode,
                         'name' => $item->name,
@@ -258,6 +263,7 @@ class AdminController extends Controller
                         'price' => $item->price ? '₦' . number_format($item->price, 2) : null,
                         'stock' => $item->stock,
                         'image' => ImageUrl::url($item->image),
+                        'display_on_website' => (bool) $item->display_on_website,
                     ];
                 })->toArray(),
             ];
@@ -281,6 +287,7 @@ class AdminController extends Controller
             'stock' => $product->stock,
             'image' => $product->image,
             'image_public_id' => $product->image_public_id,
+            'display_on_website' => (bool) ($product->display_on_website ?? true),
             'active' => true,
         ];
 
@@ -528,6 +535,9 @@ class AdminController extends Controller
             ]);
             
             $product->update(['display_on_website' => $validated['display_on_website']]);
+            SolutionItem::where('product_id', $product->id)->update([
+                'display_on_website' => $validated['display_on_website'],
+            ]);
             
             return response()->json([
                 'success' => true,

@@ -36,7 +36,7 @@
 
         @if(count($flattened) > 0)
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
                     <p class="text-gray-600 text-sm font-medium">Total Products</p>
                     <p class="text-4xl font-bold text-gray-900 mt-2">{{ count($flattened) }}</p>
@@ -49,13 +49,36 @@
                     <p class="text-gray-600 text-sm font-medium">Out of Stock</p>
                     <p class="text-4xl font-bold text-gray-900 mt-2">{{ collect($flattened)->filter(fn($r) => ($r['item']['stock'] ?? 0) <= 0)->count() }}</p>
                 </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+                    <p class="text-gray-600 text-sm font-medium">Visible on Website</p>
+                    <p class="text-4xl font-bold text-gray-900 mt-2">{{ collect($flattened)->filter(fn($r) => !empty($r['item']['display_on_website']))->count() }}</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8 flex flex-col md:flex-row gap-3">
+                <input id="productSearch" type="text" placeholder="Search by name, barcode, or category..." class="w-full md:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="websiteFilter" class="w-full md:w-56 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">All website status</option>
+                    <option value="visible">Visible on website</option>
+                    <option value="hidden">Hidden from website</option>
+                </select>
+                <select id="stockFilter" class="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">All stock</option>
+                    <option value="in-stock">In stock</option>
+                    <option value="sold-out">Sold out</option>
+                </select>
             </div>
 
             <!-- Products Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div id="productsGrid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 @foreach($flattened as $row)
                     @php($item = $row['item'])
-                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden border border-gray-100 group">
+                    <div class="product-card bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden border border-gray-100 group hover:-translate-y-1"
+                         data-name="{{ strtolower($item['name'] ?? '') }}"
+                         data-barcode="{{ strtolower($item['barcode'] ?? '') }}"
+                         data-category="{{ strtolower($row['category'] ?? '') }}"
+                         data-website="{{ !empty($item['display_on_website']) ? 'visible' : 'hidden' }}"
+                         data-stock="{{ ($item['stock'] ?? 0) > 0 ? 'in-stock' : 'sold-out' }}">
                         <!-- Product Image -->
                         <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                             @if(!empty($item['image']))
@@ -71,10 +94,13 @@
                                 </div>
                             @endif
                             <!-- Stock Badge -->
-                            <div class="absolute top-3 right-3">
+                            <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
                                 @php($stock = $item['stock'] ?? 0)
                                 <span class="px-3 py-1 rounded-full text-xs font-bold @if($stock > 0) bg-green-100 text-green-800 @else bg-red-100 text-red-800 @endif shadow-md">
                                     {{ $stock > 0 ? $stock . ' in stock' : 'Sold Out' }}
+                                </span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold @if(!empty($item['display_on_website'])) bg-indigo-100 text-indigo-800 @else bg-gray-200 text-gray-700 @endif shadow-md website-badge">
+                                    {{ !empty($item['display_on_website']) ? 'Website On' : 'Website Off' }}
                                 </span>
                             </div>
                         </div>
@@ -108,13 +134,13 @@
                             <!-- Display on Website Toggle -->
                             <div class="mb-4 bg-gray-50 p-3 rounded-lg flex items-center justify-between">
                                 <p class="text-xs text-gray-600 font-medium">Show on Website</p>
-                                @if(!empty($item['id']) && !empty($item['solution_id']))
+                                @if(!empty($item['id']))
                                     <?php 
                                         $isDisplayed = !empty($item['display_on_website']);
                                         $bgClass = $isDisplayed ? 'bg-green-500' : 'bg-gray-300';
                                         $slideClass = $isDisplayed ? 'translate-x-6' : 'translate-x-1';
                                     ?>
-                                    <button type="button" class="toggle-display relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $bgClass }}" data-product-id="{{ $item['id'] }}" data-display="{{ $isDisplayed ? 'true' : 'false' }}">
+                                    <button type="button" class="toggle-display relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $bgClass }}" data-item-id="{{ $item['id'] }}" data-display="{{ $isDisplayed ? 'true' : 'false' }}">
                                         <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $slideClass }}"></span>
                                     </button>
                                 @endif
@@ -178,7 +204,7 @@
 <script>
 document.querySelectorAll('.toggle-display').forEach(button => {
     button.addEventListener('click', function() {
-        const productId = this.dataset.productId;
+        const itemId = this.dataset.itemId;
         const isCurrentlyDisplayed = this.dataset.display === 'true';
         const newDisplayStatus = !isCurrentlyDisplayed;
         
@@ -190,15 +216,31 @@ document.querySelectorAll('.toggle-display').forEach(button => {
         this.dataset.display = newDisplayStatus ? 'true' : 'false';
         
         // Send update to server
-        fetch(`/admin/products/${productId}/toggle-display`, {
-            method: 'PATCH',
+        fetch(`/api/menu-items/${itemId}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
             },
             body: JSON.stringify({
                 display_on_website: newDisplayStatus
             })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to update website visibility');
+            const card = this.closest('.product-card');
+            if (card) {
+                card.dataset.website = newDisplayStatus ? 'visible' : 'hidden';
+                const badge = card.querySelector('.website-badge');
+                if (badge) {
+                    badge.textContent = newDisplayStatus ? 'Website On' : 'Website Off';
+                    badge.classList.toggle('bg-indigo-100', newDisplayStatus);
+                    badge.classList.toggle('text-indigo-800', newDisplayStatus);
+                    badge.classList.toggle('bg-gray-200', !newDisplayStatus);
+                    badge.classList.toggle('text-gray-700', !newDisplayStatus);
+                }
+            }
         })
         .catch(error => {
             console.error('Error toggling product display:', error);
@@ -211,5 +253,28 @@ document.querySelectorAll('.toggle-display').forEach(button => {
         });
     });
 });
+
+const productSearch = document.getElementById('productSearch');
+const websiteFilter = document.getElementById('websiteFilter');
+const stockFilter = document.getElementById('stockFilter');
+const productCards = Array.from(document.querySelectorAll('.product-card'));
+
+const filterProducts = () => {
+    const q = (productSearch?.value || '').trim().toLowerCase();
+    const website = websiteFilter?.value || 'all';
+    const stock = stockFilter?.value || 'all';
+
+    productCards.forEach(card => {
+        const text = `${card.dataset.name || ''} ${card.dataset.barcode || ''} ${card.dataset.category || ''}`;
+        const matchesText = !q || text.includes(q);
+        const matchesWebsite = website === 'all' || card.dataset.website === website;
+        const matchesStock = stock === 'all' || card.dataset.stock === stock;
+        card.style.display = matchesText && matchesWebsite && matchesStock ? '' : 'none';
+    });
+};
+
+productSearch?.addEventListener('input', filterProducts);
+websiteFilter?.addEventListener('change', filterProducts);
+stockFilter?.addEventListener('change', filterProducts);
 </script>
 @endsection

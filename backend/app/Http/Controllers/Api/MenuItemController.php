@@ -72,6 +72,7 @@ class MenuItemController extends Controller
             'active' => $data['is_active'] ?? true,
             'is_sold_out' => $data['is_sold_out'] ?? false,
             'stock' => (int) ($data['stock'] ?? 0),
+            'display_on_website' => array_key_exists('display_on_website', $data) ? (bool) $data['display_on_website'] : true,
         ];
 
         $item = SolutionItem::create($payload);
@@ -125,6 +126,7 @@ class MenuItemController extends Controller
             'sort_order' => $data['sort_order'] ?? $menuItem->sort_order,
             'active' => array_key_exists('is_active', $data) ? $data['is_active'] : $menuItem->active,
             'is_sold_out' => array_key_exists('is_sold_out', $data) ? $data['is_sold_out'] : $menuItem->is_sold_out,
+            'display_on_website' => array_key_exists('display_on_website', $data) ? (bool) $data['display_on_website'] : $menuItem->display_on_website,
         ];
 
         if (array_key_exists('stock', $data)) {
@@ -202,6 +204,13 @@ class MenuItemController extends Controller
         return response()->json($this->transformItem($menuItem->load('solution')));
     }
 
+    public function toggleDisplayOnWebsite(SolutionItem $menuItem)
+    {
+        $menuItem->update(['display_on_website' => ! (bool) $menuItem->display_on_website]);
+
+        return response()->json($this->transformItem($menuItem->load('solution')));
+    }
+
     public function destroy(SolutionItem $menuItem)
     {
         if ($menuItem->image_public_id) {
@@ -254,6 +263,7 @@ class MenuItemController extends Controller
             'is_active' => (bool) $item->active,
             'sort_order' => $item->sort_order,
             'image_url' => ImageUrl::url($item->image),
+            'display_on_website' => (bool) $item->display_on_website,
             'category' => $item->solution ? [
                 'id' => $item->solution->id,
                 'name' => $item->solution->name,

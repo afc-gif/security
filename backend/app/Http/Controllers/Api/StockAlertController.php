@@ -15,6 +15,7 @@ class StockAlertController extends Controller
             ->orderBy('alert_type', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()
+            ->filter(fn ($alert) => $alert->solutionItem !== null)
             ->map(fn ($alert) => [
                 'id' => $alert->id,
                 'product_id' => $alert->solution_item_id,
@@ -24,7 +25,8 @@ class StockAlertController extends Controller
                 'current_stock' => $alert->current_stock,
                 'threshold' => $alert->threshold,
                 'created_at' => $alert->created_at,
-            ]);
+            ])
+            ->values();
 
         return response()->json($alerts);
     }
