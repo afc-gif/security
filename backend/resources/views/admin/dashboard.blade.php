@@ -1465,6 +1465,7 @@
                 scanDebounce = setTimeout(async () => {
                     const matches = await findNameMatches(code);
                     if (!matches.length) {
+                if (posLookupResult) posLookupResult.style.display = 'none';
                         showLookupError('No item matches that name.');
                         setPosStatus('No match found.', 'error');
                         renderSuggestions([]);
