@@ -15,7 +15,8 @@
             font-family: "Courier New", monospace;
             background: #f5f5f5;
             padding: 20px;
-            color: #111;
+            color: #000;
+            line-height: 1.35;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -24,7 +25,7 @@
             width: 80mm;
             background: white;
             margin: 0 auto;
-            padding: 20px;
+            padding: 22px 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             position: relative;
             overflow: hidden;
@@ -35,12 +36,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70mm;
-            max-width: 85%;
-            max-height: 60%;
+            width: 74mm;
+            max-width: 94%;
+            max-height: 72%;
             height: auto;
             object-fit: contain;
-            opacity: 0.08;
+            opacity: 0.13;
+            filter: grayscale(1) contrast(260%) brightness(0.2);
             z-index: 1;
             pointer-events: none;
         }
@@ -52,36 +54,40 @@
 
         .receipt-header {
             text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            border-bottom: 2.5px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .receipt-title {
-            width: 120px;
+            width: 58mm;
+            max-width: 96%;
             height: auto;
             object-fit: contain;
-            margin: 0 auto 6px;
+            margin: 0 auto 8px;
             display: block;
+            filter: grayscale(1) contrast(280%) brightness(0);
+            image-rendering: -webkit-optimize-contrast;
         }
 
         .receipt-header p {
-            font-size: 11px;
-            color: #111;
+            font-size: 12px;
+            color: #000;
+            font-weight: 600;
         }
 
         .receipt-company {
-            font-size: 10px;
-            color: #111;
+            font-size: 11px;
+            color: #000;
             margin-top: 6px;
-            line-height: 1.4;
+            line-height: 1.45;
         }
 
         .receipt-info {
-            font-size: 11px;
+            font-size: 12px;
             margin-bottom: 15px;
-            border-bottom: 1px dotted #000;
-            padding-bottom: 10px;
+            border-bottom: 1.5px dotted #000;
+            padding-bottom: 11px;
         }
 
         .receipt-info div {
@@ -95,16 +101,16 @@
         }
 
         .receipt-items {
-            font-size: 11px;
+            font-size: 12px;
             margin-bottom: 15px;
-            border-bottom: 1px dotted #000;
-            padding-bottom: 10px;
+            border-bottom: 1.5px dotted #000;
+            padding-bottom: 11px;
         }
 
         .item-header {
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid #000;
+            border-bottom: 1.5px solid #000;
             padding-bottom: 5px;
             margin-bottom: 5px;
             font-weight: bold;
@@ -113,7 +119,7 @@
         .item-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
 
         .item-name {
@@ -123,58 +129,62 @@
         }
 
         .item-qty {
-            width: 30px;
+            width: 34px;
             text-align: center;
+            font-weight: 700;
         }
 
         .item-price {
-            width: 50px;
+            width: 58px;
             text-align: right;
+            font-weight: 700;
         }
 
         .receipt-totals {
-            font-size: 12px;
+            font-size: 13px;
             margin-bottom: 15px;
-            border-bottom: 2px solid #000;
+            border-bottom: 2.5px solid #000;
             padding-bottom: 10px;
         }
 
         .total-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
 
         .total-row.grand-total {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 15px;
             margin-top: 5px;
         }
 
         .receipt-salesperson {
-            background: #f0f0f0;
+            background: #fff;
+            border: 1.5px solid #000;
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 4px;
             margin-bottom: 15px;
-            font-size: 11px;
+            font-size: 12px;
             text-align: center;
         }
 
         .receipt-salesperson strong {
             display: block;
             margin-bottom: 3px;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .receipt-footer {
             text-align: center;
-            font-size: 10px;
-            color: #111;
+            font-size: 11px;
+            color: #000;
+            font-weight: 600;
             margin-bottom: 15px;
         }
 
         .receipt-divider {
-            border-top: 1px dashed #000;
+            border-top: 1.5px dashed #000;
             margin: 10px 0;
         }
 
@@ -222,7 +232,18 @@
             .receipt-container {
                 width: 100%;
                 box-shadow: none;
-                padding: 0;
+                padding: 2mm 1.8mm;
+            }
+
+            .receipt-watermark {
+                opacity: 0.16 !important;
+                filter: grayscale(1) contrast(280%) brightness(0.18) !important;
+            }
+
+            .receipt-title {
+                width: 60mm;
+                max-width: 98%;
+                filter: grayscale(1) contrast(320%) brightness(0) !important;
             }
 
             .print-button,
@@ -240,7 +261,7 @@
 </head>
 <body>
     <div class="receipt-container">
-        <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="" class="receipt-watermark">
+        <img src="{{ asset('head.png') }}" alt="" class="receipt-watermark">
         <!-- Header -->
         <div class="receipt-header">
             <img src="{{ asset('head.png') }}" alt="ARTSCI" class="receipt-title">
