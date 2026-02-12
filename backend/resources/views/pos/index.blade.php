@@ -1182,23 +1182,6 @@
         });
         ordersPoller.start();
 
-        if (posSuggestions) {
-            posSuggestions.addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-suggest-id]');
-                if (!btn) return;
-                const id = Number(btn.getAttribute('data-suggest-id'));
-                const item = menuCache.find(i => i.id === id);
-                if (!item) return;
-                addToPosCart(item);
-                renderSuggestions([]);
-                if (posBarcodeInput) {
-                    posBarcodeInput.value = '';
-                    posBarcodeInput.focus();
-                }
-                setPosStatus(`Added ${item.name}. Ready for next scan.`);
-            });
-        }
-
         const showPosToast = (message, duration = 4000) => {
             const toast = document.createElement('div');
             toast.style.cssText = `
