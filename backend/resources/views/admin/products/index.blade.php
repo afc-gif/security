@@ -109,8 +109,13 @@
                             <div class="mb-4 bg-gray-50 p-3 rounded-lg flex items-center justify-between">
                                 <p class="text-xs text-gray-600 font-medium">Show on Website</p>
                                 @if(!empty($item['id']) && !empty($item['solution_id']))
-                                    <button onclick="toggleProductDisplay({{ $item['id'] }}, this)" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $item['display_on_website'] ? 'bg-green-500' : 'bg-gray-300' }}" data-display="{{ $item['display_on_website'] ? 'true' : 'false' }}">
-                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $item['display_on_website'] ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                    <?php 
+                                        $isDisplayed = !empty($item['display_on_website']);
+                                        $bgClass = $isDisplayed ? 'bg-green-500' : 'bg-gray-300';
+                                        $slideClass = $isDisplayed ? 'translate-x-6' : 'translate-x-1';
+                                    ?>
+                                    <button type="button" class="toggle-display relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $bgClass }}" data-product-id="{{ $item['id'] }}" data-display="{{ $isDisplayed ? 'true' : 'false' }}">
+                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $slideClass }}"></span>
                                     </button>
                                 @endif
                             </div>
@@ -171,37 +176,40 @@
 </div>
 
 <script>
-function toggleProductDisplay(productId, button) {
-    const isCurrentlyDisplayed = button.dataset.display === 'true';
-    const newDisplayStatus = !isCurrentlyDisplayed;
-    
-    // Update UI optimistically
-    button.classList.toggle('bg-green-500');
-    button.classList.toggle('bg-gray-300');
-    button.querySelector('span').classList.toggle('translate-x-6');
-    button.querySelector('span').classList.toggle('translate-x-1');
-    button.dataset.display = newDisplayStatus ? 'true' : 'false';
-    
-    // Send update to server
-    fetch(`/admin/products/${productId}/toggle-display`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        body: JSON.stringify({
-            display_on_website: newDisplayStatus
+document.querySelectorAll('.toggle-display').forEach(button => {
+    button.addEventListener('click', function() {
+        const productId = this.dataset.productId;
+        const isCurrentlyDisplayed = this.dataset.display === 'true';
+        const newDisplayStatus = !isCurrentlyDisplayed;
+        
+        // Update UI optimistically
+        this.classList.toggle('bg-green-500');
+        this.classList.toggle('bg-gray-300');
+        this.querySelector('span').classList.toggle('translate-x-6');
+        this.querySelector('span').classList.toggle('translate-x-1');
+        this.dataset.display = newDisplayStatus ? 'true' : 'false';
+        
+        // Send update to server
+        fetch(`/admin/products/${productId}/toggle-display`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({
+                display_on_website: newDisplayStatus
+            })
         })
-    })
-    .catch(error => {
-        console.error('Error toggling product display:', error);
-        // Revert UI if request fails
-        button.classList.toggle('bg-green-500');
-        button.classList.toggle('bg-gray-300');
-        button.querySelector('span').classList.toggle('translate-x-6');
-        button.querySelector('span').classList.toggle('translate-x-1');
-        button.dataset.display = isCurrentlyDisplayed ? 'true' : 'false';
+        .catch(error => {
+            console.error('Error toggling product display:', error);
+            // Revert UI if request fails
+            this.classList.toggle('bg-green-500');
+            this.classList.toggle('bg-gray-300');
+            this.querySelector('span').classList.toggle('translate-x-6');
+            this.querySelector('span').classList.toggle('translate-x-1');
+            this.dataset.display = isCurrentlyDisplayed ? 'true' : 'false';
+        });
     });
-}
+});
 </script>
 @endsection
