@@ -338,7 +338,18 @@
                     if (data && data.message) message = data.message;
                 } catch (err) {
                     const text = await res.text().catch(() => '');
-                    if (text) message = text;
+                    const lowerText = String(text || '').toLowerCase();
+                    if (res.status === 502 || lowerText.includes('bad gateway')) {
+                        message = 'Server temporarily unavailable (502). Please retry in a few seconds.';
+                    } else if (res.status === 503) {
+                        message = 'Service unavailable (503). Please retry shortly.';
+                    } else if (res.status === 504 || lowerText.includes('gateway timeout')) {
+                        message = 'Server timeout (504). Please retry.';
+                    } else if (lowerText.includes('<html') || lowerText.includes('<!doctype')) {
+                        message = `Server error (${res.status}). Please retry.`;
+                    } else if (text) {
+                        message = text;
+                    }
                 }
                 throw new Error(message);
             }
