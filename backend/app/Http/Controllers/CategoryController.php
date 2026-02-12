@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Services\CloudinaryImageService;
+use App\Support\ImageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,7 +21,7 @@ class CategoryController extends Controller
         return view('admin.categories.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:categories',
@@ -30,7 +32,9 @@ class CategoryController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+            $upload = $cloudinary->upload($request->file('image'), 'categories');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $validated['slug'] = str()->slug($validated['name']);
@@ -44,7 +48,7 @@ class CategoryController extends Controller
         return view('admin.categories.edit', compact('category'));
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, Category $category, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:categories,name,' . $category->id,
@@ -55,10 +59,14 @@ class CategoryController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($category->image) {
+            if ($category->image_public_id) {
+                $cloudinary->destroy($category->image_public_id);
+            } elseif ($category->image && !ImageUrl::isAbsolute($category->image)) {
                 Storage::disk('public')->delete($category->image);
             }
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+            $upload = $cloudinary->upload($request->file('image'), 'categories');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $validated['slug'] = str()->slug($validated['name']);
@@ -67,9 +75,11 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')->with('success', 'Category updated successfully');
     }
 
-    public function destroy(Category $category)
+    public function destroy(Category $category, CloudinaryImageService $cloudinary)
     {
-        if ($category->image) {
+        if ($category->image_public_id) {
+            $cloudinary->destroy($category->image_public_id);
+        } elseif ($category->image && !ImageUrl::isAbsolute($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
         $category->delete();

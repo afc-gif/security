@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use App\Models\Category;
+use App\Services\CloudinaryImageService;
+use App\Support\ImageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,7 +23,7 @@ class MenuItemController extends Controller
         return view('admin.menu-items.create', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -34,7 +36,9 @@ class MenuItemController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('menu-items', 'public');
+            $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         MenuItem::create($validated);
@@ -48,7 +52,7 @@ class MenuItemController extends Controller
         return view('admin.menu-items.edit', compact('menuItem', 'categories'));
     }
 
-    public function update(Request $request, MenuItem $menuItem)
+    public function update(Request $request, MenuItem $menuItem, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -61,10 +65,14 @@ class MenuItemController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($menuItem->image) {
+            if ($menuItem->image_public_id) {
+                $cloudinary->destroy($menuItem->image_public_id);
+            } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
                 Storage::disk('public')->delete($menuItem->image);
             }
-            $validated['image'] = $request->file('image')->store('menu-items', 'public');
+            $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $menuItem->update($validated);
@@ -72,25 +80,32 @@ class MenuItemController extends Controller
         return redirect()->route('menu-items.index')->with('success', 'Menu item updated successfully');
     }
 
-    public function uploadImage(Request $request, MenuItem $menuItem)
+    public function uploadImage(Request $request, MenuItem $menuItem, CloudinaryImageService $cloudinary)
     {
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
-        if ($menuItem->image) {
+        if ($menuItem->image_public_id) {
+            $cloudinary->destroy($menuItem->image_public_id);
+        } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
             Storage::disk('public')->delete($menuItem->image);
         }
 
-        $path = $request->file('image')->store('menu-items', 'public');
-        $menuItem->update(['image' => $path]);
+        $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+        $menuItem->update([
+            'image' => $upload['url'],
+            'image_public_id' => $upload['public_id'],
+        ]);
 
-        return response()->json(['success' => true, 'path' => $path]);
+        return response()->json(['success' => true, 'path' => $upload['url']]);
     }
 
-    public function destroy(MenuItem $menuItem)
+    public function destroy(MenuItem $menuItem, CloudinaryImageService $cloudinary)
     {
-        if ($menuItem->image) {
+        if ($menuItem->image_public_id) {
+            $cloudinary->destroy($menuItem->image_public_id);
+        } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
             Storage::disk('public')->delete($menuItem->image);
         }
         $menuItem->delete();

@@ -23,7 +23,7 @@
             <label for="image" class="block text-sm font-semibold mb-2">Image</label>
             @if($category->image)
                 <div class="mb-2">
-                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="h-20 w-20 object-cover rounded">
+                    <img src="{{ \App\Support\ImageUrl::url($category->image) }}" alt="{{ $category->name }}" class="h-20 w-20 object-cover rounded">
                 </div>
             @endif
             <input type="file" id="image" name="image" accept="image/*" class="w-full border rounded px-3 py-2">

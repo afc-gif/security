@@ -13,7 +13,7 @@
                 @foreach($products as $product)
                     <div class="product-card">
                         @if($product->image)
-                            <img src="{{ Storage::disk('public')->url($product->image) }}" alt="{{ $product->name }}" class="product-image">
+                            <img src="{{ \App\Support\ImageUrl::url($product->image) }}" alt="{{ $product->name }}" class="product-image">
                         @else
                             <div class="product-image-placeholder">
                                 <i class="fas fa-box"></i>

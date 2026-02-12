@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Solution;
 use App\Models\SolutionItem;
 use App\Models\StockAlert;
+use App\Services\CloudinaryImageService;
+use App\Support\ImageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -63,7 +65,7 @@ class AdminController extends Controller
         return view('admin.products.create', compact('categories'));
     }
 
-    public function storeProduct(Request $request)
+    public function storeProduct(Request $request, CloudinaryImageService $cloudinary)
     {
         if ($schemaError = $this->ensureProductSchema()) {
             return $schemaError;
@@ -89,10 +91,10 @@ class AdminController extends Controller
                 }
 
                 try {
-                    // Store the image in the public disk under products folder
-                    $path = $image->store('products', 'public');
-                    $validated['image'] = $path;
-                    Log::info("Image stored successfully", ['path' => $path]);
+                    $upload = $cloudinary->upload($image, 'products');
+                    $validated['image'] = $upload['url'];
+                    $validated['image_public_id'] = $upload['public_id'];
+                    Log::info("Image stored successfully", ['path' => $validated['image']]);
                 } catch (\Exception $e) {
                     Log::error("Image storage failed: " . $e->getMessage());
                     return back()->withErrors(['image' => 'Failed to upload image. Please check server permissions and try again.'])->withInput();
@@ -133,7 +135,7 @@ class AdminController extends Controller
         return view('admin.products.edit', compact('product', 'categories', 'solutionItem'));
     }
 
-    public function updateProduct(Request $request, Product $product)
+    public function updateProduct(Request $request, Product $product, CloudinaryImageService $cloudinary)
     {
         if ($schemaError = $this->ensureProductSchema()) {
             return $schemaError;
@@ -165,7 +167,14 @@ class AdminController extends Controller
                 }
 
                 // Delete old image if it exists
-                if ($product->image && Storage::disk('public')->exists($product->image)) {
+                if ($product->image_public_id) {
+                    try {
+                        $cloudinary->destroy($product->image_public_id);
+                        Log::info("Old image deleted", ['public_id' => $product->image_public_id]);
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to delete old image: " . $e->getMessage());
+                    }
+                } elseif ($product->image && !ImageUrl::isAbsolute($product->image) && Storage::disk('public')->exists($product->image)) {
                     try {
                         Storage::disk('public')->delete($product->image);
                         Log::info("Old image deleted", ['path' => $product->image]);
@@ -175,9 +184,10 @@ class AdminController extends Controller
                 }
 
                 try {
-                    $path = $image->store('products', 'public');
-                    $validated['image'] = $path;
-                    Log::info("New image stored successfully", ['path' => $path]);
+                    $upload = $cloudinary->upload($image, 'products');
+                    $validated['image'] = $upload['url'];
+                    $validated['image_public_id'] = $upload['public_id'];
+                    Log::info("New image stored successfully", ['path' => $validated['image']]);
                 } catch (\Exception $e) {
                     Log::error("Image storage failed during update: " . $e->getMessage());
                     return back()->withErrors(['image' => 'Failed to upload image. Please check server permissions and try again.'])->withInput();
@@ -210,9 +220,11 @@ class AdminController extends Controller
         }
     }
 
-    public function deleteProduct(Product $product)
+    public function deleteProduct(Product $product, CloudinaryImageService $cloudinary)
     {
-        if ($product->image) {
+        if ($product->image_public_id) {
+            $cloudinary->destroy($product->image_public_id);
+        } elseif ($product->image && !ImageUrl::isAbsolute($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
         $this->removeSolutionItemForProduct($product);
@@ -245,7 +257,7 @@ class AdminController extends Controller
                         'description' => $item->description,
                         'price' => $item->price ? '₦' . number_format($item->price, 2) : null,
                         'stock' => $item->stock,
-                        'image' => $item->image ? asset('storage/' . $item->image) : null,
+                        'image' => ImageUrl::url($item->image),
                     ];
                 })->toArray(),
             ];
@@ -268,6 +280,7 @@ class AdminController extends Controller
             'price' => $product->price,
             'stock' => $product->stock,
             'image' => $product->image,
+            'image_public_id' => $product->image_public_id,
             'active' => true,
         ];
 

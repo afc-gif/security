@@ -14,6 +14,7 @@ class MenuItem extends Model
         'name',
         'description',
         'image',
+        'image_public_id',
         'price',
         'sort_order',
         'available',

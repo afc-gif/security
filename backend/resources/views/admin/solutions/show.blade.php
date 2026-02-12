@@ -32,7 +32,7 @@
                 <div class="grid grid-cols-4 gap-4 items-start">
                     @if ($item->image)
                         <div>
-                            <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" class="w-full h-32 object-cover rounded">
+                            <img src="{{ \App\Support\ImageUrl::url($item->image) }}" alt="{{ $item->name }}" class="w-full h-32 object-cover rounded">
                         </div>
                     @else
                         <div class="bg-gray-200 h-32 rounded flex items-center justify-center">

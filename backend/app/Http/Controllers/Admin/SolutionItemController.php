@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Solution;
 use App\Models\SolutionItem;
+use App\Services\CloudinaryImageService;
+use App\Support\ImageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +19,7 @@ class SolutionItemController extends Controller
         return view('admin.solutions.items.create', compact('solution'));
     }
 
-    public function store(Request $request, Solution $solution)
+    public function store(Request $request, Solution $solution, CloudinaryImageService $cloudinary)
     {
         Log::info("SolutionItemController.store - Raw request data", [
             'all_input' => $request->all(),
@@ -46,8 +48,9 @@ class SolutionItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('solutions', 'public');
-            $validated['image'] = $path;
+            $upload = $cloudinary->upload($request->file('image'), 'solutions');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $solution->items()->create($validated);
@@ -61,7 +64,7 @@ class SolutionItemController extends Controller
         return view('admin.solutions.items.edit', compact('solution', 'item'));
     }
 
-    public function update(Request $request, Solution $solution, SolutionItem $item)
+    public function update(Request $request, Solution $solution, SolutionItem $item, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -79,11 +82,14 @@ class SolutionItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            if ($item->image) {
+            if ($item->image_public_id) {
+                $cloudinary->destroy($item->image_public_id);
+            } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
                 Storage::disk('public')->delete($item->image);
             }
-            $path = $request->file('image')->store('solutions', 'public');
-            $validated['image'] = $path;
+            $upload = $cloudinary->upload($request->file('image'), 'solutions');
+            $validated['image'] = $upload['url'];
+            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $item->update($validated);
@@ -92,9 +98,11 @@ class SolutionItemController extends Controller
                         ->with('success', 'Solution item updated successfully.');
     }
 
-    public function destroy(Solution $solution, SolutionItem $item)
+    public function destroy(Solution $solution, SolutionItem $item, CloudinaryImageService $cloudinary)
     {
-        if ($item->image) {
+        if ($item->image_public_id) {
+            $cloudinary->destroy($item->image_public_id);
+        } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
             Storage::disk('public')->delete($item->image);
         }
         $item->delete();

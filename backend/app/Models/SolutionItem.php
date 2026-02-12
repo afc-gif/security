@@ -11,7 +11,7 @@ class SolutionItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['solution_id', 'product_id', 'name', 'barcode', 'description', 'price', 'stock', 'image', 'sort_order', 'active', 'is_sold_out', 'display_on_website'];
+    protected $fillable = ['solution_id', 'product_id', 'name', 'barcode', 'description', 'price', 'stock', 'image', 'image_public_id', 'sort_order', 'active', 'is_sold_out', 'display_on_website'];
 
     protected $casts = [
         'price' => 'decimal:2',

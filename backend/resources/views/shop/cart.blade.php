@@ -14,7 +14,7 @@
                         <div class="cart-item">
                             <div class="item-image">
                                 @if($item['image'])
-                                    <img src="{{ Storage::disk('public')->url($item['image']) }}" alt="{{ $item['name'] }}">
+                                    <img src="{{ \App\Support\ImageUrl::url($item['image']) }}" alt="{{ $item['name'] }}">
                                 @else
                                     <div class="placeholder"><i class="fas fa-box"></i></div>
                                 @endif

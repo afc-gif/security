@@ -86,7 +86,7 @@
                     <label for="image">Product Image</label>
                     @if($product->image)
                         <div class="image-preview">
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                            <img src="{{ \App\Support\ImageUrl::url($product->image) }}" alt="{{ $product->name }}">
                         </div>
                     @endif
                     <input type="file" id="image" name="image" accept="image/*">

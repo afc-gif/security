@@ -59,7 +59,7 @@
             <label for="image" class="block text-gray-700 font-bold mb-2">Item Image</label>
             @if ($item->image)
                 <div class="mb-2">
-                    <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" class="h-32 rounded">
+                    <img src="{{ \App\Support\ImageUrl::url($item->image) }}" alt="{{ $item->name }}" class="h-32 rounded">
                     <p class="text-sm text-gray-600 mt-1">Current image</p>
                 </div>
             @endif

@@ -48,7 +48,7 @@
             <label for="image" class="block text-sm font-semibold mb-2">Image</label>
             @if($menuItem->image)
                 <div class="mb-2">
-                    <img src="{{ asset('storage/' . $menuItem->image) }}" alt="{{ $menuItem->name }}" class="h-20 w-20 object-cover rounded">
+                    <img src="{{ \App\Support\ImageUrl::url($menuItem->image) }}" alt="{{ $menuItem->name }}" class="h-20 w-20 object-cover rounded">
                 </div>
             @endif
             <input type="file" id="image" name="image" accept="image/*" class="w-full border rounded px-3 py-2">

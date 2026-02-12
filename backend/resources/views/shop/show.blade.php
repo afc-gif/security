@@ -12,7 +12,7 @@
         <!-- Product Image -->
         <div class="col-md-6 mb-4">
             @if($product->image)
-                <img src="{{ Storage::disk('public')->url($product->image) }}" alt="{{ $product->name }}" class="img-fluid rounded" style="max-height: 500px; object-fit: cover;">
+                <img src="{{ \App\Support\ImageUrl::url($product->image) }}" alt="{{ $product->name }}" class="img-fluid rounded" style="max-height: 500px; object-fit: cover;">
             @else
                 <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 500px;">
                     <i class="fas fa-image" style="font-size: 100px; color: #ccc;"></i>
