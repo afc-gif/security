@@ -273,77 +273,44 @@
 
             <section class="panel" data-section="menu">
                 <div class="card">
-                    <h2>Products</h2>
-                    <p class="muted">Add items and toggle availability.</p>
-                    <div class="grid-2">
-                        <div class="list" id="menuList"></div>
-                        <form id="menuForm">
-                            <label>Name</label>
-                            <input name="name" placeholder="Product name" required />
-                            <label>Barcode (Optional)</label>
-                            <input name="barcode" placeholder="Scan or enter barcode (leave blank to auto-generate)" />
-                            <label>Description</label>
-                            <textarea name="description" rows="2" placeholder="Optional"></textarea>
-                            <label>Price (NGN)</label>
-                            <input name="price" type="number" step="0.01" min="0" required />
-                            <label>Stock Quantity</label>
-                            <input name="stock" type="number" min="0" value="0" />
-                            <label>Category</label>
-                            <select name="category_id" id="menuCategorySelect" required>
-                                <option value="" disabled selected>Select category</option>
-                            </select>
-                            <label>Image</label>
-                            <input name="image" type="file" accept="image/*" />
-                            <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
-                                <input name="display_on_website" type="checkbox" value="1" checked style="width:18px; height:18px; cursor:pointer;" />
-                                <span>Display on Website</span>
-                            </label>
-                            <small class="muted" style="display:block; margin-top:4px;">Uncheck to hide from public website (will remain in POS)</small>
-                            <button class="btn-primary" type="submit">Add Product</button>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Products</h2>
+                            <p class="muted" style="margin:0;">Add, edit and manage your product inventory.</p>
+                        </div>
+                        <a href="{{ route('admin.products.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            📋 View All Products
+                        </a>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div style="margin-bottom:16px;">
+                        <input id="productSearchDashboard" type="text" placeholder="Search products by name..." style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff; font-size:13px;" />
+                    </div>
+
+                    <div style="background:#f8fbff; border:1px solid var(--brand-border); border-radius:14px; padding:16px; margin-bottom:16px;">
+                        <h3 style="margin:0 0 14px; font-size:16px;">Add New Product</h3>
+                        <form id="menuForm" style="display:grid; gap:10px;">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Product Name *</label><input name="name" placeholder="e.g. CCTV Camera" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Barcode (Optional)</label><input name="barcode" placeholder="Auto-generate if blank" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Price (NGN) *</label><input name="price" type="number" step="0.01" min="0" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Stock Quantity</label><input name="stock" type="number" min="0" value="0" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Category *</label><select name="category_id" id="menuCategorySelect" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;"><option value="" disabled selected>Select category</option></select></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Image</label><input name="image" type="file" accept="image/*" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                            </div>
+                            <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Description (Optional)</label><textarea name="description" rows="2" placeholder="Add product details..." style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;"></textarea></div>
+                            <label style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer;"><input name="display_on_website" type="checkbox" value="1" checked style="width:18px; height:18px; cursor:pointer;" /><span style="font-size:13px;">Display on Website</span></label>
+                            <small class="muted" style="display:block; margin-top:2px; font-size:12px;">Uncheck to hide from public website (will remain in POS)</small>
+                            <button class="btn-primary" type="submit" style="margin-top:8px;">+ Add Product</button>
                         </form>
                     </div>
+
+                    <div><h3 style="margin:0 0 12px; font-size:16px;">Recent Products</h3><div class="list" id="menuList" style="border:1px solid var(--brand-border); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);"></div><div style="text-align:center; margin-top:12px;"><a href="{{ route('admin.products.index') }}" style="color:#2563eb; font-weight:600; font-size:13px; text-decoration:none;">View complete products list →</a></div></div>
                 </div>
             </section>
-
-            <section class="panel" data-section="users">
-                <div class="card">
-                    <h2>Users</h2>
-                    <p class="muted">Approve accounts and assign roles.</p>
-                    <div class="list" id="usersList"></div>
-                </div>
-            </section>
-
-            <section class="panel" data-section="orders">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
-                        <div>
-                            <h2 style="margin:0 0 4px;">Orders</h2>
-                            <p class="muted" style="margin:0;">Today and recent sales. Seller is recorded per order.</p>
-                        </div>
-                        <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap;">
-                            <select id="ordersExportRange" style="padding:8px 10px; border-radius:10px; border:1px solid var(--brand-border);">
-                                <option value="weekly">Last 7 days</option>
-                                <option value="monthly" selected>Last 30 days</option>
-                            </select>
-                            <button class="btn-ghost" id="ordersExportBtn" style="white-space:nowrap;">Download CSV</button>
-                            <button class="btn-ghost" id="deleteSelectedOrdersBtn" style="white-space:nowrap;" disabled>Delete Selected</button>
-                            <button class="btn-ghost" id="purgeOrdersBtn" style="white-space:nowrap;">Delete test orders</button>
-                        </div>
-                    </div>
-
-                    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top:12px;">
-                        <div style="border:1px solid var(--brand-border); border-radius:12px; padding:12px; background:#fff;">
-                            <div class="muted" style="font-size:12px; margin-bottom:6px;">Revenue (last 7 days)</div>
-                            <div id="ordersChart" >
-                                <div id="ordersChartBars" style="display:flex; align-items:flex-end; gap:8px; height:120px;"></div>
-                                <div id="ordersChartLabels" style="display:flex; gap:8px; justify-content:space-between; font-size:11px; color:var(--brand-muted); margin-top:6px;"></div>
-                            </div>
-                        </div>
-                        <div style="border:1px solid var(--brand-border); border-radius:12px; padding:12px; background:#fff;">
-                            <div class="muted" style="font-size:12px;">Snapshot</div>
-                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
-                                <div class="stat" style="margin:0; box-shadow:none; border-color:var(--brand-border);">
-                                    <h3 id="statOrders">0</h3><span>Orders today</span>
                                 </div>
                                 <div class="stat" style="margin:0; box-shadow:none; border-color:var(--brand-border);">
                                     <h3 id="statRevenue">₦0</h3><span>Revenue today</span>
@@ -1345,6 +1312,17 @@
             });
         });
 
+
+        // Dashboard Products Search
+        const productSearchDashboard = document.getElementById('productSearchDashboard');
+        productSearchDashboard?.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const items = menuList?.querySelectorAll('.item');
+            items?.forEach(item => {
+                const itemText = item.textContent.toLowerCase();
+                item.style.display = itemText.includes(searchTerm) ? '' : 'none';
+            });
+        });
         menuForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = new FormData(menuForm);
