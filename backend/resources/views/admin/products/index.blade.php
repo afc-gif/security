@@ -161,10 +161,14 @@
 
                             <!-- Actions -->
                             <div class="space-y-2 flex-1 flex flex-col justify-end">
-                                @if(!empty($item['id']) && !empty($item['solution_id']))
-                                    <a href="{{ route('admin.solutions.items.edit', [$row['solution_id'], $item['id']]) }}" class="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded transition text-sm">
+                                @if(!empty($item['id']))
+                                    @php($resolvedSolutionId = $item['solution_id'] ?? $row['solution_id'] ?? null)
+
+                                    @if(!empty($resolvedSolutionId))
+                                    <a href="{{ route('admin.solutions.items.edit', [$resolvedSolutionId, $item['id']]) }}" class="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded transition text-sm">
                                         ✏️ Edit
                                     </a>
+                                    @endif
 
                                     @if(!empty($item['barcode']))
                                         <div class="grid grid-cols-2 gap-2">
@@ -177,13 +181,19 @@
                                         </div>
                                     @endif
 
-                                    <form action="{{ route('admin.solutions.items.destroy', [$row['solution_id'], $item['id']]) }}" method="POST" class="w-full">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm" onclick="return confirm('Delete this product?')">
+                                    @if(!empty($resolvedSolutionId))
+                                        <form action="{{ route('admin.solutions.items.destroy', [$resolvedSolutionId, $item['id']]) }}" method="POST" class="w-full">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm" onclick="return confirm('Delete this product?')">
+                                                🗑️ Delete
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm delete-menu-item" data-item-id="{{ $item['id'] }}">
                                             🗑️ Delete
                                         </button>
-                                    </form>
+                                    @endif
                                 @else
                                     <p class="text-center text-gray-500 text-xs py-2">View only</p>
                                 @endif
@@ -260,6 +270,30 @@ document.querySelectorAll('.toggle-display').forEach(button => {
             this.querySelector('span').classList.toggle('translate-x-5');
             this.querySelector('span').classList.toggle('translate-x-1');
             this.dataset.display = isCurrentlyDisplayed ? 'true' : 'false';
+        });
+    });
+});
+
+document.querySelectorAll('.delete-menu-item').forEach(button => {
+    button.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        if (!itemId || !confirm('Delete this product?')) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        fetch(`/api/menu-items/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to delete product');
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error deleting product:', error);
+            alert('Could not delete product. Please try again.');
         });
     });
 });

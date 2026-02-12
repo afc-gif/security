@@ -1317,62 +1317,96 @@
         // Dashboard Products Search with Autocomplete
         const productSearchDashboard = document.getElementById('productSearchDashboard');
         let suggestionsContainer = null;
-        
+        let productSearchAbortController = null;
+        let productSearchRequestId = 0;
+
+        const clearDashboardProductSuggestions = () => {
+            suggestionsContainer?.remove();
+            suggestionsContainer = null;
+        };
+
         productSearchDashboard?.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
-            
-            // Remove previous suggestions
-            suggestionsContainer?.remove();
-            
+            productSearchRequestId += 1;
+            const requestId = productSearchRequestId;
+            clearDashboardProductSuggestions();
+
+            if (productSearchAbortController) {
+                productSearchAbortController.abort();
+                productSearchAbortController = null;
+            }
+
             if (!query) return;
-            
+
+            productSearchAbortController = new AbortController();
+
             try {
                 // Fetch matching products from database
-                const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
+                    signal: productSearchAbortController.signal,
+                });
                 if (!response.ok) throw new Error('Search failed');
-                
+
                 const products = await response.json();
-                
-                if (products.length === 0) return;
-                
+                const latestQuery = (productSearchDashboard?.value || '').trim();
+                if (requestId !== productSearchRequestId || latestQuery !== query) return;
+                if (!Array.isArray(products) || products.length === 0) return;
+
                 // Create suggestions container
                 suggestionsContainer = document.createElement('div');
-                suggestionsContainer.style.cssText = 'position:absolute; background:#fff; border:1px solid var(--brand-border); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-height:300px; overflow-y:auto; min-width:300px; z-index:1000;';
-                
+                suggestionsContainer.style.cssText = 'position:absolute; top:100%; left:0; right:0; margin-top:4px; background:#fff; border:1px solid var(--brand-border); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-height:300px; overflow-y:auto; z-index:1000;';
+
                 products.forEach(product => {
-                    const item = document.createElement('div');
-                    item.style.cssText = 'padding:12px; border-bottom:1px solid var(--brand-border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
-                    item.innerHTML = `<div><strong>${product.name}</strong><br><small style="color:var(--brand-muted);">${product.category || 'Uncategorized'}</small></div><div style="font-weight:700; color:var(--brand-dark);">${product.price}</div>`;
-                    
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.style.cssText = 'width:100%; padding:12px; border:0; border-bottom:1px solid var(--brand-border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; text-align:left; background:#fff;';
+                    item.innerHTML = `<div><strong>${product.name}</strong><br><small style="color:var(--brand-muted);">${product.category || 'Uncategorized'}</small></div><div style="font-weight:700; color:var(--brand-dark);">₦${product.price}</div>`;
+
                     item.addEventListener('mouseenter', () => item.style.backgroundColor = '#f0f4f9');
                     item.addEventListener('mouseleave', () => item.style.backgroundColor = '#fff');
-                    
+
                     item.addEventListener('click', () => {
+                        productSearchRequestId += 1;
+                        if (productSearchAbortController) {
+                            productSearchAbortController.abort();
+                            productSearchAbortController = null;
+                        }
+                        clearDashboardProductSuggestions();
                         productSearchDashboard.value = '';
-                        suggestionsContainer?.remove();
-                        suggestionsContainer = null;
-                        // Populate form with selected product data (optional)
-                        console.log('Selected:', product);
+
+                        if (product.edit_url) {
+                            window.location.href = product.edit_url;
+                            return;
+                        }
+                        if (product.solution_id && product.id) {
+                            window.location.href = `/admin/solutions/${product.solution_id}/items/${product.id}/edit`;
+                            return;
+                        }
+
+                        window.location.href = '/admin/products';
                     });
-                    
+
                     suggestionsContainer.appendChild(item);
                 });
-                
+
                 if (suggestionsContainer.children.length > 0) {
                     productSearchDashboard.parentElement.style.position = 'relative';
                     productSearchDashboard.parentElement.appendChild(suggestionsContainer);
                 }
             } catch (error) {
+                if (error && error.name === 'AbortError') return;
                 console.error('Search error:', error);
+            } finally {
+                if (requestId === productSearchRequestId) {
+                    productSearchAbortController = null;
+                }
             }
         });
-        
+
         // Close suggestions when clicking outside
         document.addEventListener('click', (e) => {
-            if (e.target !== productSearchDashboard) {
-                suggestionsContainer?.remove();
-                suggestionsContainer = null;
-            }
+            if (!productSearchDashboard || productSearchDashboard.parentElement?.contains(e.target)) return;
+            clearDashboardProductSuggestions();
         });
         menuForm.addEventListener('submit', async (e) => {
             e.preventDefault();

@@ -147,10 +147,14 @@ class SolutionItemController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
+                    'solution_id' => $product->solution_id,
                     'category' => $product->solution ? $product->solution->name : 'Uncategorized',
                     'price' => number_format($product->price, 2),
                     'barcode' => $product->barcode,
                     'stock' => $product->stock,
+                    'edit_url' => $product->solution_id
+                        ? route('admin.solutions.items.edit', [$product->solution_id, $product->id])
+                        : null,
                 ];
             });
 
