@@ -17,7 +17,7 @@ class ImageUrl
             return $value;
         }
 
-        return Storage::disk('public')->url($value);
+        return Storage::url('public/' . $value);
     }
 
     public static function isAbsolute(?string $value): bool
