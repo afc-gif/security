@@ -689,6 +689,7 @@
             if (!code) {
                 setPosStatus('Ready to scan.');
                 renderSuggestions([]);
+                if (posLookupResult) posLookupResult.style.display = 'none';
                 return;
             }
             const isName = /^[a-zA-Z\s]+$/.test(code);
