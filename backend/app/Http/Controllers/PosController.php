@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\SolutionItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\StockAlert;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PosController extends Controller
 {
@@ -145,59 +147,124 @@ class PosController extends Controller
                 'payment_method' => 'required|in:cash,card,mobile'
             ]);
 
-            // Create order with current user (POS operator) as the seller
-            $order = Order::create([
-                'user_id' => auth()->id(), // Current logged-in POS user
-                'total_amount' => $cartData['total'],
-                'status' => 'completed',
-                'payment_method' => $cartData['payment_method'],
-                'notes' => 'POS Sale'
-            ]);
-
-            // Create order items
-            foreach ($cartData['items'] as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'solution_item_id' => $item['id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price']
+            // Use transaction to ensure atomicity
+            return DB::transaction(function () use ($cartData) {
+                // Create order with current user (POS operator) as the seller
+                $order = Order::create([
+                    'user_id' => auth()->id(), // Current logged-in POS user
+                    'total_amount' => $cartData['total'],
+                    'status' => 'completed',
+                    'payment_method' => $cartData['payment_method'],
+                    'notes' => 'POS Sale'
                 ]);
 
-                // Update stock + alerts
-                $solutionItem = SolutionItem::find($item['id']);
-                if ($solutionItem && $solutionItem->stock !== null) {
-                    $currentStock = (int) $solutionItem->stock;
-                    $newStock = max(0, $currentStock - (int) $item['quantity']);
+                // Get all product IDs to fetch in one query
+                $productIds = array_column($cartData['items'], 'id');
+                $products = SolutionItem::whereIn('id', $productIds)->get()->keyBy('id');
 
-                    $solutionItem->update([
-                        'stock' => $newStock,
-                        'is_sold_out' => $newStock === 0,
-                    ]);
+                // Prepare order items and stock updates
+                $orderItems = [];
+                $stockUpdates = [];
+                $alertsToCreate = [];
 
-                    $solutionItem->checkAndCreateStockAlert();
+                foreach ($cartData['items'] as $item) {
+                    // Create order item
+                    $orderItems[] = [
+                        'order_id' => $order->id,
+                        'solution_item_id' => $item['id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+
+                    // Calculate new stock
+                    $solutionItem = $products->get($item['id']);
+                    if ($solutionItem && $solutionItem->stock !== null) {
+                        $currentStock = (int) $solutionItem->stock;
+                        $newStock = max(0, $currentStock - (int) $item['quantity']);
+                        
+                        $stockUpdates[$item['id']] = [
+                            'stock' => $newStock,
+                            'is_sold_out' => $newStock === 0,
+                        ];
+
+                        // Check if we need to create alerts
+                        if ($newStock === 0) {
+                            $existingAlert = $solutionItem->stockAlerts()
+                                ->where('alert_type', 'out_of_stock')
+                                ->whereNull('acknowledged_at')
+                                ->exists();
+                            
+                            if (!$existingAlert) {
+                                $alertsToCreate[] = [
+                                    'solution_item_id' => $item['id'],
+                                    'alert_type' => 'out_of_stock',
+                                    'threshold' => 0,
+                                    'current_stock' => 0,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+                            }
+                        } elseif ($newStock <= 2 && $newStock > 0) {
+                            $existingAlert = $solutionItem->stockAlerts()
+                                ->where('alert_type', 'low_stock')
+                                ->where('threshold', 2)
+                                ->whereNull('acknowledged_at')
+                                ->exists();
+                            
+                            if (!$existingAlert) {
+                                $alertsToCreate[] = [
+                                    'solution_item_id' => $item['id'],
+                                    'alert_type' => 'low_stock',
+                                    'threshold' => 2,
+                                    'current_stock' => $newStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+                            }
+                        }
+                    }
                 }
-            }
 
-            Log::info('POS Sale Completed', [
-                'order_id' => $order->id,
-                'seller' => auth()->user()->name,
-                'total' => $cartData['total'],
-                'payment_method' => $cartData['payment_method']
-            ]);
+                // Batch insert order items
+                if (!empty($orderItems)) {
+                    OrderItem::insert($orderItems);
+                }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Sale completed successfully',
-                'sale_id' => $order->id,
-                'salesperson' => auth()->user()->name,
-                'timestamp' => $order->created_at->toIso8601String(),
-                'total' => $cartData['total'],
-                'payment_method' => $cartData['payment_method']
-            ]);
+                // Update stock for all items
+                foreach ($stockUpdates as $productId => $updates) {
+                    SolutionItem::where('id', $productId)->update($updates);
+                }
+
+                // Batch create alerts
+                if (!empty($alertsToCreate)) {
+                    StockAlert::insert($alertsToCreate);
+                }
+
+                Log::info('POS Sale Completed', [
+                    'order_id' => $order->id,
+                    'seller' => auth()->user()->name,
+                    'total' => $cartData['total'],
+                    'payment_method' => $cartData['payment_method'],
+                    'items_count' => count($cartData['items']),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sale completed successfully',
+                    'sale_id' => $order->id,
+                    'salesperson' => auth()->user()->name,
+                    'timestamp' => $order->created_at->toIso8601String(),
+                    'total' => $cartData['total'],
+                    'payment_method' => $cartData['payment_method']
+                ]);
+            });
         } catch (\Exception $e) {
             Log::error('POS Sale Failed', [
                 'error' => $e->getMessage(),
-                'user' => auth()->user()->name ?? 'Unknown'
+                'user' => auth()->user()->name ?? 'Unknown',
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json(

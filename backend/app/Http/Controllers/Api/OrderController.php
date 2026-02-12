@@ -146,29 +146,64 @@ class OrderController extends Controller
             }, $itemsData);
             OrderItem::insert($orderItemsInsert);
 
+            $stockTransactions = [];
             foreach ($quantityByItem as $solutionItemId => $totalQty) {
                 $solutionItem = $menuItems->get($solutionItemId);
                 if (! $solutionItem) {
                     continue;
                 }
 
-                if ($hasStockTransactionsTable) {
-                    try {
-                        $solutionItem->recordStockTransaction(
-                            -$totalQty,
-                            'sale',
-                            'order',
-                            $order->id,
-                            $request->user()?->id,
-                            "Sale in order #{$order->code}"
-                        );
-                    } catch (\Throwable $e) {
-                        report($e);
+                DB::table('solution_items')
+                    ->where('id', $solutionItemId)
+                    ->decrement('stock', $totalQty);
+
+                $currentStock = (int) DB::table('solution_items')
+                    ->where('id', $solutionItemId)
+                    ->value('stock');
+
+                DB::table('solution_items')
+                    ->where('id', $solutionItemId)
+                    ->update(['is_sold_out' => $currentStock <= 0]);
+
+                if ($currentStock <= 2) {
+                    $alertType = $currentStock <= 0 ? 'out_of_stock' : 'low_stock';
+                    $threshold = $currentStock <= 0 ? 0 : 2;
+                    $hasOpenAlert = DB::table('stock_alerts')
+                        ->where('solution_item_id', $solutionItemId)
+                        ->where('alert_type', $alertType)
+                        ->whereNull('acknowledged_at')
+                        ->exists();
+
+                    if (! $hasOpenAlert) {
+                        DB::table('stock_alerts')->insert([
+                            'solution_item_id' => $solutionItemId,
+                            'alert_type' => $alertType,
+                            'threshold' => $threshold,
+                            'current_stock' => $currentStock,
+                            'created_by' => $request->user()?->id,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]);
                     }
                 }
 
-                // Model events handle sold-out and low-stock alert checks.
-                $solutionItem->decrement('stock', $totalQty);
+                if ($hasStockTransactionsTable) {
+                    $stockTransactions[] = [
+                        'solution_item_id' => $solutionItemId,
+                        'quantity_changed' => -$totalQty,
+                        'transaction_type' => 'sale',
+                        'reference_type' => 'order',
+                        'reference_id' => $order->id,
+                        'user_id' => $request->user()?->id,
+                        'notes' => "Sale in order #{$order->code}",
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+            }
+
+            if ($hasStockTransactionsTable && ! empty($stockTransactions)) {
+                DB::table('stock_transactions')->insert($stockTransactions);
             }
 
             return $this->transformOrder($order->load(['items.solutionItem', 'user']));
