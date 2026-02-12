@@ -36,9 +36,13 @@ class MenuItemController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $upload = $cloudinary->upload($request->file('image'), 'menu-items');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
+            try {
+                $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image upload failed. Please try again.'])->withInput();
+            }
         }
 
         MenuItem::create($validated);
@@ -65,14 +69,19 @@ class MenuItemController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($menuItem->image_public_id) {
-                $cloudinary->destroy($menuItem->image_public_id);
-            } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
-                Storage::disk('public')->delete($menuItem->image);
+            try {
+                if ($menuItem->image_public_id) {
+                    $cloudinary->destroy($menuItem->image_public_id);
+                } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
+                    Storage::disk('public')->delete($menuItem->image);
+                }
+
+                $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image update failed. Please try again.'])->withInput();
             }
-            $upload = $cloudinary->upload($request->file('image'), 'menu-items');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $menuItem->update($validated);
@@ -86,17 +95,21 @@ class MenuItemController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
-        if ($menuItem->image_public_id) {
-            $cloudinary->destroy($menuItem->image_public_id);
-        } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
-            Storage::disk('public')->delete($menuItem->image);
-        }
+        try {
+            if ($menuItem->image_public_id) {
+                $cloudinary->destroy($menuItem->image_public_id);
+            } elseif ($menuItem->image && !ImageUrl::isAbsolute($menuItem->image)) {
+                Storage::disk('public')->delete($menuItem->image);
+            }
 
-        $upload = $cloudinary->upload($request->file('image'), 'menu-items');
-        $menuItem->update([
-            'image' => $upload['url'],
-            'image_public_id' => $upload['public_id'],
-        ]);
+            $upload = $cloudinary->upload($request->file('image'), 'menu-items');
+            $menuItem->update([
+                'image' => $upload['url'],
+                'image_public_id' => $upload['public_id'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Image upload failed.'], 422);
+        }
 
         return response()->json(['success' => true, 'path' => $upload['url']]);
     }

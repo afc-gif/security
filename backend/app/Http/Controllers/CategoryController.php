@@ -32,9 +32,13 @@ class CategoryController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $upload = $cloudinary->upload($request->file('image'), 'categories');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
+            try {
+                $upload = $cloudinary->upload($request->file('image'), 'categories');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image upload failed. Please try again.'])->withInput();
+            }
         }
 
         $validated['slug'] = str()->slug($validated['name']);
@@ -59,14 +63,18 @@ class CategoryController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($category->image_public_id) {
-                $cloudinary->destroy($category->image_public_id);
-            } elseif ($category->image && !ImageUrl::isAbsolute($category->image)) {
-                Storage::disk('public')->delete($category->image);
+            try {
+                if ($category->image_public_id) {
+                    $cloudinary->destroy($category->image_public_id);
+                } elseif ($category->image && !ImageUrl::isAbsolute($category->image)) {
+                    Storage::disk('public')->delete($category->image);
+                }
+                $upload = $cloudinary->upload($request->file('image'), 'categories');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image update failed. Please try again.'])->withInput();
             }
-            $upload = $cloudinary->upload($request->file('image'), 'categories');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $validated['slug'] = str()->slug($validated['name']);

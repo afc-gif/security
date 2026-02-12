@@ -48,9 +48,13 @@ class SolutionItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $upload = $cloudinary->upload($request->file('image'), 'solutions');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
+            try {
+                $upload = $cloudinary->upload($request->file('image'), 'solutions');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image upload failed. Please try again.'])->withInput();
+            }
         }
 
         $solution->items()->create($validated);
@@ -82,14 +86,19 @@ class SolutionItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            if ($item->image_public_id) {
-                $cloudinary->destroy($item->image_public_id);
-            } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
-                Storage::disk('public')->delete($item->image);
+            try {
+                if ($item->image_public_id) {
+                    $cloudinary->destroy($item->image_public_id);
+                } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
+                    Storage::disk('public')->delete($item->image);
+                }
+
+                $upload = $cloudinary->upload($request->file('image'), 'solutions');
+                $validated['image'] = $upload['url'];
+                $validated['image_public_id'] = $upload['public_id'];
+            } catch (\Throwable $e) {
+                return back()->withErrors(['image' => 'Image update failed. Please try again.'])->withInput();
             }
-            $upload = $cloudinary->upload($request->file('image'), 'solutions');
-            $validated['image'] = $upload['url'];
-            $validated['image_public_id'] = $upload['public_id'];
         }
 
         $item->update($validated);
