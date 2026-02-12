@@ -68,9 +68,25 @@ class OrderController extends Controller
         return DB::transaction(function () use ($data, $request) {
             $itemsData = [];
             $subtotal = 0;
+            $hasStockTransactionsTable = Schema::hasTable('stock_transactions');
+            $quantityByItem = [];
+
+            $menuItemIds = collect($data['items'])
+                ->pluck('menu_item_id')
+                ->unique()
+                ->values();
+
+            $menuItems = SolutionItem::whereIn('id', $menuItemIds)
+                ->get()
+                ->keyBy('id');
 
             foreach ($data['items'] as $itemInput) {
-                $menuItem = SolutionItem::findOrFail($itemInput['menu_item_id']);
+                $menuItem = $menuItems->get($itemInput['menu_item_id']);
+                if (! $menuItem) {
+                    throw ValidationException::withMessages([
+                        'items' => ['One or more selected items no longer exist. Refresh and try again.'],
+                    ]);
+                }
                 if (! $menuItem->active) {
                     throw ValidationException::withMessages([
                         'items' => ["{$menuItem->name} is inactive."],
@@ -89,6 +105,7 @@ class OrderController extends Controller
                     'total' => $lineTotal,
                 ];
 
+                $quantityByItem[$menuItem->id] = ($quantityByItem[$menuItem->id] ?? 0) + (int) $itemInput['quantity'];
                 $subtotal += $lineTotal;
             }
 
@@ -113,33 +130,45 @@ class OrderController extends Controller
                 'notes' => $data['note'] ?? null,
             ]);
 
-            foreach ($itemsData as $item) {
-                $order->items()->create($item);
+            $now = now();
+            $orderItemsInsert = array_map(function (array $item) use ($order, $now) {
+                return [
+                    'order_id' => $order->id,
+                    'solution_item_id' => $item['solution_item_id'],
+                    'name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'price' => $item['price'],
+                    'total' => $item['total'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }, $itemsData);
+            OrderItem::insert($orderItemsInsert);
 
-                // Track stock transaction and create alerts
-                $solutionItem = \App\Models\SolutionItem::find($item['solution_item_id']);
-                if ($solutionItem) {
-                    if (Schema::hasTable('stock_transactions')) {
-                        try {
-                            $solutionItem->recordStockTransaction(
-                                -$item['quantity'],
-                                'sale',
-                                'order',
-                                $order->id,
-                                $request->user()?->id,
-                                "Sale in order #{$order->code}"
-                            );
-                        } catch (\Throwable $e) {
-                            report($e);
-                        }
-                    }
-
-                    // Decrement stock
-                    $solutionItem->decrement('stock', $item['quantity']);
-                    
-                    // Check and create alerts if needed
-                    $solutionItem->checkAndCreateStockAlert();
+            foreach ($quantityByItem as $solutionItemId => $totalQty) {
+                $solutionItem = $menuItems->get($solutionItemId);
+                if (! $solutionItem) {
+                    continue;
                 }
+
+                if ($hasStockTransactionsTable) {
+                    try {
+                        $solutionItem->recordStockTransaction(
+                            -$totalQty,
+                            'sale',
+                            'order',
+                            $order->id,
+                            $request->user()?->id,
+                            "Sale in order #{$order->code}"
+                        );
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                }
+
+                // Model events handle sold-out and low-stock alert checks.
+                $solutionItem->decrement('stock', $totalQty);
             }
 
             return $this->transformOrder($order->load(['items.solutionItem', 'user']));

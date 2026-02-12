@@ -1483,7 +1483,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
-                    timeoutMs: 30000,
+                    timeoutMs: 60000,
                 });
                 const order = await res.json();
                 alert(`Sale recorded. Order code: ${order.code || 'pending'}.`);
@@ -2119,13 +2119,27 @@
             input.accept = 'image/*';
             input.style.display = 'none';
             document.body.appendChild(input);
-
-            input.addEventListener('change', () => {
-                const file = input.files && input.files[0] ? input.files[0] : null;
+            let resolved = false;
+            const finish = (file = null) => {
+                if (resolved) return;
+                resolved = true;
+                window.removeEventListener('focus', onWindowFocus);
                 input.remove();
                 resolve(file);
+            };
+            const onWindowFocus = () => {
+                // If file picker is closed without selection, some browsers never fire "change".
+                setTimeout(() => {
+                    const file = input.files && input.files[0] ? input.files[0] : null;
+                    if (!file) finish(null);
+                }, 300);
+            };
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0] ? input.files[0] : null;
+                finish(file);
             }, { once: true });
-
+            input.addEventListener('cancel', () => finish(null), { once: true });
+            window.addEventListener('focus', onWindowFocus, { once: true });
             input.click();
         });
 
@@ -2158,7 +2172,7 @@
             if (shouldReplaceImage) {
                 imageFile = await pickImageFile();
                 if (!imageFile) {
-                    alert('No image selected. Keeping current image.');
+                    toast('No image selected. Keeping current image.', 'error');
                 }
             }
 

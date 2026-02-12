@@ -743,7 +743,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
-                    timeoutMs: 30000,
+                    timeoutMs: 60000,
                 });
                 const order = await res.json();
                 alert(`Sale recorded. Order code: ${order.code || 'pending'}.`);
