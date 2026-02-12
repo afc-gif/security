@@ -516,4 +516,28 @@ class AdminController extends Controller
             ]);
         }
     }
-}
+
+    // Toggle product display on website
+    public function toggleProductDisplay(Request $request, $productId)
+    {
+        try {
+            $product = Product::findOrFail($productId);
+            
+            $validated = $request->validate([
+                'display_on_website' => 'required|boolean'
+            ]);
+            
+            $product->update(['display_on_website' => $validated['display_on_website']]);
+            
+            return response()->json([
+                'success' => true,
+                'display_on_website' => $product->display_on_website
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error toggling product display: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product display status'
+            ], 500);
+        }
+    }
