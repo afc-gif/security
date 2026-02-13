@@ -1,6 +1,28 @@
 @extends('admin.layout')
 
 @section('content')
+<style>
+/* Keep product card actions visible on admin/products regardless of global theme CSS */
+#productsGrid .product-card {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+#productsGrid .product-card > div {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+#productsGrid .product-card .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
@@ -92,7 +114,7 @@
             <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 @foreach($flattened as $row)
                     @php($item = $row['item'])
-                    <div class="product-card bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-200 hover:border-blue-300 group"
+                    <div class="product-card bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 group"
                          data-name="{{ strtolower($item['name'] ?? '') }}"
                          data-barcode="{{ strtolower($item['barcode'] ?? '') }}"
                          data-category="{{ strtolower($row['category'] ?? '') }}"

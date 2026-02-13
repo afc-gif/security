@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SolutionItem;
+use App\Models\Solution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,6 +28,41 @@ class ShopController extends Controller
             ->with('solution')
             ->get();
         return view('shop.solutions', compact('solutions'));
+    }
+
+    /**
+     * API endpoint for solutions with full product details
+     * Used by AJAX/frontend to fetch solutions data
+     */
+    public function solutionsApi()
+    {
+        $solutions = Solution::with(['items' => function ($query) {
+            $query->where('active', true)
+                  ->where('display_on_website', true)
+                  ->orderBy('sort_order');
+        }])->where('active', true)->orderBy('sort_order')->get();
+
+        return response()->json($solutions->map(function ($solution) {
+            return [
+                'id' => $solution->id,
+                'name' => $solution->name,
+                'icon' => $solution->icon ?? '',
+                'description' => $solution->description ?? '',
+                'items' => $solution->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'description' => $item->description,
+                        'price' => $item->price,
+                        'barcode' => $item->barcode,
+                        'stock' => $item->stock,
+                        'is_sold_out' => (bool) $item->is_sold_out,
+                        'image' => \App\Support\ImageUrl::url($item->image),
+                        'display_on_website' => (bool) $item->display_on_website,
+                    ];
+                }),
+            ];
+        })->toArray());
     }
 
     public function show(SolutionItem $product)
