@@ -170,43 +170,50 @@
                                     ? route('admin.solutions.items.edit', [$resolvedSolutionId, $itemId])
                                     : (!empty($resolvedProductId) ? route('admin.products.edit', $resolvedProductId) : null))
 
+                                {{-- Edit Button: Always visible, enabled if editUrl exists --}}
                                 @if(!empty($editUrl))
                                     <a href="{{ $editUrl }}" class="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded transition text-sm">
                                         ✏️ Edit
                                     </a>
                                 @else
-                                    <button type="button" class="w-full text-center bg-blue-50 text-blue-300 font-semibold py-2 rounded text-sm cursor-not-allowed" disabled>
+                                    <button type="button" class="w-full text-center bg-blue-50 text-blue-300 font-semibold py-2 rounded text-sm cursor-not-allowed opacity-50" disabled>
                                         ✏️ Edit
                                     </button>
                                 @endif
 
+                                {{-- Action Buttons Row --}}
                                 <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" class="text-center bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold py-1 rounded transition toggle-sold-out {{ $hasItem ? '' : 'opacity-50 cursor-not-allowed' }}" data-item-id="{{ $itemId }}" {{ $hasItem ? '' : 'disabled' }}>
-                                        {{ !empty($item['is_sold_out']) ? '✅ Mark Available' : '🚫 Mark Sold Out' }}
+                                    {{-- Mark Sold Out Button --}}
+                                    <button type="button" class="text-center bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold py-1 rounded transition toggle-sold-out" data-item-id="{{ $itemId }}" {{ $hasItem ? '' : 'disabled' }} @if(!$hasItem) style="opacity: 0.5; cursor: not-allowed;" @endif>
+                                        {{ !empty($item['is_sold_out']) ? '✅ Available' : '🚫 Mark Sold' }}
                                     </button>
+                                    
+                                    {{-- Copy Barcode Button --}}
                                     @if(!empty($item['barcode']))
                                         <button type="button" class="text-center bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1 rounded transition copy-barcode" data-barcode="{{ $item['barcode'] }}">
                                             📋 Copy
                                         </button>
                                     @else
-                                        <button type="button" class="text-center bg-slate-50 text-slate-400 text-xs font-semibold py-1 rounded cursor-not-allowed" disabled>
+                                        <button type="button" class="text-center bg-slate-50 text-slate-400 text-xs font-semibold py-1 rounded cursor-not-allowed opacity-50" disabled>
                                             📋 Copy
                                         </button>
                                     @endif
                                 </div>
 
+                                {{-- Barcode Actions (Download/Print) --}}
                                 @if(!empty($item['barcode']) && $hasItem)
                                     <div class="grid grid-cols-2 gap-2">
-                                        <a href="{{ route('barcode.download', ['solutionItem' => $itemId]) }}" class="text-center bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold py-1 rounded transition" title="Download">
-                                            📥
+                                        <a href="{{ route('barcode.download', ['solutionItem' => $itemId]) }}" class="text-center bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold py-1 rounded transition" title="Download Barcode">
+                                            📥 Download
                                         </a>
-                                        <a href="{{ route('barcode.print', ['solutionItem' => $itemId]) }}" class="text-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-1 rounded transition" target="_blank" title="Print">
-                                            🖨️
+                                        <a href="{{ route('barcode.print', ['solutionItem' => $itemId]) }}" class="text-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-1 rounded transition" target="_blank" title="Print Barcode">
+                                            🖨️ Print
                                         </a>
                                     </div>
                                 @endif
 
-                                <button type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm delete-menu-item {{ $hasItem ? '' : 'opacity-50 cursor-not-allowed' }}" data-item-id="{{ $itemId }}" {{ $hasItem ? '' : 'disabled' }}>
+                                {{-- Delete Button: Always visible, enabled if item exists --}}
+                                <button type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm delete-menu-item" data-item-id="{{ $itemId }}" {{ $hasItem ? '' : 'disabled' }} @if(!$hasItem) style="opacity: 0.5; cursor: not-allowed;" @endif>
                                     🗑️ Delete
                                 </button>
                             </div>
