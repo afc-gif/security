@@ -97,7 +97,8 @@
                          data-barcode="{{ strtolower($item['barcode'] ?? '') }}"
                          data-category="{{ strtolower($row['category'] ?? '') }}"
                          data-website="{{ !empty($item['display_on_website']) ? 'visible' : 'hidden' }}"
-                         data-stock="{{ ($item['stock'] ?? 0) > 0 ? 'in-stock' : 'sold-out' }}">
+                         data-stock="{{ !empty($item['is_sold_out']) || ($item['stock'] ?? 0) <= 0 ? 'sold-out' : 'in-stock' }}"
+                         data-sold-out="{{ !empty($item['is_sold_out']) ? 'true' : 'false' }}">
                         
                         <!-- Product Image -->
                         <div class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
@@ -114,8 +115,8 @@
                             <!-- Stock & Website Badges -->
                             <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
                                 @php($stock = $item['stock'] ?? 0)
-                                <span class="px-2 py-1 rounded text-xs font-semibold @if($stock > 0) bg-green-100 text-green-800 @else bg-red-100 text-red-800 @endif shadow-sm">
-                                    {{ $stock > 0 ? '✓ ' . $stock : '✗ Sold Out' }}
+                                <span class="px-2 py-1 rounded text-xs font-semibold stock-badge @if(!empty($item['is_sold_out']) || $stock <= 0) bg-red-100 text-red-800 @else bg-green-100 text-green-800 @endif shadow-sm">
+                                    {{ !empty($item['is_sold_out']) || $stock <= 0 ? '✗ Sold Out' : '✓ ' . $stock }}
                                 </span>
                                 <span class="px-2 py-1 rounded text-xs font-semibold @if(!empty($item['display_on_website'])) bg-blue-100 text-blue-800 @else bg-gray-200 text-gray-700 @endif shadow-sm website-badge">
                                     {{ !empty($item['display_on_website']) ? '✓ Web' : '✗ Web' }}
@@ -163,12 +164,32 @@
                             <div class="space-y-2 flex-1 flex flex-col justify-end">
                                 @if(!empty($item['id']))
                                     @php($resolvedSolutionId = $item['solution_id'] ?? $row['solution_id'] ?? null)
+                                    @php($resolvedProductId = $item['product_id'] ?? null)
 
                                     @if(!empty($resolvedSolutionId))
                                     <a href="{{ route('admin.solutions.items.edit', [$resolvedSolutionId, $item['id']]) }}" class="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded transition text-sm">
                                         ✏️ Edit
                                     </a>
+                                    @elseif(!empty($resolvedProductId))
+                                    <a href="{{ route('admin.products.edit', $resolvedProductId) }}" class="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded transition text-sm">
+                                        ✏️ Edit
+                                    </a>
                                     @endif
+
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" class="text-center bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold py-1 rounded transition toggle-sold-out" data-item-id="{{ $item['id'] }}">
+                                            {{ !empty($item['is_sold_out']) ? '✅ Mark Available' : '🚫 Mark Sold Out' }}
+                                        </button>
+                                        @if(!empty($item['barcode']))
+                                            <button type="button" class="text-center bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1 rounded transition copy-barcode" data-barcode="{{ $item['barcode'] }}">
+                                                📋 Copy
+                                            </button>
+                                        @else
+                                            <button type="button" class="text-center bg-slate-50 text-slate-400 text-xs font-semibold py-1 rounded cursor-not-allowed" disabled>
+                                                📋 Copy
+                                            </button>
+                                        @endif
+                                    </div>
 
                                     @if(!empty($item['barcode']))
                                         <div class="grid grid-cols-2 gap-2">
@@ -181,19 +202,9 @@
                                         </div>
                                     @endif
 
-                                    @if(!empty($resolvedSolutionId))
-                                        <form action="{{ route('admin.solutions.items.destroy', [$resolvedSolutionId, $item['id']]) }}" method="POST" class="w-full">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm" onclick="return confirm('Delete this product?')">
-                                                🗑️ Delete
-                                            </button>
-                                        </form>
-                                    @else
-                                        <button type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm delete-menu-item" data-item-id="{{ $item['id'] }}">
-                                            🗑️ Delete
-                                        </button>
-                                    @endif
+                                    <button type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded transition text-sm delete-menu-item" data-item-id="{{ $item['id'] }}">
+                                        🗑️ Delete
+                                    </button>
                                 @else
                                     <p class="text-center text-gray-500 text-xs py-2">View only</p>
                                 @endif
@@ -226,40 +237,39 @@ document.querySelectorAll('.toggle-display').forEach(button => {
     button.addEventListener('click', function() {
         const itemId = this.dataset.itemId;
         const isCurrentlyDisplayed = this.dataset.display === 'true';
-        const newDisplayStatus = !isCurrentlyDisplayed;
         
         // Update UI optimistically
         this.classList.toggle('bg-green-500');
         this.classList.toggle('bg-gray-300');
         this.querySelector('span').classList.toggle('translate-x-5');
         this.querySelector('span').classList.toggle('translate-x-1');
-        this.dataset.display = newDisplayStatus ? 'true' : 'false';
+        this.dataset.display = isCurrentlyDisplayed ? 'false' : 'true';
         
         // Send update to server
-        fetch(`/api/menu-items/${itemId}`, {
-            method: 'PUT',
+        fetch(`/api/menu-items/${itemId}/toggle-display-on-website`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-            },
-            body: JSON.stringify({
-                display_on_website: newDisplayStatus
-            })
+            }
         })
-        .then(res => {
+        .then(async res => {
             if (!res.ok) throw new Error('Failed to update website visibility');
+            const data = await res.json();
+            const isDisplayed = !!data.display_on_website;
+            this.dataset.display = isDisplayed ? 'true' : 'false';
             const card = this.closest('.product-card');
             if (card) {
-                card.dataset.website = newDisplayStatus ? 'visible' : 'hidden';
+                card.dataset.website = isDisplayed ? 'visible' : 'hidden';
                 const badge = card.querySelector('.website-badge');
                 if (badge) {
-                    badge.textContent = newDisplayStatus ? '✓ Web' : '✗ Web';
-                    badge.classList.toggle('bg-blue-100', newDisplayStatus);
-                    badge.classList.toggle('text-blue-800', newDisplayStatus);
-                    badge.classList.toggle('bg-gray-200', !newDisplayStatus);
-                    badge.classList.toggle('text-gray-700', !newDisplayStatus);
+                    badge.textContent = isDisplayed ? '✓ Web' : '✗ Web';
+                    badge.classList.toggle('bg-blue-100', isDisplayed);
+                    badge.classList.toggle('text-blue-800', isDisplayed);
+                    badge.classList.toggle('bg-gray-200', !isDisplayed);
+                    badge.classList.toggle('text-gray-700', !isDisplayed);
                 }
+                if (typeof filterProducts === 'function') filterProducts();
             }
         })
         .catch(error => {
@@ -271,6 +281,74 @@ document.querySelectorAll('.toggle-display').forEach(button => {
             this.querySelector('span').classList.toggle('translate-x-1');
             this.dataset.display = isCurrentlyDisplayed ? 'true' : 'false';
         });
+    });
+});
+
+document.querySelectorAll('.toggle-sold-out').forEach(button => {
+    button.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        if (!itemId) return;
+
+        fetch(`/api/menu-items/${itemId}/toggle-sold-out`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        })
+        .then(async res => {
+            if (!res.ok) throw new Error('Failed to toggle sold-out status');
+            const data = await res.json();
+            const card = this.closest('.product-card');
+            if (!card) return;
+
+            const isSoldOut = !!data.is_sold_out;
+            card.dataset.soldOut = isSoldOut ? 'true' : 'false';
+            card.dataset.stock = isSoldOut ? 'sold-out' : 'in-stock';
+
+            this.textContent = isSoldOut ? '✅ Mark Available' : '🚫 Mark Sold Out';
+
+            const badge = card.querySelector('.stock-badge');
+            if (badge) {
+                badge.textContent = isSoldOut ? '✗ Sold Out' : `✓ ${data.stock ?? 0}`;
+                badge.classList.toggle('bg-red-100', isSoldOut);
+                badge.classList.toggle('text-red-800', isSoldOut);
+                badge.classList.toggle('bg-green-100', !isSoldOut);
+                badge.classList.toggle('text-green-800', !isSoldOut);
+            }
+            if (typeof filterProducts === 'function') filterProducts();
+        })
+        .catch(error => {
+            console.error('Error toggling sold-out status:', error);
+            alert('Could not update sold-out status. Please try again.');
+        });
+    });
+});
+
+document.querySelectorAll('.copy-barcode').forEach(button => {
+    button.addEventListener('click', async function() {
+        const barcode = this.dataset.barcode || '';
+        if (!barcode) return;
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(barcode);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = barcode;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            alert('Barcode copied.');
+        } catch (error) {
+            console.error('Error copying barcode:', error);
+            alert('Could not copy barcode.');
+        }
     });
 });
 

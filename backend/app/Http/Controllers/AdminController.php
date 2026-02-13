@@ -262,6 +262,7 @@ class AdminController extends Controller
                         'description' => $item->description,
                         'price' => $item->price ? '₦' . number_format($item->price, 2) : null,
                         'stock' => $item->stock,
+                        'is_sold_out' => (bool) $item->is_sold_out,
                         'image' => ImageUrl::url($item->image),
                         'display_on_website' => (bool) $item->display_on_website,
                     ];
