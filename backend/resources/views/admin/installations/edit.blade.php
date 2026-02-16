@@ -65,7 +65,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
                         @if($installation->cover_image)
-                            <img src="{{ \App\Support\ImageUrl::url($installation->cover_image) }}" alt="{{ $installation->title }}" class="h-28 w-44 object-cover rounded border border-gray-200 mb-2">
+                            <img src="{{ \App\Support\ImageUrl::url($installation->cover_image) }}" alt="{{ $installation->title }}" class="h-24 w-36 object-cover rounded border border-gray-200 mb-2">
                         @endif
                         <input type="file" name="cover_image" accept="image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                     </div>
@@ -81,7 +81,7 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             @foreach($installation->gallery_images as $index => $galleryImage)
                                 <label class="border border-gray-200 rounded-lg p-2 bg-white">
-                                    <img src="{{ \App\Support\ImageUrl::url($galleryImage) }}" alt="Gallery image {{ $index + 1 }}" class="h-24 w-full object-cover rounded mb-2">
+                                    <img src="{{ \App\Support\ImageUrl::url($galleryImage) }}" alt="Gallery image {{ $index + 1 }}" class="h-20 w-full object-cover rounded mb-2">
                                     <span class="inline-flex items-center gap-2 text-xs text-gray-700">
                                         <input type="checkbox" name="remove_gallery_indexes[]" value="{{ $index }}">
                                         Remove image

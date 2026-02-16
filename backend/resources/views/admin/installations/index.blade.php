@@ -29,6 +29,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Image</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Project</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Category</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Location</th>
@@ -41,11 +42,19 @@
                             @foreach($installations as $installation)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3">
-                                        <div class="font-semibold text-gray-900">{{ $installation->title }}</div>
+                                        @php($thumb = \App\Support\ImageUrl::url($installation->cover_image))
+                                        @if($thumb)
+                                            <img src="{{ $thumb }}" alt="{{ $installation->title }}" class="h-12 w-16 object-cover rounded border border-gray-200">
+                                        @else
+                                            <div class="h-12 w-16 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-[10px] text-gray-500">No image</div>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-semibold text-gray-900 max-w-[220px] truncate">{{ $installation->title }}</div>
                                         <div class="text-xs text-gray-500">/{{ $installation->slug }}</div>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-800">{{ $installation->category }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-800">{{ $installation->city }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $installation->category }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $installation->city }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex gap-2 flex-wrap">
                                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $installation->is_public ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700' }}">
