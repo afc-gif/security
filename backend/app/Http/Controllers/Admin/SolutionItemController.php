@@ -36,6 +36,7 @@ class SolutionItemController extends Controller
             if (empty($validated['barcode'])) {
                 $validated['barcode'] = $this->generateUniqueBarcode();
             }
+            $validated['display_on_website'] = $request->boolean('display_on_website');
 
             if ($request->hasFile('image')) {
                 try {
@@ -85,6 +86,7 @@ class SolutionItemController extends Controller
             if (empty($validated['barcode'])) {
                 $validated['barcode'] = $item->barcode ?: $this->generateUniqueBarcode();
             }
+            $validated['display_on_website'] = $request->boolean('display_on_website');
 
             if ($request->hasFile('image')) {
                 try {
