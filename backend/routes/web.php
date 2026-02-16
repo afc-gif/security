@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\ShopController;
+use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
 use App\Http\Controllers\Api\MenuItemController as ApiMenuItemController;
 use App\Http\Controllers\Api\OrderController as ApiOrderController;
@@ -13,7 +15,24 @@ use App\Http\Controllers\Api\UserAdminController as ApiUserAdminController;
 // Authentication routes only
 Route::middleware('web')->group(function () {
     Route::get('/', function () {
-        return view('welcome');
+        $installations = collect();
+
+        try {
+            if (Schema::hasTable('installations')) {
+                $installations = Installation::query()
+                    ->where('is_public', true)
+                    ->orderByDesc('is_featured')
+                    ->orderBy('sort_order')
+                    ->orderByDesc('completed_at')
+                    ->orderByDesc('id')
+                    ->limit(8)
+                    ->get();
+            }
+        } catch (\Throwable $e) {
+            // Keep homepage functional even if database is temporarily unavailable.
+        }
+
+        return view('welcome', compact('installations'));
     })->name('home');
     Route::get('/solutions', [ShopController::class, 'solutions'])->name('solutions.index');
     Route::post('/shop/{solutionItem}/add-to-cart', [ShopController::class, 'addToCart'])->name('shop.addToCart');
@@ -118,6 +137,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
             'destroy' => 'admin.solutions.items.destroy',
         ]
     ]);
+
+    // Installations Gallery Management
+    Route::resource('installations', \App\Http\Controllers\Admin\InstallationController::class)->names([
+        'index' => 'admin.installations.index',
+        'create' => 'admin.installations.create',
+        'store' => 'admin.installations.store',
+        'edit' => 'admin.installations.edit',
+        'update' => 'admin.installations.update',
+        'destroy' => 'admin.installations.destroy',
+    ])->except(['show']);
 });
 
 // POS API routes (for barcode scanning and product lookup)

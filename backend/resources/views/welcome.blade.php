@@ -28,6 +28,7 @@
       <ul class="nav-menu">
         <li><a href="#solutions">Solutions</a></li>
         <li><a href="#services">Services</a></li>
+        <li><a href="#installations">Installations</a></li>
         <li><a href="#why-artsci">Why ARTSCI</a></li>
         <li><a href="#partners">Partners</a></li>
         <li><a href="#contact" class="cta-nav">Get Started</a></li>
@@ -226,6 +227,126 @@
           <h4>Preventive Maintenance</h4>
           <p>Regular health checks, updates, and optimization for maximum system longevity</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installations Gallery -->
+  <section class="installations" id="installations">
+    <div class="container">
+      <div class="section-header">
+        <h2>Recent Installations</h2>
+        <p>Real projects delivered by ARTSCI teams across homes, estates, and enterprise facilities</p>
+      </div>
+      @php
+        $fallbackInstallations = collect([
+          [
+            'category' => 'CCTV',
+            'city' => 'Lagos',
+            'title' => 'Commercial CCTV Upgrade',
+            'summary' => '32-channel HD surveillance rollout with remote monitoring enabled for round-the-clock visibility.',
+            'outcome' => 'Faster incident response and full perimeter coverage.',
+            'client_type' => 'Business',
+            'completed_label' => 'Completed Nov 2025',
+            'completed_at' => '2025-11',
+            'image' => asset('images/survelliance.webp'),
+            'gallery_images' => [],
+          ],
+          [
+            'category' => 'Solar',
+            'city' => 'Abuja',
+            'title' => 'Hybrid Solar + Battery Deployment',
+            'summary' => 'Enterprise-grade hybrid inverter and battery bank integration for mission-critical uptime.',
+            'outcome' => 'Reduced generator runtime and improved power resilience.',
+            'client_type' => 'Warehouse',
+            'completed_label' => 'Completed Oct 2025',
+            'completed_at' => '2025-10',
+            'image' => asset('images/solar power.jpg'),
+            'gallery_images' => [],
+          ],
+          [
+            'category' => 'Access Control',
+            'city' => 'Port Harcourt',
+            'title' => 'Biometric Access Deployment',
+            'summary' => 'Biometric readers, gate automation, and visitor access rules for controlled site entry.',
+            'outcome' => 'Stronger entry security with auditable access logs.',
+            'client_type' => 'Business',
+            'completed_label' => 'Completed Sep 2025',
+            'completed_at' => '2025-09',
+            'image' => asset('images/access-control.webp'),
+            'gallery_images' => [],
+          ],
+          [
+            'category' => 'Perimeter',
+            'city' => 'Ibadan',
+            'title' => 'Perimeter Electric Fence System',
+            'summary' => 'Multi-zone electric fence connected to smart alerts and centralized alarm monitoring.',
+            'outcome' => 'Immediate breach detection with rapid onsite action.',
+            'client_type' => 'Home Estate',
+            'completed_label' => 'Completed Aug 2025',
+            'completed_at' => '2025-08',
+            'image' => asset('images/Perimeter Security.jpg'),
+            'gallery_images' => [],
+          ],
+        ]);
+
+        $installationCards = isset($installations) && $installations->count() > 0
+          ? $installations->map(function ($item) {
+              $gallery = is_array($item->gallery_images) ? $item->gallery_images : [];
+              $cover = $item->cover_image ?: ($gallery[0] ?? null);
+              return [
+                'category' => $item->category,
+                'city' => $item->city,
+                'title' => $item->title,
+                'summary' => $item->summary,
+                'outcome' => $item->outcome,
+                'client_type' => $item->client_type ?: 'Business',
+                'completed_label' => $item->completed_at ? 'Completed ' . $item->completed_at->format('M Y') : 'Completed recently',
+                'completed_at' => $item->completed_at ? $item->completed_at->format('Y-m') : null,
+                'image' => \App\Support\ImageUrl::url($cover) ?: asset('images/survelliance.webp'),
+                'gallery_images' => array_values(array_filter(array_map(fn ($img) => \App\Support\ImageUrl::url($img), $gallery))),
+              ];
+            })
+          : $fallbackInstallations;
+      @endphp
+      <div class="installation-grid">
+        @foreach($installationCards as $card)
+          <article class="installation-card">
+            <div class="installation-media">
+              <img
+                src="{{ $card['image'] }}"
+                alt="{{ $card['title'] }}"
+                loading="lazy"
+                data-gallery='@json(array_values(array_unique(array_filter(array_merge([$card["image"]], $card["gallery_images"] ?? [])))))'
+              >
+              <span class="installation-badge">Verified Installation</span>
+            </div>
+            <div class="installation-content">
+              <div class="installation-meta">
+                <span class="meta-pill">{{ $card['category'] }}</span>
+                <span class="meta-pill muted">{{ $card['city'] }}</span>
+              </div>
+              <h3>{{ $card['title'] }}</h3>
+              <p>{{ $card['summary'] }}</p>
+              <div class="installation-details">
+                <span class="detail-chip">{{ $card['client_type'] }}</span>
+                @if(!empty($card['completed_at']))
+                  <time datetime="{{ $card['completed_at'] }}">{{ $card['completed_label'] }}</time>
+                @else
+                  <span>{{ $card['completed_label'] }}</span>
+                @endif
+              </div>
+              @if(!empty($card['outcome']))
+                <span class="installation-outcome">Outcome: {{ $card['outcome'] }}</span>
+              @endif
+              <button type="button" class="installation-link" data-open-installation>View installation photo</button>
+            </div>
+          </article>
+        @endforeach
+      </div>
+
+      <div class="installation-cta">
+        <a href="#contact" class="btn btn-primary">Get a Similar Setup</a>
       </div>
     </div>
   </section>

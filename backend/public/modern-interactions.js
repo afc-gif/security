@@ -104,7 +104,7 @@ const observer = new IntersectionObserver((entries) => {
 
 // Observe elements for animation
 const animatedElements = document.querySelectorAll(
-  '.solution-card, .why-item, .service-item, .partner-logo, .stat-box'
+  '.solution-card, .installation-card, .why-item, .service-item, .partner-logo, .stat-box'
 );
 
 animatedElements.forEach(el => {
@@ -389,7 +389,7 @@ document.head.appendChild(style2);
 // Mouse Gradient Effect on Cards (Premium Touch)
 // ============================================
 
-const cards = document.querySelectorAll('.solution-card, .service-item, .why-item');
+const cards = document.querySelectorAll('.solution-card, .installation-card, .service-item, .why-item');
 
 cards.forEach(card => {
   card.addEventListener('mousemove', (e) => {
@@ -432,6 +432,147 @@ if ('IntersectionObserver' in window) {
       imageObserver.observe(img);
     }
   });
+}
+
+// ============================================
+// Installations Lightbox
+// ============================================
+
+const installationCards = Array.from(document.querySelectorAll('.installation-card'));
+const installationItems = installationCards
+  .map((card) => {
+    const image = card.querySelector('.installation-media img');
+    const title = card.querySelector('h3');
+    const summary = card.querySelector('p');
+    const galleryJson = image ? image.dataset.gallery : '[]';
+    let gallery = [];
+
+    try {
+      gallery = JSON.parse(galleryJson || '[]');
+      if (!Array.isArray(gallery)) {
+        gallery = [];
+      }
+    } catch (_error) {
+      gallery = [];
+    }
+
+    if (!image) return null;
+    return {
+      src: image.currentSrc || image.src,
+      gallery: gallery.length > 0 ? gallery : [image.currentSrc || image.src],
+      alt: image.alt || '',
+      title: title ? title.textContent.trim() : 'Installation',
+      summary: summary ? summary.textContent.trim() : ''
+    };
+  })
+  .filter(Boolean);
+
+if (installationItems.length > 0) {
+  const lightbox = document.createElement('div');
+  lightbox.className = 'installation-lightbox';
+  lightbox.innerHTML = `
+    <div class="lightbox-inner" role="dialog" aria-modal="true" aria-label="Installation gallery">
+      <div class="lightbox-top">
+        <button class="lightbox-close" type="button" aria-label="Close gallery">&times;</button>
+      </div>
+      <div class="lightbox-stage">
+        <button class="lightbox-nav prev" type="button" aria-label="Previous image">&#8249;</button>
+        <img class="lightbox-image" alt="" />
+        <button class="lightbox-nav next" type="button" aria-label="Next image">&#8250;</button>
+      </div>
+      <div class="lightbox-caption">
+        <strong></strong>
+        <span></span>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(lightbox);
+
+  const lightboxImage = lightbox.querySelector('.lightbox-image');
+  const lightboxTitle = lightbox.querySelector('.lightbox-caption strong');
+  const lightboxSummary = lightbox.querySelector('.lightbox-caption span');
+  const closeBtn = lightbox.querySelector('.lightbox-close');
+  const prevBtn = lightbox.querySelector('.lightbox-nav.prev');
+  const nextBtn = lightbox.querySelector('.lightbox-nav.next');
+  const stage = lightbox.querySelector('.lightbox-stage');
+  let activeImageIndex = 0;
+  let activeGallery = [];
+  let touchStartX = 0;
+
+  const renderImage = (imageIndex) => {
+    if (activeGallery.length === 0) return;
+    const safeImageIndex = (imageIndex + activeGallery.length) % activeGallery.length;
+    activeImageIndex = safeImageIndex;
+    lightboxImage.src = activeGallery[safeImageIndex];
+  };
+
+  const renderInstallation = (cardIndex, imageIndex = 0) => {
+    const safeCardIndex = (cardIndex + installationItems.length) % installationItems.length;
+    const current = installationItems[safeCardIndex];
+    activeGallery = current.gallery;
+    lightboxImage.alt = current.alt;
+    lightboxTitle.textContent = current.title;
+    lightboxSummary.textContent = current.summary;
+    renderImage(imageIndex);
+  };
+
+  const openLightbox = (index, imageIndex = 0) => {
+    renderInstallation(index, imageIndex);
+    lightbox.classList.add('is-open');
+    document.body.classList.add('installation-lightbox-open');
+  };
+
+  const closeLightbox = () => {
+    lightbox.classList.remove('is-open');
+    document.body.classList.remove('installation-lightbox-open');
+  };
+
+  installationCards.forEach((card, index) => {
+    const image = card.querySelector('.installation-media img');
+    const trigger = card.querySelector('[data-open-installation]');
+
+    if (image) {
+      image.addEventListener('click', () => openLightbox(index));
+    }
+
+    if (trigger) {
+      trigger.addEventListener('click', () => openLightbox(index));
+    }
+  });
+
+  closeBtn.addEventListener('click', closeLightbox);
+  prevBtn.addEventListener('click', () => renderImage(activeImageIndex - 1));
+  nextBtn.addEventListener('click', () => renderImage(activeImageIndex + 1));
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('is-open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') renderImage(activeImageIndex - 1);
+    if (e.key === 'ArrowRight') renderImage(activeImageIndex + 1);
+  });
+
+  stage.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+
+  stage.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+
+    if (Math.abs(deltaX) < 40) return;
+    if (deltaX > 0) {
+      renderImage(activeImageIndex - 1);
+    } else {
+      renderImage(activeImageIndex + 1);
+    }
+  }, { passive: true });
 }
 
 // ============================================

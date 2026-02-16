@@ -21,43 +21,43 @@ class SolutionItemController extends Controller
 
     public function store(Request $request, Solution $solution, CloudinaryImageService $cloudinary)
     {
-        Log::info("SolutionItemController.store - Raw request data", [
-            'all_input' => $request->all(),
-            'stock_input' => $request->input('stock'),
-            'post_data' => $_POST ?? 'not available',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'barcode' => 'nullable|string|max:64|unique:solution_items,barcode',
+                'description' => 'nullable|string',
+                'price' => 'nullable|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+                'sort_order' => 'nullable|integer',
+                'display_on_website' => 'nullable|boolean',
+            ]);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'barcode' => 'nullable|string|max:64|unique:solution_items,barcode',
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'sort_order' => 'nullable|integer',
-            'display_on_website' => 'nullable|boolean',
-        ]);
-
-        Log::info("SolutionItemController.store - Validated data", [
-            'validated' => $validated,
-            'stock_value' => $validated['stock'] ?? 'missing',
-        ]);
-
-        if (empty($validated['barcode'])) {
-            $validated['barcode'] = $this->generateUniqueBarcode();
-        }
-
-        if ($request->hasFile('image')) {
-            try {
-                $upload = $cloudinary->upload($request->file('image'), 'solutions');
-                $validated['image'] = $upload['url'];
-                $validated['image_public_id'] = $upload['public_id'];
-            } catch (\Throwable $e) {
-                return back()->withErrors(['image' => 'Image upload failed. Please try again.'])->withInput();
+            if (empty($validated['barcode'])) {
+                $validated['barcode'] = $this->generateUniqueBarcode();
             }
-        }
 
-        $solution->items()->create($validated);
+            if ($request->hasFile('image')) {
+                try {
+                    $upload = $cloudinary->upload($request->file('image'), 'solutions');
+                    $validated['image'] = $upload['url'];
+                    $validated['image_public_id'] = $upload['public_id'];
+                } catch (\Throwable $e) {
+                    Log::error('Solution item image upload failed on create: ' . $e->getMessage(), ['exception' => $e]);
+                    return back()->withErrors(['image' => 'Image upload failed. Please confirm Cloudinary is configured and try again.'])->withInput();
+                }
+            }
+
+            $solution->items()->create($validated);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Solution item create failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'solution_id' => $solution->id,
+            ]);
+            return back()->withErrors(['error' => 'Could not save item right now. Please try again.'])->withInput();
+        }
 
         return redirect()->route('admin.solutions.show', $solution)
                         ->with('success', 'Solution item created successfully.');
@@ -70,38 +70,53 @@ class SolutionItemController extends Controller
 
     public function update(Request $request, Solution $solution, SolutionItem $item, CloudinaryImageService $cloudinary)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'barcode' => 'nullable|string|max:64|unique:solution_items,barcode,' . $item->id,
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'sort_order' => 'nullable|integer',
-            'display_on_website' => 'nullable|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'barcode' => 'nullable|string|max:64|unique:solution_items,barcode,' . $item->id,
+                'description' => 'nullable|string',
+                'price' => 'nullable|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+                'sort_order' => 'nullable|integer',
+                'display_on_website' => 'nullable|boolean',
+            ]);
 
-        if (empty($validated['barcode'])) {
-            $validated['barcode'] = $item->barcode ?: $this->generateUniqueBarcode();
-        }
-
-        if ($request->hasFile('image')) {
-            try {
-                if ($item->image_public_id) {
-                    $cloudinary->destroy($item->image_public_id);
-                } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
-                    Storage::disk('public')->delete($item->image);
-                }
-
-                $upload = $cloudinary->upload($request->file('image'), 'solutions');
-                $validated['image'] = $upload['url'];
-                $validated['image_public_id'] = $upload['public_id'];
-            } catch (\Throwable $e) {
-                return back()->withErrors(['image' => 'Image update failed. Please try again.'])->withInput();
+            if (empty($validated['barcode'])) {
+                $validated['barcode'] = $item->barcode ?: $this->generateUniqueBarcode();
             }
-        }
 
-        $item->update($validated);
+            if ($request->hasFile('image')) {
+                try {
+                    if ($item->image_public_id) {
+                        $cloudinary->destroy($item->image_public_id);
+                    } elseif ($item->image && !ImageUrl::isAbsolute($item->image)) {
+                        Storage::disk('public')->delete($item->image);
+                    }
+
+                    $upload = $cloudinary->upload($request->file('image'), 'solutions');
+                    $validated['image'] = $upload['url'];
+                    $validated['image_public_id'] = $upload['public_id'];
+                } catch (\Throwable $e) {
+                    Log::error('Solution item image upload failed on update: ' . $e->getMessage(), [
+                        'exception' => $e,
+                        'item_id' => $item->id,
+                    ]);
+                    return back()->withErrors(['image' => 'Image update failed. Please confirm Cloudinary is configured and try again.'])->withInput();
+                }
+            }
+
+            $item->update($validated);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Solution item update failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'solution_id' => $solution->id,
+                'item_id' => $item->id,
+            ]);
+            return back()->withErrors(['error' => 'Could not update item right now. Please try again.'])->withInput();
+        }
 
         return redirect()->route('admin.solutions.show', $solution)
                         ->with('success', 'Solution item updated successfully.');

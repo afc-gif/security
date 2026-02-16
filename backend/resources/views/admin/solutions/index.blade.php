@@ -1,74 +1,79 @@
 @extends('admin.layout')
 
-
-
 @section('content')
-<div class="container mx-auto py-8 px-4">
-
-    
-        
-            
-                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Categories Management</h1>
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Solution Categories</h1>
+                <p class="text-sm text-gray-600 mt-1">Manage security and power categories shown across admin and public pages.</p>
             </div>
-            <a href="{{ route('admin.solutions.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Category
+            <a href="{{ route('admin.solutions.create') }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                + Add Category
             </a>
         </div>
 
         @if (session('success'))
-            <div style="background: #D1FAE5; border: 1px solid #6EE7B7; border-radius: 8px; color: #065F46; padding: 12px 16px; margin-bottom: 24px;">
-                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+            <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
                 {{ session('success') }}
             </div>
         @endif
 
-        <div style="max-width: 100%;">
-            @forelse ($solutions as $solution)
-                <div class="solution-card">
-                    <div class="solution-header">
-                        <div style="flex: 1;">
-                            <div class="solution-title">
-                                <span class="solution-icon">{{ $solution->icon }}</span>
-                                <h3>{{ $solution->name }}</h3>
-                            </div>
-                            @if ($solution->description)
-                                <p class="solution-description">{{ $solution->description }}</p>
-                            @endif
-                            <div class="solution-meta">
-                                <span><strong>Products:</strong> {{ $solution->items->count() }}</span>
-                                <span><strong>Status:</strong> <span class="status-badge {{ $solution->active ? 'status-active' : 'status-inactive' }}">{{ $solution->active ? 'Active' : 'Inactive' }}</span></span>
-                                <span><strong>Order:</strong> {{ $solution->sort_order ?? '—' }}</span>
-                            </div>
-                        </div>
-                        <div class="solution-actions">
-                            <a href="{{ route('admin.solutions.show', $solution) }}" class="btn-icon btn-view" title="View products in this category">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="{{ route('admin.solutions.edit', $solution) }}" class="btn-icon btn-edit" title="Edit category">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <form action="{{ route('admin.solutions.destroy', $solution) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this category? This action cannot be undone.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon btn-delete" title="Delete category">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            @if($solutions->count() === 0)
+                <div class="p-10 text-center text-gray-600">
+                    No categories yet. Create your first category to start organizing products.
                 </div>
-            @empty
-                <div class="empty-state">
-                    <h2><i class="fas fa-inbox"></i> No Categories Found</h2>
-                    <p>Get started by creating your first product category.</p>
-                    <a href="{{ route('admin.solutions.create') }}" class="btn btn-primary" style="display: inline-block; margin-top: 12px;">
-                        <i class="fas fa-plus"></i> Create Category
-                    </a>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Category</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Products</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Order</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($solutions as $solution)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">{{ $solution->icon }}</span>
+                                            <span class="font-semibold text-gray-900">{{ $solution->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 max-w-md">
+                                        {{ $solution->description ?: '—' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">{{ $solution->items->count() }}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $solution->active ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700' }}">
+                                            {{ $solution->active ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">{{ $solution->sort_order ?? 0 }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex justify-end gap-2">
+                                            <a href="{{ route('admin.solutions.show', $solution) }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold">View</a>
+                                            <a href="{{ route('admin.solutions.edit', $solution) }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-semibold">Edit</a>
+                                            <form action="{{ route('admin.solutions.destroy', $solution) }}" method="POST" onsubmit="return confirm('Delete this category? This action cannot be undone.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-md bg-red-50 text-red-700 hover:bg-red-100 text-sm font-semibold">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-            @endforelse
+            @endif
         </div>
+    </div>
 </div>
 @endsection

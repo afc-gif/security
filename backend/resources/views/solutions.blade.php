@@ -64,7 +64,7 @@
 
             const cards = items.map(item => {
                 const image = item.image ? `<img src=\"${item.image.startsWith('http') ? item.image : '/storage/' + item.image}\" alt=\"${item.name}\" style=\"width: 100%; height: 100%; object-fit: cover;\">` : '';
-                const price = item.price !== null && item.price !== undefined ? `<div style=\"font-size: 16px; font-weight: 700; color: #0f766e;\">R${parseFloat(item.price).toFixed(2)}</div>` : '';
+                const price = item.price !== null && item.price !== undefined ? `<div style=\"font-size: 16px; font-weight: 700; color: #0f766e;\">₦${parseFloat(item.price).toFixed(2)}</div>` : '';
                 const idBarcode = `ID: #${item.id ?? ''} • Barcode: ${item.barcode ?? ''}`;
                 const stock = stockBadge(item.stock ?? 0);
                 return `

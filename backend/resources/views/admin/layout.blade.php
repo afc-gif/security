@@ -20,6 +20,7 @@
             <div class="flex gap-6 items-center">
                 <a href="{{ route('admin.dashboard') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Dashboard</a>
                 <a href="{{ route('admin.products.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Products</a>
+                <a href="{{ route('admin.installations.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Installations</a>
                 <a href="{{ route('admin.solutions.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Solutions</a>
                 <a href="{{ route('admin.users.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition">Users</a>
                 <a href="{{ route('pos.index') }}" class="hover:bg-blue-500 px-3 py-2 rounded transition" title="Go to POS System">🛒 POS</a>
