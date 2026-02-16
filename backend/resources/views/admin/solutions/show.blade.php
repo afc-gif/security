@@ -53,6 +53,9 @@
 
                         <div class="md:col-span-2">
                             <div class="flex md:flex-col gap-2">
+                                <a href="{{ route('barcode.download-image', $item) }}" class="inline-flex items-center justify-center px-3 py-2 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-sm font-semibold">
+                                    Download Barcode
+                                </a>
                                 <a href="{{ route('admin.solutions.items.edit', [$solution, $item]) }}" class="inline-flex items-center justify-center px-3 py-2 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-semibold">Edit</a>
                                 <form action="{{ route('admin.solutions.items.destroy', [$solution, $item]) }}" method="POST" onsubmit="return confirm('Delete this item?');" class="w-full">
                                     @csrf
