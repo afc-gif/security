@@ -45,8 +45,11 @@ class BarcodeController extends Controller
             'png'
         );
 
+        // Add barcode number under image (legacy printable format)
+        $labeledBarcodeImage = $this->appendBarcodeTextToPng($barcodeImage, $solutionItem->barcode);
+
         // Return as downloadable image
-        return response($barcodeImage)
+        return response($labeledBarcodeImage)
             ->header('Content-Type', 'image/png')
             ->header('Content-Disposition', "attachment; filename=\"{$solutionItem->barcode}.png\"")
             ->header('Cache-Control', 'public, max-age=86400');
@@ -143,5 +146,59 @@ class BarcodeController extends Controller
             'print_url' => route('barcode.print', ['solutionItem' => $solutionItem->id]),
             'svg_url' => route('barcode.svg', ['solutionItem' => $solutionItem->id]),
         ]);
+    }
+
+    /**
+     * Build a labeled barcode PNG with the barcode value centered below bars.
+     * Falls back to original PNG when GD is unavailable or processing fails.
+     */
+    private function appendBarcodeTextToPng(string $barcodePng, string $barcodeValue): string
+    {
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagestring')) {
+            return $barcodePng;
+        }
+
+        $barcodeImage = @imagecreatefromstring($barcodePng);
+        if ($barcodeImage === false) {
+            return $barcodePng;
+        }
+
+        $barWidth = imagesx($barcodeImage);
+        $barHeight = imagesy($barcodeImage);
+
+        $paddingTop = 10;
+        $paddingBottom = 12;
+        $font = 5; // built-in GD font
+        $textWidth = imagefontwidth($font) * strlen($barcodeValue);
+        $textHeight = imagefontheight($font);
+
+        $canvasWidth = max($barWidth + 20, $textWidth + 20);
+        $canvasHeight = $paddingTop + $barHeight + 8 + $textHeight + $paddingBottom;
+
+        $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
+        if ($canvas === false) {
+            imagedestroy($barcodeImage);
+            return $barcodePng;
+        }
+
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $black = imagecolorallocate($canvas, 0, 0, 0);
+        imagefill($canvas, 0, 0, $white);
+
+        $barcodeX = (int) floor(($canvasWidth - $barWidth) / 2);
+        imagecopy($canvas, $barcodeImage, $barcodeX, $paddingTop, 0, 0, $barWidth, $barHeight);
+
+        $textX = (int) floor(($canvasWidth - $textWidth) / 2);
+        $textY = $paddingTop + $barHeight + 8;
+        imagestring($canvas, $font, $textX, $textY, $barcodeValue, $black);
+
+        ob_start();
+        imagepng($canvas);
+        $output = (string) ob_get_clean();
+
+        imagedestroy($barcodeImage);
+        imagedestroy($canvas);
+
+        return $output !== '' ? $output : $barcodePng;
     }
 }
