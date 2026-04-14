@@ -17,10 +17,12 @@ class Project extends Model
         'location',
         'description',
         'status',
+        'progress_percentage',
         'priority',
         'start_date',
         'deadline',
         'assigned_manager_id',
+        'assigned_field_staff_id',
         'created_by',
     ];
 
@@ -44,8 +46,23 @@ class Project extends Model
         return $this->belongsTo(User::class, 'assigned_manager_id');
     }
 
+    public function fieldStaff()
+    {
+        return $this->belongsTo(User::class, 'assigned_field_staff_id');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updates()
+    {
+        return $this->hasMany(ProjectUpdate::class);
+    }
+
+    public function media()
+    {
+        return $this->hasMany(ProjectMedia::class);
     }
 }

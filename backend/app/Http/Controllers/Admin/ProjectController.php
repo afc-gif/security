@@ -33,7 +33,12 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.projects.create', compact('clients', 'managers'));
+        $fieldStaff = User::query()
+            ->where('role', 'field_staff')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.projects.create', compact('clients', 'managers', 'fieldStaff'));
     }
 
     public function store(Request $request)
@@ -51,6 +56,10 @@ class ProjectController extends Controller
                 'nullable',
                 Rule::exists('users', 'id')->where('role', 'manager'),
             ],
+            'assigned_field_staff_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('role', 'field_staff'),
+            ],
         ]);
 
         $validated['project_code'] = $this->generateProjectCode();
@@ -66,7 +75,14 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load(['client', 'inspection', 'manager', 'creator']);
+        $project->load([
+            'client',
+            'inspection',
+            'manager',
+            'fieldStaff',
+            'creator',
+            'updates' => fn ($query) => $query->with(['user', 'media.uploader'])->latest('work_date')->latest('id'),
+        ]);
 
         return view('admin.projects.show', compact('project'));
     }
@@ -90,6 +106,7 @@ class ProjectController extends Controller
             'description' => $this->buildDescriptionFromInspection($inspection),
             'status' => 'not_started',
             'priority' => $inspection->priority,
+            'assigned_field_staff_id' => $inspection->assigned_to,
             'created_by' => $request->user()->id,
         ]);
 

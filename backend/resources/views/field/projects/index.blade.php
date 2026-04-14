@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Inspections</title>
+    <title>My Projects</title>
     <style>
         :root {
             --text: #111827;
@@ -29,6 +29,12 @@
         .muted { color: var(--muted); font-size: 14px; }
         .meta { display: grid; gap: 6px; margin: 12px 0; color: var(--muted); font-size: 14px; }
         .status { display: inline-flex; padding: 4px 8px; border-radius: 8px; background: #e0f2fe; color: #075985; font-size: 13px; font-weight: 700; }
+        .status.completed { background: #dcfce7; color: #166534; }
+        .status.not_started { background: #e5e7eb; color: #374151; }
+        .status.on_hold { background: #fef3c7; color: #92400e; }
+        .progress { display: flex; align-items: center; gap: 10px; }
+        .bar { height: 8px; flex: 1; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+        .bar span { display: block; height: 100%; background: var(--action); }
         .empty { padding: 24px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); text-align: center; }
         .pagination { margin-top: 16px; }
 
@@ -43,15 +49,15 @@
     <main class="page">
         <div class="topbar">
             <div>
-                <h1>My Inspections</h1>
-                <div class="muted">Assigned field work</div>
+                <h1>My Projects</h1>
+                <div class="muted">Assigned project work</div>
             </div>
         </div>
 
         <nav class="nav" aria-label="Field navigation">
             <a class="link" href="{{ route('field.dashboard') }}">My Dashboard</a>
-            <a class="link active" href="{{ route('field.inspections.index') }}">My Inspections</a>
-            <a class="link" href="{{ route('field.projects.index') }}">My Projects</a>
+            <a class="link" href="{{ route('field.inspections.index') }}">My Inspections</a>
+            <a class="link active" href="{{ route('field.projects.index') }}">My Projects</a>
         </nav>
 
         @if (session('success'))
@@ -60,30 +66,34 @@
             </div>
         @endif
 
-        @if($inspections->count() === 0)
-            <div class="empty">No inspections assigned yet.</div>
+        @if($projects->count() === 0)
+            <div class="empty">No projects assigned yet.</div>
         @else
             <div class="list">
-                @foreach($inspections as $inspection)
+                @foreach($projects as $project)
                     <article class="item">
                         <div class="item-head">
                             <div>
-                                <div class="code">{{ $inspection->inspection_code }}</div>
-                                <div class="muted">{{ $inspection->title }}</div>
+                                <div class="code">{{ $project->project_code }}</div>
+                                <div class="muted">{{ $project->title }}</div>
                             </div>
-                            <span class="status">{{ ucfirst($inspection->status) }}</span>
+                            <span class="status {{ $project->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}</span>
                         </div>
                         <div class="meta">
-                            <div>Client: {{ $inspection->client?->client_name ?? '—' }}</div>
-                            <div>Date: {{ $inspection->scheduled_date?->format('d M Y H:i') ?? '—' }}</div>
+                            <div>Client: {{ $project->client?->client_name ?? '—' }}</div>
+                            <div>Deadline: {{ $project->deadline?->format('d M Y') ?? '—' }}</div>
+                            <div class="progress">
+                                <div class="bar"><span style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></span></div>
+                                <strong>{{ $project->progress_percentage ?? 0 }}%</strong>
+                            </div>
                         </div>
-                        <a class="button" href="{{ route('field.inspections.show', $inspection) }}">Open Inspection</a>
+                        <a class="button" href="{{ route('field.projects.show', $project) }}">Open Project</a>
                     </article>
                 @endforeach
             </div>
 
             <div class="pagination">
-                {{ $inspections->links() }}
+                {{ $projects->links() }}
             </div>
         @endif
     </main>

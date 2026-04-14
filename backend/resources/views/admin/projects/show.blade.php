@@ -34,6 +34,15 @@
                     </span>
                 </div>
                 <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Progress</div>
+                    <div class="flex items-center gap-3">
+                        <div class="h-2 flex-1 rounded-full bg-gray-200 overflow-hidden">
+                            <div class="h-full bg-blue-600" style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></div>
+                        </div>
+                        <div class="text-gray-900 font-semibold whitespace-nowrap">{{ $project->progress_percentage ?? 0 }}%</div>
+                    </div>
+                </div>
+                <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Location</div>
                     <div class="text-gray-900">{{ $project->location ?: '—' }}</div>
                 </div>
@@ -52,6 +61,10 @@
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Assigned Manager</div>
                     <div class="text-gray-900">{{ $project->manager?->name ?? 'Unassigned' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Assigned Field Staff</div>
+                    <div class="text-gray-900">{{ $project->fieldStaff?->name ?? 'Unassigned' }}</div>
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Created By</div>
@@ -79,6 +92,100 @@
                 </div>
             @else
                 <div class="text-gray-600">This project was created manually and is not linked to an inspection.</div>
+            @endif
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Project Update Timeline</h2>
+            @if($project->updates->count() === 0)
+                <div class="text-gray-600">No project updates submitted yet.</div>
+            @else
+                <div class="space-y-4">
+                    @foreach($project->updates as $update)
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                <div>
+                                    <div class="font-semibold text-gray-900">{{ $update->summary ?: 'Project update' }}</div>
+                                    <div class="text-sm text-gray-600">
+                                        Submitted by {{ $update->user?->name ?? '—' }}
+                                        on {{ $update->created_at?->format('d M Y H:i') ?? '—' }}
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-700 whitespace-nowrap">
+                                    Work date: {{ $update->work_date?->format('d M Y') ?? '—' }}
+                                </div>
+                            </div>
+
+                            @if($update->progress_percentage !== null)
+                                <div class="mt-3">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Reported Progress</div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-2 flex-1 rounded-full bg-gray-200 overflow-hidden">
+                                            <div class="h-full bg-blue-600" style="width: {{ min(100, max(0, (int) $update->progress_percentage)) }}%;"></div>
+                                        </div>
+                                        <div class="text-gray-900 font-semibold whitespace-nowrap">{{ $update->progress_percentage }}%</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="grid grid-cols-1 gap-4 mt-4">
+                                @if($update->work_done)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Work Done</div>
+                                        <div class="text-gray-900 whitespace-pre-line">{{ $update->work_done }}</div>
+                                    </div>
+                                @endif
+                                @if($update->materials_used)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Materials Used</div>
+                                        <div class="text-gray-900 whitespace-pre-line">{{ $update->materials_used }}</div>
+                                    </div>
+                                @endif
+                                @if($update->issues_encountered)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Issues Encountered</div>
+                                        <div class="text-gray-900 whitespace-pre-line">{{ $update->issues_encountered }}</div>
+                                    </div>
+                                @endif
+                                @if($update->next_step)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Next Step</div>
+                                        <div class="text-gray-900 whitespace-pre-line">{{ $update->next_step }}</div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($update->media->count())
+                                <div class="mt-4">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Uploaded Media</div>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        @foreach($update->media as $media)
+                                            <div class="rounded-lg border border-gray-200 bg-white p-3">
+                                                @if($media->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($media->file_path))
+                                                    <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                                        {{ $media->file_name ?? basename($media->file_path) }}
+                                                    </a>
+                                                @else
+                                                    <div class="font-semibold text-gray-800">{{ $media->file_name ?? basename((string) $media->file_path) }}</div>
+                                                    <div class="text-sm text-red-700 mt-1">File unavailable</div>
+                                                @endif
+                                                <div class="text-sm text-gray-600 mt-1">
+                                                    Uploaded by {{ $media->uploader?->name ?? '—' }}
+                                                    @if($media->file_type)
+                                                        · {{ $media->file_type }}
+                                                    @endif
+                                                    @if($media->file_size)
+                                                        · {{ number_format($media->file_size / 1024, 1) }} KB
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
             @endif
         </div>
     </div>

@@ -40,6 +40,13 @@
             margin-bottom: 24px;
         }
 
+        .nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
         .brand {
             font-size: 18px;
             font-weight: 700;
@@ -60,6 +67,12 @@
             font-weight: 700;
             text-decoration: none;
             cursor: pointer;
+        }
+
+        .button.active {
+            background: var(--action);
+            border-color: var(--action);
+            color: #fff;
         }
 
         .button.primary {
@@ -133,6 +146,7 @@
             h1 { font-size: 26px; }
             .stats { grid-template-columns: 1fr; }
             .button, .logout { width: 100%; }
+            .nav { display: grid; }
         }
     </style>
 </head>
@@ -146,27 +160,48 @@
             </form>
         </div>
 
+        <nav class="nav" aria-label="Field navigation">
+            <a class="button active" href="{{ route('field.dashboard') }}">My Dashboard</a>
+            <a class="button" href="{{ route('field.inspections.index') }}">My Inspections</a>
+            <a class="button" href="{{ route('field.projects.index') }}">My Projects</a>
+        </nav>
+
         <section class="panel" aria-labelledby="field-dashboard-title">
             <p class="eyebrow">Field Staff</p>
             <h1 id="field-dashboard-title">Field staff dashboard</h1>
-            <p>Track assigned inspections and submit site reports.</p>
+            <p>Track assigned inspections, project work, and site reports.</p>
 
             <div class="stats">
                 <div class="stat">
                     <strong>{{ $totalInspections ?? 0 }}</strong>
-                    <span>Total assigned</span>
+                    <span>Total inspections</span>
                 </div>
                 <div class="stat">
                     <strong>{{ $pendingInspections ?? 0 }}</strong>
-                    <span>Pending or assigned</span>
+                    <span>Pending inspections</span>
                 </div>
                 <div class="stat">
                     <strong>{{ $completedInspections ?? 0 }}</strong>
-                    <span>Completed</span>
+                    <span>Completed inspections</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $assignedProjects ?? 0 }}</strong>
+                    <span>Assigned projects</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $ongoingProjects ?? 0 }}</strong>
+                    <span>Ongoing projects</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $completedProjects ?? 0 }}</strong>
+                    <span>Completed projects</span>
                 </div>
             </div>
 
-            <a class="button primary" href="{{ route('field.inspections.index') }}">My Inspections</a>
+            <div class="nav" style="margin:0;">
+                <a class="button primary" href="{{ route('field.inspections.index') }}">My Inspections</a>
+                <a class="button primary" href="{{ route('field.projects.index') }}">My Projects</a>
+            </div>
         </section>
     </main>
 </body>

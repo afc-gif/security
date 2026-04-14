@@ -36,6 +36,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Client</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Inspection</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Progress</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Deadline</th>
                                 <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Actions</th>
                             </tr>
@@ -59,6 +60,7 @@
                                             {{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ $project->progress_percentage ?? 0 }}%</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ $project->deadline?->format('d M Y') ?? '—' }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex justify-end gap-2">
