@@ -83,6 +83,31 @@
         </div>
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Project Conversion</h2>
+            @if($inspection->project)
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                    <div class="text-gray-900 font-semibold">This inspection is linked to project {{ $inspection->project->project_code }}.</div>
+                    <a href="{{ route('admin.projects.show', $inspection->project) }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition mt-3">
+                        View Project
+                    </a>
+                </div>
+            @else
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div>
+                        <div class="font-semibold text-gray-900">Create a project from this inspection.</div>
+                        <div class="text-sm text-gray-600 mt-1">The inspection will stay intact and the project will keep a link back to it.</div>
+                    </div>
+                    <form method="POST" action="{{ route('admin.inspections.convert-to-project', $inspection) }}">
+                        @csrf
+                        <button type="submit" onclick="return confirm('Convert this inspection to a project?')" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                            Convert to Project
+                        </button>
+                    </form>
+                </div>
+            @endif
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Evidence Files</h2>
             @if($inspection->media->count() === 0)
                 <div class="text-gray-600">No evidence files uploaded yet.</div>

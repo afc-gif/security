@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Client;
+use App\Models\Inspection;
+use App\Models\Project;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+
+class ProjectController extends Controller
+{
+    public function index()
+    {
+        $projects = Project::with(['client', 'inspection'])
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.projects.index', compact('projects'));
+    }
+
+    public function create()
+    {
+        $clients = Client::query()
+            ->orderBy('client_name')
+            ->get();
+
+        $managers = User::query()
+            ->where('role', 'manager')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.projects.create', compact('clients', 'managers'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'title' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:5000',
+            'status' => ['nullable', 'string', Rule::in(['not_started', 'ongoing', 'on_hold', 'completed'])],
+            'priority' => ['nullable', 'string', Rule::in(['low', 'medium', 'high'])],
+            'start_date' => 'nullable|date',
+            'deadline' => 'nullable|date',
+            'assigned_manager_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('role', 'manager'),
+            ],
+        ]);
+
+        $validated['project_code'] = $this->generateProjectCode();
+        $validated['status'] = $validated['status'] ?? 'not_started';
+        $validated['created_by'] = $request->user()->id;
+
+        $project = Project::create($validated);
+
+        return redirect()
+            ->route('admin.projects.show', $project)
+            ->with('success', 'Project created successfully.');
+    }
+
+    public function show(Project $project)
+    {
+        $project->load(['client', 'inspection', 'manager', 'creator']);
+
+        return view('admin.projects.show', compact('project'));
+    }
+
+    public function convertFromInspection(Request $request, Inspection $inspection)
+    {
+        $inspection->load(['project', 'client']);
+
+        if ($inspection->project) {
+            return redirect()
+                ->route('admin.projects.show', $inspection->project)
+                ->with('success', 'This inspection is already linked to a project.');
+        }
+
+        $project = Project::create([
+            'project_code' => $this->generateProjectCode(),
+            'inspection_id' => $inspection->id,
+            'client_id' => $inspection->client_id,
+            'title' => $inspection->title,
+            'location' => $inspection->location,
+            'description' => $this->buildDescriptionFromInspection($inspection),
+            'status' => 'not_started',
+            'priority' => $inspection->priority,
+            'created_by' => $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('admin.projects.show', $project)
+            ->with('success', 'Inspection converted to project successfully.');
+    }
+
+    private function generateProjectCode(): string
+    {
+        do {
+            $code = 'PROJ-' . now()->format('Ymd') . '-' . Str::upper(Str::random(4));
+        } while (Project::where('project_code', $code)->exists());
+
+        return $code;
+    }
+
+    private function buildDescriptionFromInspection(Inspection $inspection): ?string
+    {
+        $parts = [];
+
+        if ($inspection->findings) {
+            $parts[] = "Findings:\n" . $inspection->findings;
+        }
+
+        if ($inspection->recommendations) {
+            $parts[] = "Recommendations:\n" . $inspection->recommendations;
+        }
+
+        if ($inspection->risks_identified) {
+            $parts[] = "Risks Identified:\n" . $inspection->risks_identified;
+        }
+
+        return $parts ? implode("\n\n", $parts) : null;
+    }
+}

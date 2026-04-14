@@ -53,4 +53,9 @@ class Inspection extends Model
     {
         return $this->hasMany(InspectionMedia::class);
     }
+
+    public function project()
+    {
+        return $this->hasOne(Project::class);
+    }
 }

@@ -63,7 +63,7 @@ class InspectionController extends Controller
 
     public function show(Inspection $inspection)
     {
-        $inspection->load(['client', 'assignedUser', 'creator', 'media.uploader']);
+        $inspection->load(['client', 'assignedUser', 'creator', 'media.uploader', 'project']);
 
         return view('admin.inspections.show', compact('inspection'));
     }

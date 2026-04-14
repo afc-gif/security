@@ -375,6 +375,21 @@
                 </div>
             </section>
 
+            <section class="panel" data-section="projects">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Projects</h2>
+                            <p class="muted" style="margin:0;">Track client projects created manually or converted from inspections.</p>
+                        </div>
+                        <a href="{{ route('admin.projects.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            View All Projects
+                        </a>
+                    </div>
+                    <div class="muted">Use the projects page to create and view project records.</div>
+                </div>
+            </section>
+
             <section class="panel" data-section="users">
                 <div class="card">
                     <h2>Users</h2>

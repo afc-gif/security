@@ -139,6 +139,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.inspections');
+    Route::post('/inspections/{inspection}/convert-to-project', [\App\Http\Controllers\Admin\ProjectController::class, 'convertFromInspection'])
+        ->name('admin.inspections.convert-to-project');
+
+    // Projects Management
+    Route::resource('projects', \App\Http\Controllers\Admin\ProjectController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->names('admin.projects');
 
     // Solutions/Products Management
     Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
