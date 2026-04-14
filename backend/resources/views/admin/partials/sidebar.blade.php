@@ -15,6 +15,7 @@
         ],
         'operations' => [
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients'],
+            ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections'],
         ],
         'system' => [
             ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users'],
@@ -38,6 +39,7 @@
             'orders' => request()->routeIs('admin.orders.*'),
             'pos' => request()->routeIs('pos.*'),
             'clients' => request()->routeIs('admin.clients.*'),
+            'inspections' => request()->routeIs('admin.inspections.*'),
             'users' => request()->routeIs('admin.users.*'),
             default => false,
         };

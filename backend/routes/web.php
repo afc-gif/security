@@ -130,6 +130,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->except(['show'])
         ->names('admin.clients');
 
+    // Inspections Management
+    Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->names('admin.inspections');
+
     // Solutions/Products Management
     Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
         'index' => 'admin.solutions.index',

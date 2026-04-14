@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Client;
+use App\Models\Inspection;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+
+class InspectionController extends Controller
+{
+    public function index()
+    {
+        $inspections = Inspection::with(['client', 'assignedUser'])
+            ->latest('scheduled_date')
+            ->latest('id')
+            ->paginate(20);
+
+        return view('admin.inspections.index', compact('inspections'));
+    }
+
+    public function create()
+    {
+        $clients = Client::query()
+            ->orderBy('client_name')
+            ->get();
+
+        $fieldStaff = User::query()
+            ->where('role', 'field_staff')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.inspections.create', compact('clients', 'fieldStaff'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'title' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'inspection_type' => 'nullable|string|max:255',
+            'scheduled_date' => 'nullable|date',
+            'assigned_to' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('role', 'field_staff'),
+            ],
+            'priority' => ['nullable', 'string', Rule::in(['low', 'medium', 'high'])],
+        ]);
+
+        $validated['inspection_code'] = $this->generateInspectionCode();
+        $validated['status'] = empty($validated['assigned_to']) ? 'pending' : 'assigned';
+        $validated['created_by'] = $request->user()->id;
+
+        $inspection = Inspection::create($validated);
+
+        return redirect()
+            ->route('admin.inspections.show', $inspection)
+            ->with('success', 'Inspection created successfully.');
+    }
+
+    public function show(Inspection $inspection)
+    {
+        $inspection->load(['client', 'assignedUser', 'creator']);
+
+        return view('admin.inspections.show', compact('inspection'));
+    }
+
+    private function generateInspectionCode(): string
+    {
+        do {
+            $code = 'INSP-' . now()->format('Ymd') . '-' . Str::upper(Str::random(4));
+        } while (Inspection::where('inspection_code', $code)->exists());
+
+        return $code;
+    }
+}
