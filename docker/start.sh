@@ -9,7 +9,10 @@ chown -R www-data:www-data storage bootstrap/cache /run/nginx public storage/log
 
 # Run migrations automatically
 echo "Running database migrations..."
-php artisan migrate --force 2>&1 || echo "Migration warning - continuing startup..."
+if ! php artisan migrate --force 2>&1; then
+    echo "ERROR: Database migrations failed. Refusing to start with an out-of-date schema."
+    exit 1
+fi
 
 php artisan storage:link 2>&1 || true
 php artisan config:cache 2>&1 || true

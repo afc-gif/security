@@ -11,15 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            // Drop kitchen-related columns
-            $table->dropColumn([
-                'kitchen_status',
-                'kitchen_note',
-                'kitchen_eta_minutes',
-                'kitchen_eta_at',
-                'kitchen_sent_at',
-            ]);
+        $columns = [
+            'kitchen_status',
+            'kitchen_note',
+            'kitchen_eta_minutes',
+            'kitchen_eta_at',
+            'kitchen_sent_at',
+        ];
+
+        $existingColumns = array_values(array_filter(
+            $columns,
+            static fn (string $column): bool => Schema::hasColumn('orders', $column)
+        ));
+
+        if ($existingColumns === []) {
+            return;
+        }
+
+        Schema::table('orders', function (Blueprint $table) use ($existingColumns) {
+            $table->dropColumn($existingColumns);
         });
     }
 
@@ -30,11 +40,21 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             // Restore kitchen-related columns
-            $table->string('kitchen_status')->default('pending')->after('status');
-            $table->text('kitchen_note')->nullable()->after('kitchen_status');
-            $table->integer('kitchen_eta_minutes')->nullable()->after('kitchen_note');
-            $table->dateTime('kitchen_eta_at')->nullable()->after('kitchen_eta_minutes');
-            $table->dateTime('kitchen_sent_at')->nullable()->after('kitchen_eta_at');
+            if (!Schema::hasColumn('orders', 'kitchen_status')) {
+                $table->string('kitchen_status')->default('pending')->after('status');
+            }
+            if (!Schema::hasColumn('orders', 'kitchen_note')) {
+                $table->text('kitchen_note')->nullable()->after('kitchen_status');
+            }
+            if (!Schema::hasColumn('orders', 'kitchen_eta_minutes')) {
+                $table->integer('kitchen_eta_minutes')->nullable()->after('kitchen_note');
+            }
+            if (!Schema::hasColumn('orders', 'kitchen_eta_at')) {
+                $table->dateTime('kitchen_eta_at')->nullable()->after('kitchen_eta_minutes');
+            }
+            if (!Schema::hasColumn('orders', 'kitchen_sent_at')) {
+                $table->dateTime('kitchen_sent_at')->nullable()->after('kitchen_eta_at');
+            }
         });
     }
 };
