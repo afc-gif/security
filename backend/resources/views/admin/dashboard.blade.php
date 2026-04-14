@@ -1520,42 +1520,40 @@
             }
         });
 
-        if (posBarcodeInput) posBarcodeInput.addEventListener('input', (e) => {
+        if (posBarcodeInput) posBarcodeInput.addEventListener('input', async (e) => {
             const code = e.target.value.trim();
+            
             clearTimeout(scanDebounce);
             if (!code) {
                 setPosStatus('Ready to scan.');
                 renderSuggestions([]);
+                if (posLookupResult) posLookupResult.style.display = 'none';
                 return;
             }
-            const isName = /^[a-zA-Z\s]+$/.test(code);
-            if (isName) {
-                if (code.length < 2) {
-                    setPosStatus('Keep typing the product name.');
-                    renderSuggestions([]);
-                    return;
-                }
-                scanDebounce = setTimeout(async () => {
-                    const matches = await findNameMatches(code);
-                    if (!matches.length) {
-                if (posLookupResult) posLookupResult.style.display = 'none';
-                        showLookupError('No item matches that name.');
+            
+            // Search both by name and barcode like the product search
+            scanDebounce = setTimeout(async () => {
+                try {
+                    // Fetch matching products from API - works for both name and barcode
+                    const response = await fetch(`/api/products/search?q=${encodeURIComponent(code)}`);
+                    if (!response.ok) throw new Error('Search failed');
+                    
+                    const matches = await response.json();
+                    if (!Array.isArray(matches) || matches.length === 0) {
+                        showLookupError('No products match that search.');
                         setPosStatus('No match found.', 'error');
                         renderSuggestions([]);
                         return;
                     }
-                    showLookupResult(matches[0]);
-                    setPosStatus('Found. Press Enter or click Add to cart.');
+                    
+                    showLookupResult(matches[0]); // Show first match
+                    setPosStatus(`Found ${matches.length} item(s). Press Enter or click to add.`);
                     renderSuggestions(matches);
-                }, 200);
-                return;
-            }
-            if (code.length < 3) {
-                setPosStatus('Keep typing or scan the barcode.');
-                renderSuggestions([]);
-                return;
-            }
-            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: false }), 200);
+                } catch (err) {
+                    showLookupError('Search failed. Check connection.');
+                    setPosStatus('Search failed.', 'error');
+                }
+            }, 100); // Debounce for API search
         });
 
         if (posCheckoutBtn) posCheckoutBtn.addEventListener('click', async () => {
