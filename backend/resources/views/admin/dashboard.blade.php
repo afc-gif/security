@@ -345,6 +345,36 @@
                     <div><h3 style="margin:0 0 12px; font-size:16px;">Recent Products</h3><div class="list" id="menuList" style="border:1px solid var(--brand-border); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);"></div><div style="text-align:center; margin-top:12px;"><a href="{{ route('admin.products.index') }}" style="color:#2563eb; font-weight:600; font-size:13px; text-decoration:none;">View complete products list →</a></div></div>
                 </div>
             </section>
+            <section class="panel" data-section="clients">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Clients</h2>
+                            <p class="muted" style="margin:0;">Manage customer records for inspections and field work.</p>
+                        </div>
+                        <a href="{{ route('admin.clients.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            👥 View All Clients
+                        </a>
+                    </div>
+                    <div class="list" id="clientList"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-section="inspections">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Inspections</h2>
+                            <p class="muted" style="margin:0;">Create and assign field inspections for client sites.</p>
+                        </div>
+                        <a href="{{ route('admin.inspections.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            🔍 View All Inspections
+                        </a>
+                    </div>
+                    <div class="list" id="inspectionList"></div>
+                </div>
+            </section>
+
             <section class="panel" data-section="users">
                 <div class="card">
                     <h2>Users</h2>
@@ -1163,6 +1193,77 @@
                         </button>
                         <button class="btn-ghost" onclick="deleteUser(${u.id})">Delete</button>
                     </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadClients() {
+            const clientList = document.getElementById('clientList');
+            if (!clientList) return;
+            try {
+                const res = await safeRequest('/api/clients');
+                const data = await res.json();
+                renderClients(data);
+            } catch (e) {
+                console.error(e);
+                clientList.innerHTML = '<div class="muted">Could not load clients.</div>';
+            }
+        }
+
+        function renderClients(clients) {
+            const clientList = document.getElementById('clientList');
+            if (!clientList) return;
+            if (!clients || clients.length === 0) {
+                clientList.innerHTML = '<div class="muted">No clients yet.</div>';
+                return;
+            }
+            clientList.innerHTML = clients.slice(0, 10).map(c => `
+                <div class="item" style="align-items:flex-start;">
+                    <div>
+                        <h4>${c.client_name || c.name || 'Unnamed'}</h4>
+                        <div class="muted">${c.email || c.contact_email || 'No email'}</div>
+                        <div class="row" style="gap:6px;margin-top:6px;">
+                            <span class="pill">${c.phone || c.contact_phone || 'No phone'}</span>
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.clients.index') }}" class="btn-ghost" style="text-decoration:none;">View</a>
+                </div>
+            `).join('');
+        }
+
+        async function loadInspections() {
+            const inspectionList = document.getElementById('inspectionList');
+            if (!inspectionList) return;
+            try {
+                const res = await safeRequest('/api/inspections');
+                const data = await res.json();
+                renderInspections(data);
+            } catch (e) {
+                console.error(e);
+                inspectionList.innerHTML = '<div class="muted">Could not load inspections.</div>';
+            }
+        }
+
+        function renderInspections(inspections) {
+            const inspectionList = document.getElementById('inspectionList');
+            if (!inspectionList) return;
+            if (!inspections || inspections.length === 0) {
+                inspectionList.innerHTML = '<div class="muted">No inspections yet.</div>';
+                return;
+            }
+            inspectionList.innerHTML = inspections.slice(0, 10).map(i => `
+                <div class="item" style="align-items:flex-start;">
+                    <div>
+                        <h4>${i.inspection_code || 'Inspection'}</h4>
+                        <div class="muted">${i.title || i.location || 'No title'}</div>
+                        <div class="row" style="gap:6px;margin-top:6px;">
+                            <span class="pill" style="border-color:${i.status === 'completed' ? '#bbf7d0' : i.status === 'assigned' ? '#bfdbfe' : '#fed7aa'};color:${i.status === 'completed' ? '#166534' : i.status === 'assigned' ? '#1e40af' : '#92400e'}">
+                                ${i.status ? i.status.charAt(0).toUpperCase() + i.status.slice(1) : 'Unknown'}
+                            </span>
+                            <span class="pill">${i.client ? i.client.client_name || i.client.name : 'No client'}</span>
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.inspections.index') }}" class="btn-ghost" style="text-decoration:none;">View</a>
                 </div>
             `).join('');
         }
@@ -2405,7 +2506,7 @@
             await checkHealth();
             renderPosCart();
             if (posBarcodeInput) posBarcodeInput.focus();
-            await Promise.all([loadCategories(), loadMenu(), loadOrders(), loadOrderSummary(), loadUsers()]);
+            await Promise.all([loadCategories(), loadMenu(), loadOrders(), loadOrderSummary(), loadUsers(), loadClients(), loadInspections()]);
             renderSavedCustomers();
             renderParkedTickets();
             loadAdminAlerts();
@@ -2413,7 +2514,7 @@
 
             const refresh = async () => {
                 if (isInteracting) return;
-                await Promise.all([loadCategories(), loadMenu(), loadOrders(), loadOrderSummary(), loadUsers()]);
+                await Promise.all([loadCategories(), loadMenu(), loadOrders(), loadOrderSummary(), loadUsers(), loadClients(), loadInspections()]);
             };
             const refreshPoller = createPoller(refresh, 5000, {
                 onError: (err) => console.warn('Admin refresh failed', err),

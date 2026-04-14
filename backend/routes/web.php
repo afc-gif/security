@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
 use App\Http\Controllers\Api\MenuItemController as ApiMenuItemController;
 use App\Http\Controllers\Api\OrderController as ApiOrderController;
 use App\Http\Controllers\Api\UserAdminController as ApiUserAdminController;
+use App\Models\User;
 
 // Authentication routes only
 Route::middleware('web')->group(function () {
@@ -79,6 +80,9 @@ Route::middleware(['auth', 'admin'])->prefix('api')->group(function () {
     Route::get('/users', [ApiUserAdminController::class, 'index']);
     Route::put('/users/{user}', [ApiUserAdminController::class, 'update']);
     Route::delete('/users/{user}', [ApiUserAdminController::class, 'destroy']);
+
+    Route::get('/clients', [\App\Http\Controllers\Api\ClientController::class, 'index']);
+    Route::get('/inspections', [\App\Http\Controllers\Api\InspectionController::class, 'index']);
 });
 
 Route::middleware(['auth'])->prefix('api')->group(function () {
@@ -205,6 +209,7 @@ Route::middleware('auth')->group(function () {
 // POS System (accessible to authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/pos', function () {
+        /** @var User|null $user */
         $user = auth()->user();
         if (!$user || !($user->isAdmin() || $user->isPos())) {
             abort(403, 'Unauthorized');
@@ -215,6 +220,7 @@ Route::middleware('auth')->group(function () {
     // Receipt view route
     Route::get('/pos/receipt/{order}', function (App\Models\Order $order) {
         // Ensure user can only view their own sales or admins can see all
+        /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->isPos() && $order->user_id !== $user->id) {
             abort(403, 'Unauthorized');
