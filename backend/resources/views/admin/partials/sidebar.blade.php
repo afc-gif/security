@@ -13,6 +13,9 @@
             ['key' => 'orders', 'label' => 'Orders', 'route' => 'admin.orders.index', 'tab' => 'orders'],
             ['key' => 'pos', 'label' => 'POS', 'route' => 'pos.index', 'tab' => 'pos'],
         ],
+        'operations' => [
+            ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients'],
+        ],
         'system' => [
             ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users'],
             ['key' => 'health', 'label' => 'Health', 'route' => 'admin.dashboard', 'tab' => 'health'],
@@ -23,6 +26,7 @@
     $sectionLabels = [
         'overview' => null,
         'commerce' => 'Commerce',
+        'operations' => 'Operations',
         'system' => 'System',
     ];
 
@@ -33,6 +37,7 @@
             'products' => request()->routeIs('admin.products.*'),
             'orders' => request()->routeIs('admin.orders.*'),
             'pos' => request()->routeIs('pos.*'),
+            'clients' => request()->routeIs('admin.clients.*'),
             'users' => request()->routeIs('admin.users.*'),
             default => false,
         };

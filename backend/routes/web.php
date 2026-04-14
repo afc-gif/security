@@ -125,6 +125,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::patch('/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
 
+    // Clients Management
+    Route::resource('clients', \App\Http\Controllers\Admin\ClientController::class)
+        ->except(['show'])
+        ->names('admin.clients');
+
     // Solutions/Products Management
     Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
         'index' => 'admin.solutions.index',
