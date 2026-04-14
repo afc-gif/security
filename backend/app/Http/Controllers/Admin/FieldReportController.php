@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -25,6 +26,11 @@ class FieldReportController extends Controller
     public function index(Request $request)
     {
         try {
+            // Test database connection first
+            if (!$this->testDatabaseConnection()) {
+                throw new \Exception('Database connection unavailable');
+            }
+
             $filters = $this->filters($request);
             $fieldStaff = User::where('role', 'field_staff')
                 ->orderBy('name')
@@ -99,8 +105,9 @@ class FieldReportController extends Controller
                 'activityFeed'
             ));
         } catch (\Exception $e) {
-            Log::error('Field reports page error: ' . $e->getMessage());
-            return view('admin.field-reports.index', [
+            Log::error('Field reports page error: ' . $e->getMessage(), ['exception' => $e]);
+            
+            $emptyData = [
                 'filters' => [],
                 'fieldStaff' => collect(),
                 'activeFilters' => [],
@@ -115,8 +122,56 @@ class FieldReportController extends Controller
                 'recentlyCompletedTasks' => collect(),
                 'activityFeed' => collect(),
                 'databaseError' => true,
-            ]);
+            ];
+
+            try {
+                return view('admin.field-reports.index', $emptyData);
+            } catch (\Exception $viewError) {
+                Log::error('Field reports view rendering failed: ' . $viewError->getMessage());
+                return response($this->simpleHtmlFallback(), 200, ['Content-Type' => 'text/html']);
+            }
         }
+    }
+
+    private function testDatabaseConnection(): bool
+    {
+        try {
+            DB::connection()->getPdo();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    private function simpleHtmlFallback(): string
+    {
+        return <<<'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Reports - Service Unavailable</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
+        .container { max-width: 1280px; margin: 0 auto; }
+        .alert { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; color: #92400e; }
+        h1 { color: #1f2937; margin-top: 20px; }
+        p { color: #6b7280; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alert">
+            <strong>Service Temporarily Unavailable</strong><br>
+            The database connection is currently unavailable. Field reports cannot be loaded at this time.
+        </div>
+        <h1>Field Reports</h1>
+        <p>We're experiencing temporary connectivity issues. Please try again in a few moments.</p>
+    </div>
+</body>
+</html>
+HTML;
     }
 
     private function queryCount(?Builder $query): int
