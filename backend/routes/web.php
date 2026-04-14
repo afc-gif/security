@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\Field\FieldDashboardController;
+use App\Http\Controllers\Field\InspectionController as FieldInspectionController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -169,6 +170,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function () {
     Route::get('/dashboard', [FieldDashboardController::class, 'index'])->name('field.dashboard');
+    Route::get('/inspections', [FieldInspectionController::class, 'index'])->name('field.inspections.index');
+    Route::get('/inspections/{inspection}', [FieldInspectionController::class, 'show'])->name('field.inspections.show');
+    Route::post('/inspections/{inspection}/submit', [FieldInspectionController::class, 'submitReport'])->name('field.inspections.submit');
 });
 
 // POS API routes (for barcode scanning and product lookup)

@@ -59,6 +59,59 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Submitted Report</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Findings</div>
+                    <div class="text-gray-900 whitespace-pre-line">{{ $inspection->findings ?: '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Risks Identified</div>
+                    <div class="text-gray-900 whitespace-pre-line">{{ $inspection->risks_identified ?: '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Recommendations</div>
+                    <div class="text-gray-900 whitespace-pre-line">{{ $inspection->recommendations ?: '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Submitted At</div>
+                    <div class="text-gray-900">{{ $inspection->submitted_at?->format('d M Y H:i') ?? '—' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Evidence Files</h2>
+            @if($inspection->media->count() === 0)
+                <div class="text-gray-600">No evidence files uploaded yet.</div>
+            @else
+                <div class="grid grid-cols-1 gap-3">
+                    @foreach($inspection->media as $media)
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            @if($media->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($media->file_path))
+                                <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                    {{ $media->file_name ?? basename($media->file_path) }}
+                                </a>
+                            @else
+                                <div class="font-semibold text-gray-800">{{ $media->file_name ?? basename((string) $media->file_path) }}</div>
+                                <div class="text-sm text-red-700 mt-1">File unavailable</div>
+                            @endif
+                            <div class="text-sm text-gray-600 mt-1">
+                                Uploaded by {{ $media->uploader?->name ?? '—' }}
+                                @if($media->file_type)
+                                    · {{ $media->file_type }}
+                                @endif
+                                @if($media->file_size)
+                                    · {{ number_format($media->file_size / 1024, 1) }} KB
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 @endsection

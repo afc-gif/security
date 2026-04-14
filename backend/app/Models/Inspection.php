@@ -19,11 +19,19 @@ class Inspection extends Model
         'assigned_to',
         'status',
         'priority',
+        'findings',
+        'risks_identified',
+        'recommendations',
+        'submitted_at',
+        'reviewed_at',
+        'review_notes',
         'created_by',
     ];
 
     protected $casts = [
         'scheduled_date' => 'datetime',
+        'submitted_at' => 'datetime',
+        'reviewed_at' => 'datetime',
     ];
 
     public function client()
@@ -39,5 +47,10 @@ class Inspection extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function media()
+    {
+        return $this->hasMany(InspectionMedia::class);
     }
 }
