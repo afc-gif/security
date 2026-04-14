@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class FieldReportController extends Controller
 {
@@ -27,42 +28,50 @@ class FieldReportController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $pendingInspectionReviewsQuery = $this->inspectionQuery($filters, 'pending_review');
-        $recentInspectionSubmissionsQuery = $this->inspectionQuery($filters);
-        $recentProjectUpdatesQuery = $this->projectUpdateQuery($filters);
-        $projectUpdatesNeedingCorrectionQuery = $this->projectUpdateQuery($filters, 'needs_correction');
-        $recentlyCompletedTasksQuery = $this->completedTaskQuery($filters);
+        $pendingInspectionReviewsQuery = $this->tableExists('inspections')
+            ? $this->inspectionQuery($filters, 'pending_review')
+            : null;
+        $recentInspectionSubmissionsQuery = $this->tableExists('inspections')
+            ? $this->inspectionQuery($filters)
+            : null;
+        $recentProjectUpdatesQuery = $this->tableExists('project_updates')
+            ? $this->projectUpdateQuery($filters)
+            : null;
+        $projectUpdatesNeedingCorrectionQuery = $this->tableExists('project_updates')
+            ? $this->projectUpdateQuery($filters, 'needs_correction')
+            : null;
+        $recentlyCompletedTasksQuery = $this->tableExists('tasks')
+            ? $this->completedTaskQuery($filters)
+            : null;
 
-        $pendingInspectionReviewsCount = (clone $pendingInspectionReviewsQuery)->count();
-        $recentProjectUpdatesCount = (clone $recentProjectUpdatesQuery)->count();
-        $projectUpdatesNeedingCorrectionCount = (clone $projectUpdatesNeedingCorrectionQuery)->count();
-        $completedTasksCount = (clone $recentlyCompletedTasksQuery)->count();
+        $pendingInspectionReviewsCount = $this->queryCount($pendingInspectionReviewsQuery);
+        $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
+        $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
+        $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
 
         $pendingInspectionReviews = $pendingInspectionReviewsQuery
-            ->latest('submitted_at')
-            ->limit(10)
-            ->get();
+            ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()
+            : collect();
 
         $recentInspectionSubmissions = $recentInspectionSubmissionsQuery
-            ->latest('submitted_at')
-            ->limit(10)
-            ->get();
+            ? $recentInspectionSubmissionsQuery->latest('submitted_at')->limit(10)->get()
+            : collect();
 
         $recentProjectUpdates = $recentProjectUpdatesQuery
-            ->latest('created_at')
-            ->limit(10)
-            ->get();
+            ? $recentProjectUpdatesQuery->latest('created_at')->limit(10)->get()
+            : collect();
 
         $projectUpdatesNeedingCorrection = $projectUpdatesNeedingCorrectionQuery
-            ->latest('reviewed_at')
-            ->latest('created_at')
-            ->limit(10)
-            ->get();
+            ? $projectUpdatesNeedingCorrectionQuery
+                ->when($this->columnExists('project_updates', 'reviewed_at'), fn (Builder $q) => $q->latest('reviewed_at'))
+                ->latest('created_at')
+                ->limit(10)
+                ->get()
+            : collect();
 
         $recentlyCompletedTasks = $recentlyCompletedTasksQuery
-            ->latest('completed_at')
-            ->limit(10)
-            ->get();
+            ? $recentlyCompletedTasksQuery->latest('completed_at')->limit(10)->get()
+            : collect();
 
         $activityFeed = $this->buildActivityFeed(
             $recentInspectionSubmissions,
@@ -87,6 +96,21 @@ class FieldReportController extends Controller
             'recentlyCompletedTasks',
             'activityFeed'
         ));
+    }
+
+    private function queryCount(?Builder $query): int
+    {
+        return $query ? (clone $query)->count() : 0;
+    }
+
+    private function tableExists(string $table): bool
+    {
+        return Schema::hasTable($table);
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        return $this->tableExists($table) && Schema::hasColumn($table, $column);
     }
 
     private function filters(Request $request): array
