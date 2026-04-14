@@ -15,8 +15,7 @@ class InspectionController extends Controller
     public function index()
     {
         $inspections = Inspection::with(['client', 'assignedUser'])
-            ->latest('scheduled_date')
-            ->latest('id')
+            ->latest()
             ->paginate(20);
 
         return view('admin.inspections.index', compact('inspections'));

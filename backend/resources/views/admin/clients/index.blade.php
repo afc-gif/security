@@ -24,7 +24,7 @@
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             @if($clients->count() === 0)
                 <div class="p-10 text-center text-gray-600">
-                    No clients yet. Add your first client to start building the operations record.
+                    No clients yet. Add your first client.
                 </div>
             @else
                 <div class="overflow-x-auto">

@@ -24,7 +24,7 @@
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             @if($inspections->count() === 0)
                 <div class="p-10 text-center text-gray-600">
-                    No inspections yet. Create the first inspection when a client site needs field review.
+                    No inspections yet. Create your first inspection.
                 </div>
             @else
                 <div class="overflow-x-auto">
