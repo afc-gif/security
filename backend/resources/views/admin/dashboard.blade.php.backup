@@ -273,38 +273,44 @@
 
             <section class="panel" data-section="menu">
                 <div class="card">
-                    <h2>Products</h2>
-                    <p class="muted">Add items and toggle availability.</p>
-                    <div class="grid-2">
-                        <div class="list" id="menuList"></div>
-                        <form id="menuForm">
-                            <label>Name</label>
-                            <input name="name" placeholder="Product name" required />
-                            <label>Barcode (Optional)</label>
-                            <input name="barcode" placeholder="Scan or enter barcode (leave blank to auto-generate)" />
-                            <label>Description</label>
-                            <textarea name="description" rows="2" placeholder="Optional"></textarea>
-                            <label>Price (NGN)</label>
-                            <input name="price" type="number" step="0.01" min="0" required />
-                            <label>Stock Quantity</label>
-                            <input name="stock" type="number" min="0" value="0" />
-                            <label>Category</label>
-                            <select name="category_id" id="menuCategorySelect" required>
-                                <option value="" disabled selected>Select category</option>
-                            </select>
-                            <label>Image</label>
-                            <input name="image" type="file" accept="image/*" />
-                            <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
-                                <input name="display_on_website" type="checkbox" value="1" checked style="width:18px; height:18px; cursor:pointer;" />
-                                <span>Display on Website</span>
-                            </label>
-                            <small class="muted" style="display:block; margin-top:4px;">Uncheck to hide from public website (will remain in POS)</small>
-                            <button class="btn-primary" type="submit">Add Product</button>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Products</h2>
+                            <p class="muted" style="margin:0;">Add, edit and manage your product inventory.</p>
+                        </div>
+                        <a href="{{ route('admin.products.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            📋 View All Products
+                        </a>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div style="margin-bottom:16px;">
+                        <input id="productSearchDashboard" type="text" placeholder="Search products by name..." style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff; font-size:13px;" />
+                    </div>
+
+                    <div style="background:#f8fbff; border:1px solid var(--brand-border); border-radius:14px; padding:16px; margin-bottom:16px;">
+                        <h3 style="margin:0 0 14px; font-size:16px;">Add New Product</h3>
+                        <form id="menuForm" style="display:grid; gap:10px;">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Product Name *</label><input name="name" placeholder="e.g. CCTV Camera" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Barcode (Optional)</label><input name="barcode" placeholder="Auto-generate if blank" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Price (NGN) *</label><input name="price" type="number" step="0.01" min="0" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Stock Quantity</label><input name="stock" type="number" min="0" value="0" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Category *</label><select name="category_id" id="menuCategorySelect" required style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;"><option value="" disabled selected>Select category</option></select></div>
+                                <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Image</label><input name="image" type="file" accept="image/*" style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;" /></div>
+                            </div>
+                            <div><label style="font-size:13px; color:var(--brand-muted); margin-bottom:4px; display:block;">Description (Optional)</label><textarea name="description" rows="2" placeholder="Add product details..." style="width:100%; padding:10px 12px; border:1px solid var(--brand-border); border-radius:10px; font:inherit; background:#fff;"></textarea></div>
+                            <label style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer;"><input name="display_on_website" type="checkbox" value="1" checked style="width:18px; height:18px; cursor:pointer;" /><span style="font-size:13px;">Display on Website</span></label>
+                            <small class="muted" style="display:block; margin-top:2px; font-size:12px;">Uncheck to hide from public website (will remain in POS)</small>
+                            <button class="btn-primary" type="submit" style="margin-top:8px;">+ Add Product</button>
                         </form>
                     </div>
+
+                    <div><h3 style="margin:0 0 12px; font-size:16px;">Recent Products</h3><div class="list" id="menuList" style="border:1px solid var(--brand-border); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);"></div><div style="text-align:center; margin-top:12px;"><a href="{{ route('admin.products.index') }}" style="color:#2563eb; font-weight:600; font-size:13px; text-decoration:none;">View complete products list →</a></div></div>
                 </div>
             </section>
-
             <section class="panel" data-section="users">
                 <div class="card">
                     <h2>Users</h2>
@@ -1345,6 +1351,102 @@
             });
         });
 
+
+
+        // Dashboard Products Search with Autocomplete
+        const productSearchDashboard = document.getElementById('productSearchDashboard');
+        let suggestionsContainer = null;
+        let productSearchAbortController = null;
+        let productSearchRequestId = 0;
+
+        const clearDashboardProductSuggestions = () => {
+            suggestionsContainer?.remove();
+            suggestionsContainer = null;
+        };
+
+        productSearchDashboard?.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            productSearchRequestId += 1;
+            const requestId = productSearchRequestId;
+            clearDashboardProductSuggestions();
+
+            if (productSearchAbortController) {
+                productSearchAbortController.abort();
+                productSearchAbortController = null;
+            }
+
+            if (!query) return;
+
+            productSearchAbortController = new AbortController();
+
+            try {
+                // Fetch matching products from database
+                const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
+                    signal: productSearchAbortController.signal,
+                });
+                if (!response.ok) throw new Error('Search failed');
+
+                const products = await response.json();
+                const latestQuery = (productSearchDashboard?.value || '').trim();
+                if (requestId !== productSearchRequestId || latestQuery !== query) return;
+                if (!Array.isArray(products) || products.length === 0) return;
+
+                // Create suggestions container
+                suggestionsContainer = document.createElement('div');
+                suggestionsContainer.style.cssText = 'position:absolute; top:100%; left:0; right:0; margin-top:4px; background:#fff; border:1px solid var(--brand-border); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-height:300px; overflow-y:auto; z-index:1000;';
+
+                products.forEach(product => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.style.cssText = 'width:100%; padding:12px; border:0; border-bottom:1px solid var(--brand-border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; text-align:left; background:#fff;';
+                    item.innerHTML = `<div><strong>${product.name}</strong><br><small style="color:var(--brand-muted);">${product.category || 'Uncategorized'}</small></div><div style="font-weight:700; color:var(--brand-dark);">₦${product.price}</div>`;
+
+                    item.addEventListener('mouseenter', () => item.style.backgroundColor = '#f0f4f9');
+                    item.addEventListener('mouseleave', () => item.style.backgroundColor = '#fff');
+
+                    item.addEventListener('click', () => {
+                        productSearchRequestId += 1;
+                        if (productSearchAbortController) {
+                            productSearchAbortController.abort();
+                            productSearchAbortController = null;
+                        }
+                        clearDashboardProductSuggestions();
+                        productSearchDashboard.value = '';
+
+                        if (product.edit_url) {
+                            window.location.href = product.edit_url;
+                            return;
+                        }
+                        if (product.solution_id && product.id) {
+                            window.location.href = `/admin/solutions/${product.solution_id}/items/${product.id}/edit`;
+                            return;
+                        }
+
+                        window.location.href = '/admin/products';
+                    });
+
+                    suggestionsContainer.appendChild(item);
+                });
+
+                if (suggestionsContainer.children.length > 0) {
+                    productSearchDashboard.parentElement.style.position = 'relative';
+                    productSearchDashboard.parentElement.appendChild(suggestionsContainer);
+                }
+            } catch (error) {
+                if (error && error.name === 'AbortError') return;
+                console.error('Search error:', error);
+            } finally {
+                if (requestId === productSearchRequestId) {
+                    productSearchAbortController = null;
+                }
+            }
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!productSearchDashboard || productSearchDashboard.parentElement?.contains(e.target)) return;
+            clearDashboardProductSuggestions();
+        });
         menuForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = new FormData(menuForm);
@@ -1436,6 +1538,7 @@
                 scanDebounce = setTimeout(async () => {
                     const matches = await findNameMatches(code);
                     if (!matches.length) {
+                if (posLookupResult) posLookupResult.style.display = 'none';
                         showLookupError('No item matches that name.');
                         setPosStatus('No match found.', 'error');
                         renderSuggestions([]);
