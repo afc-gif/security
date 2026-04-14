@@ -26,84 +26,116 @@ class FieldReportController extends Controller
     public function index(Request $request)
     {
         try {
+            Log::debug('FieldReportController index() called');
+            
             // Test database connection first
             if (!$this->testDatabaseConnection()) {
+                Log::warning('Database connection test failed');
                 throw new \Exception('Database connection unavailable');
             }
 
+            Log::debug('Database connection OK, building filters');
             $filters = $this->filters($request);
-            $fieldStaff = User::where('role', 'field_staff')
-                ->orderBy('name')
-                ->get(['id', 'name']);
+            Log::debug('Filters built, fetching field staff');
+            
+            try {
+                $fieldStaff = User::where('role', 'field_staff')
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+                Log::debug('Field staff fetched: ' . $fieldStaff->count());
+            } catch (\Exception $e) {
+                Log::error('Error fetching field staff: ' . $e->getMessage());
+                $fieldStaff = collect();
+            }
 
-            $pendingInspectionReviewsQuery = $this->tableExists('inspections')
-                ? $this->inspectionQuery($filters, 'pending_review')
-                : null;
-            $recentInspectionSubmissionsQuery = $this->tableExists('inspections')
-                ? $this->inspectionQuery($filters)
-                : null;
-            $recentProjectUpdatesQuery = $this->tableExists('project_updates')
-                ? $this->projectUpdateQuery($filters)
-                : null;
-            $projectUpdatesNeedingCorrectionQuery = $this->tableExists('project_updates')
-                ? $this->projectUpdateQuery($filters, 'needs_correction')
-                : null;
-            $recentlyCompletedTasksQuery = $this->tableExists('tasks')
-                ? $this->completedTaskQuery($filters)
-                : null;
+            try {
+                Log::debug('Building queries...');
+                $pendingInspectionReviewsQuery = $this->tableExists('inspections')
+                    ? $this->inspectionQuery($filters, 'pending_review')
+                    : null;
+                $recentInspectionSubmissionsQuery = $this->tableExists('inspections')
+                    ? $this->inspectionQuery($filters)
+                    : null;
+                $recentProjectUpdatesQuery = $this->tableExists('project_updates')
+                    ? $this->projectUpdateQuery($filters)
+                    : null;
+                $projectUpdatesNeedingCorrectionQuery = $this->tableExists('project_updates')
+                    ? $this->projectUpdateQuery($filters, 'needs_correction')
+                    : null;
+                $recentlyCompletedTasksQuery = $this->tableExists('tasks')
+                    ? $this->completedTaskQuery($filters)
+                    : null;
+                Log::debug('Queries built successfully');
 
-            $pendingInspectionReviewsCount = $this->queryCount($pendingInspectionReviewsQuery);
-            $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
-            $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
-            $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
+                $pendingInspectionReviewsCount = $this->queryCount($pendingInspectionReviewsQuery);
+                $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
+                $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
+                $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
+                Log::debug('Query counts: ' . compact('pendingInspectionReviewsCount', 'recentProjectUpdatesCount', 'projectUpdatesNeedingCorrectionCount', 'completedTasksCount'));
 
-            $pendingInspectionReviews = $pendingInspectionReviewsQuery
-                ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()
-                : collect();
+                $pendingInspectionReviews = $pendingInspectionReviewsQuery
+                    ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()
+                    : collect();
 
-            $recentInspectionSubmissions = $recentInspectionSubmissionsQuery
-                ? $recentInspectionSubmissionsQuery->latest('submitted_at')->limit(10)->get()
-                : collect();
+                $recentInspectionSubmissions = $recentInspectionSubmissionsQuery
+                    ? $recentInspectionSubmissionsQuery->latest('submitted_at')->limit(10)->get()
+                    : collect();
 
-            $recentProjectUpdates = $recentProjectUpdatesQuery
-                ? $recentProjectUpdatesQuery->latest('created_at')->limit(10)->get()
-                : collect();
+                $recentProjectUpdates = $recentProjectUpdatesQuery
+                    ? $recentProjectUpdatesQuery->latest('created_at')->limit(10)->get()
+                    : collect();
 
-            $projectUpdatesNeedingCorrection = $projectUpdatesNeedingCorrectionQuery
-                ? $projectUpdatesNeedingCorrectionQuery
-                    ->when($this->columnExists('project_updates', 'reviewed_at'), fn (Builder $q) => $q->latest('reviewed_at'))
-                    ->latest('created_at')
-                    ->limit(10)
-                    ->get()
-                : collect();
+                $projectUpdatesNeedingCorrection = $projectUpdatesNeedingCorrectionQuery
+                    ? $projectUpdatesNeedingCorrectionQuery
+                        ->when($this->columnExists('project_updates', 'reviewed_at'), fn (Builder $q) => $q->latest('reviewed_at'))
+                        ->latest('created_at')
+                        ->limit(10)
+                        ->get()
+                    : collect();
 
-            $recentlyCompletedTasks = $recentlyCompletedTasksQuery
-                ? $recentlyCompletedTasksQuery->latest('completed_at')->limit(10)->get()
-                : collect();
+                $recentlyCompletedTasks = $recentlyCompletedTasksQuery
+                    ? $recentlyCompletedTasksQuery->latest('completed_at')->limit(10)->get()
+                    : collect();
 
-            $activityFeed = $this->buildActivityFeed(
-                $recentInspectionSubmissions,
-                $recentProjectUpdates,
-                $recentlyCompletedTasks
-            );
+                Log::debug('Data fetched successfully');
 
-            $activeFilters = $this->activeFilterLabels($filters, $fieldStaff);
+                $activityFeed = $this->buildActivityFeed(
+                    $recentInspectionSubmissions,
+                    $recentProjectUpdates,
+                    $recentlyCompletedTasks
+                );
+                Log::debug('Activity feed built: ' . $activityFeed->count() . ' items');
 
-            return view('admin.field-reports.index', compact(
-                'filters',
-                'fieldStaff',
-                'activeFilters',
-                'pendingInspectionReviewsCount',
-                'pendingInspectionReviews',
-                'recentInspectionSubmissions',
-                'recentProjectUpdatesCount',
-                'recentProjectUpdates',
-                'projectUpdatesNeedingCorrectionCount',
-                'projectUpdatesNeedingCorrection',
-                'completedTasksCount',
-                'recentlyCompletedTasks',
-                'activityFeed'
-            ));
+                $activeFilters = $this->activeFilterLabels($filters, $fieldStaff);
+                Log::debug('Active filters computed');
+            } catch (\Exception $e) {
+                Log::error('Error building data: ' . $e->getMessage(), ['exception' => $e]);
+                throw $e;
+            }
+
+            try {
+                Log::debug('Rendering view...');
+                $response = view('admin.field-reports.index', compact(
+                    'filters',
+                    'fieldStaff',
+                    'activeFilters',
+                    'pendingInspectionReviewsCount',
+                    'pendingInspectionReviews',
+                    'recentInspectionSubmissions',
+                    'recentProjectUpdatesCount',
+                    'recentProjectUpdates',
+                    'projectUpdatesNeedingCorrectionCount',
+                    'projectUpdatesNeedingCorrection',
+                    'completedTasksCount',
+                    'recentlyCompletedTasks',
+                    'activityFeed'
+                ));
+                Log::debug('View rendered successfully');
+                return $response;
+            } catch (\Exception $viewError) {
+                Log::error('View rendering error: ' . $viewError->getMessage(), ['exception' => $viewError]);
+                throw $viewError;
+            }
         } catch (\Exception $e) {
             Log::error('Field reports page error: ' . $e->getMessage(), ['exception' => $e]);
             
