@@ -39,15 +39,18 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            height: 100dvh;
             padding: 18px;
             border-right: 1px solid var(--brand-border);
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(10px);
             box-shadow: 6px 0 30px rgba(0,0,0,0.05);
             display: grid;
-            align-content: start;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            align-content: stretch;
             gap: 12px;
             transition: width 0.2s ease, transform 0.2s ease, padding 0.2s ease;
+            overflow: hidden;
         }
         .sidebar.collapsed { width: 72px; padding: 12px; }
         .brand {
@@ -72,7 +75,27 @@
             cursor: pointer;
             z-index: 30;
         }
-        nav { display: grid; gap: 6px; margin-top: 8px; }
+        .admin-nav {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 2px 4px 8px 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(10, 20, 40, 0.28) transparent;
+        }
+        .admin-nav::-webkit-scrollbar { width: 8px; }
+        .admin-nav::-webkit-scrollbar-track { background: transparent; }
+        .admin-nav::-webkit-scrollbar-thumb { background: rgba(10,20,40,0.22); border-radius: 999px; }
+        .admin-nav::-webkit-scrollbar-thumb:hover { background: rgba(10,20,40,0.34); }
+        .admin-user {
+            margin-top: 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--brand-border);
+            background: rgba(255,255,255,0.96);
+        }
         .nav-btn {
             border: 1px solid var(--brand-border);
             background: #fff;
@@ -93,6 +116,29 @@
         .nav-btn.active { background: var(--brand-dark); color: #fff; box-shadow: var(--brand-shadow); }
         .nav-label { white-space: nowrap; }
         .sidebar.collapsed .nav-label { display: none; }
+        .nav-icon {
+            flex: 0 0 28px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--brand-soft);
+            color: var(--brand-dark);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+        .nav-btn.active .nav-icon,
+        .nav-item.active .nav-icon { background: rgba(255,255,255,0.16); color: #fff; }
+        .sidebar.collapsed .nav-btn,
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        .sidebar.collapsed .admin-user-meta { display: none; }
         main { padding: 22px; display: grid; gap: 18px; }
         .hero {
             background: linear-gradient(135deg, rgba(3,169,244,0.15), rgba(255,255,255,0.95));
@@ -167,9 +213,23 @@
         .alert-footer a { color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none; }
         @media (max-width: 960px) {
             .admin-shell { grid-template-columns: 1fr; }
-            .sidebar { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-110%); z-index: 20; }
+            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; height: 100dvh; width: 260px; transform: translateX(-110%); z-index: 20; }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { width: 260px; padding: 18px; }
+            .sidebar.collapsed .admin-brand {
+                opacity: 1;
+                pointer-events: auto;
+                height: auto;
+                padding: 10px;
+                margin: 0;
+            }
+            .sidebar.collapsed .nav-label { display: inline; }
+            .sidebar.collapsed .admin-user-meta { display: block; }
+            .sidebar.collapsed .nav-btn,
+            .sidebar.collapsed .nav-item {
+                justify-content: flex-start;
+                padding: 10px 12px;
+            }
         }
 
         @media (max-width: 640px) {

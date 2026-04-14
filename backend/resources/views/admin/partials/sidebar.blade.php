@@ -5,24 +5,24 @@
     $dashboardUrl = route('admin.dashboard');
     $items = [
         'overview' => [
-            ['key' => 'overview', 'label' => 'Overview', 'route' => 'admin.dashboard', 'tab' => 'overview'],
+            ['key' => 'overview', 'label' => 'Overview', 'route' => 'admin.dashboard', 'tab' => 'overview', 'icon' => 'OV'],
         ],
         'commerce' => [
-            ['key' => 'categories', 'label' => 'Categories', 'route' => 'admin.solutions.index', 'tab' => 'categories'],
-            ['key' => 'products', 'label' => 'Products', 'route' => 'admin.products.index', 'tab' => 'menu'],
-            ['key' => 'orders', 'label' => 'Orders', 'route' => 'admin.orders.index', 'tab' => 'orders'],
-            ['key' => 'pos', 'label' => 'POS', 'route' => 'pos.index', 'tab' => 'pos'],
+            ['key' => 'categories', 'label' => 'Categories', 'route' => 'admin.solutions.index', 'tab' => 'categories', 'icon' => 'CA'],
+            ['key' => 'products', 'label' => 'Products', 'route' => 'admin.products.index', 'tab' => 'menu', 'icon' => 'PR'],
+            ['key' => 'orders', 'label' => 'Orders', 'route' => 'admin.orders.index', 'tab' => 'orders', 'icon' => 'OR'],
+            ['key' => 'pos', 'label' => 'POS', 'route' => 'pos.index', 'tab' => 'pos', 'icon' => 'PS'],
         ],
         'operations' => [
-            ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients'],
-            ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections'],
-            ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects'],
-            ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks'],
+            ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
+            ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections', 'icon' => 'IN'],
+            ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
+            ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks', 'icon' => 'TK'],
         ],
         'system' => [
-            ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users'],
-            ['key' => 'health', 'label' => 'Health', 'route' => 'admin.dashboard', 'tab' => 'health'],
-            ['key' => 'site', 'label' => 'Public Site', 'route' => 'admin.dashboard', 'tab' => 'site'],
+            ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users', 'icon' => 'US'],
+            ['key' => 'health', 'label' => 'Health', 'route' => 'admin.dashboard', 'tab' => 'health', 'icon' => 'HE'],
+            ['key' => 'site', 'label' => 'Public Site', 'route' => 'admin.dashboard', 'tab' => 'site', 'icon' => 'SI'],
         ],
     ];
 
@@ -68,11 +68,13 @@
             @foreach ($sectionItems as $item)
                 @if ($isDashboardSidebar)
                     <button class="nav-btn {{ $item['key'] === 'overview' ? 'active' : '' }}" type="button" data-tab="{{ $item['tab'] }}">
+                        <span class="nav-icon" aria-hidden="true">{{ $item['icon'] }}</span>
                         <span class="nav-label">{{ $item['label'] }}</span>
                     </button>
                 @else
                     @php($href = $item['route'] === 'admin.dashboard' && $item['tab'] !== 'overview' ? $dashboardUrl . '#' . $item['tab'] : route($item['route']))
                     <a href="{{ $href }}" class="nav-item {{ $routeActive($item) ? 'active' : '' }}">
+                        <span class="nav-icon" aria-hidden="true">{{ $item['icon'] }}</span>
                         <span class="nav-label">{{ $item['label'] }}</span>
                     </a>
                 @endif
@@ -86,7 +88,8 @@
         </div>
         <form method="POST" action="{{ route('logout') }}" style="margin:0;">
             @csrf
-            <button type="submit" class="nav-btn" style="width:100%; justify-content:center;">
+            <button type="submit" class="nav-btn" style="width:100%; justify-content:center;" aria-label="Logout" title="Logout">
+                <span class="nav-icon" aria-hidden="true">LO</span>
                 <span class="nav-label">Logout</span>
             </button>
         </form>

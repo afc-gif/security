@@ -82,6 +82,7 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            height: 100dvh;
             width: 260px;
             padding: 18px;
             border-right: 1px solid var(--brand-border);
@@ -89,7 +90,8 @@
             backdrop-filter: blur(10px);
             box-shadow: 6px 0 30px rgba(0,0,0,0.05);
             display: grid;
-            align-content: start;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            align-content: stretch;
             gap: 12px;
             transition: width 0.3s ease, padding 0.3s ease;
             z-index: 20;
@@ -146,6 +148,23 @@
             display: grid;
             gap: 6px;
             margin-top: 8px;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 2px 4px 8px 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(10, 20, 40, 0.28) transparent;
+        }
+
+        .admin-nav::-webkit-scrollbar { width: 8px; }
+        .admin-nav::-webkit-scrollbar-track { background: transparent; }
+        .admin-nav::-webkit-scrollbar-thumb {
+            background: rgba(10, 20, 40, 0.22);
+            border-radius: 999px;
+        }
+
+        .admin-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(10, 20, 40, 0.34);
         }
 
         .nav-section {
@@ -191,6 +210,34 @@
         .nav-label { white-space: nowrap; }
         .sidebar.collapsed .nav-label { display: none; }
 
+        .nav-icon {
+            flex: 0 0 28px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--brand-soft);
+            color: var(--brand-dark);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .nav-btn.active .nav-icon,
+        .nav-item.active .nav-icon {
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+        }
+
+        .sidebar.collapsed .nav-btn,
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
         .admin-sidebar-backdrop {
             display: none;
             position: fixed;
@@ -200,10 +247,15 @@
         }
 
         .admin-user {
-            margin-top: 12px;
+            margin-top: 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--brand-border);
             display: grid;
             gap: 8px;
+            background: rgba(255,255,255,0.96);
         }
+
+        .sidebar.collapsed .admin-user-meta { display: none; }
 
         .admin-content {
             padding: 22px;
@@ -275,12 +327,28 @@
                 position: fixed;
                 left: 0;
                 top: 0;
+                height: 100vh;
+                height: 100dvh;
                 width: 260px;
                 transform: translateX(-110%);
                 transition: transform 0.3s ease;
             }
             .sidebar.open { transform: translateX(0); }
             .sidebar.open + .admin-sidebar-backdrop { display: block; }
+            .sidebar.collapsed .admin-brand {
+                opacity: 1;
+                pointer-events: auto;
+                height: auto;
+                padding: 10px;
+                margin: 0;
+            }
+            .sidebar.collapsed .nav-label { display: inline; }
+            .sidebar.collapsed .admin-user-meta { display: block; }
+            .sidebar.collapsed .nav-btn,
+            .sidebar.collapsed .nav-item {
+                justify-content: flex-start;
+                padding: 10px 12px;
+            }
             .admin-content { padding: 72px 14px 18px; }
         }
 
@@ -297,7 +365,6 @@
             .sidebar {
                 width: min(86vw, 300px);
                 padding: 14px;
-                overflow-y: auto;
             }
 
             .admin-brand img {
@@ -367,6 +434,8 @@
             toggleSidebar.addEventListener('click', () => {
                 const isMobile = window.innerWidth <= 960;
                 if (isMobile) {
+                    document.body.classList.remove('collapsed');
+                    sidebar.classList.remove('collapsed');
                     const isOpen = sidebar.classList.toggle('open');
                     toggleSidebar.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                 } else {
@@ -379,6 +448,9 @@
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 960) {
                     closeMobileSidebar();
+                } else {
+                    document.body.classList.remove('collapsed');
+                    sidebar.classList.remove('collapsed');
                 }
             });
         })();
