@@ -158,6 +158,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.tasks');
 
+    // Field Reports
+    Route::get('/field-reports', [\App\Http\Controllers\Admin\FieldReportController::class, 'index'])
+        ->name('admin.field-reports.index');
+
     // Solutions/Products Management
     Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
         'index' => 'admin.solutions.index',

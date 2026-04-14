@@ -465,6 +465,21 @@
                 </div>
             </section>
 
+            <section class="panel" data-section="field-reports">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Field Reports</h2>
+                            <p class="muted" style="margin:0;">Monitor inspection submissions, project updates, and completed tasks.</p>
+                        </div>
+                        <a href="{{ route('admin.field-reports.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            Open Field Reports
+                        </a>
+                    </div>
+                    <div class="muted">Use the Field Reports page for a centralized read-only view of field activity.</div>
+                </div>
+            </section>
+
             <section class="panel" data-section="users">
                 <div class="card">
                     <h2>Users</h2>

@@ -18,6 +18,7 @@
             ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections', 'icon' => 'IN'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
             ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks', 'icon' => 'TK'],
+            ['key' => 'field-reports', 'label' => 'Field Reports', 'route' => 'admin.field-reports.index', 'tab' => 'field-reports', 'icon' => 'FR'],
         ],
         'system' => [
             ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users', 'icon' => 'US'],
@@ -44,6 +45,7 @@
             'inspections' => request()->routeIs('admin.inspections.*'),
             'projects' => request()->routeIs('admin.projects.*'),
             'tasks' => request()->routeIs('admin.tasks.*'),
+            'field-reports' => request()->routeIs('admin.field-reports.*'),
             'users' => request()->routeIs('admin.users.*'),
             default => false,
         };
