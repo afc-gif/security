@@ -541,7 +541,7 @@
 
         const sidebar = document.getElementById('sidebar');
         const toggleSidebar = document.getElementById('toggleSidebar');
-        const navBtns = Array.from(document.querySelectorAll('.nav-btn'));
+        const navBtns = Array.from(document.querySelectorAll('.nav-btn[data-tab]'));
         const panels = Array.from(document.querySelectorAll('.panel'));
 
         const categoryList = document.getElementById('categoryList');
@@ -849,19 +849,6 @@
                 setBusy(btn, false);
             }
         };
-
-        if (toggleSidebar && toggleSidebar.dataset.bound !== '1') {
-            toggleSidebar.addEventListener('click', () => {
-                const isMobile = window.innerWidth <= 960;
-                if (isMobile) {
-                    sidebar.classList.toggle('open');
-                } else {
-                    document.body.classList.toggle('collapsed');
-                    sidebar.classList.toggle('collapsed');
-                }
-                toggleSidebar.setAttribute('aria-expanded', sidebar.classList.contains('open') ? 'true' : 'false');
-            });
-        }
 
         function switchTab(tab) {
             navBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
