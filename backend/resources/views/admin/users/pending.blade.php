@@ -4,7 +4,7 @@
 <div class="container mx-auto py-8 px-4">
     <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-900 mb-2">Pending User Registrations</h2>
-        <p class="text-gray-600">Review and approve new user registrations. Assign role (Admin or POS) to activate accounts.</p>
+        <p class="text-gray-600">Review and approve new user registrations. Assign a role to activate accounts.</p>
     </div>
 
     @if (session('success'))
@@ -47,6 +47,24 @@
                                     @method('PATCH')
                                     <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
                                         ✓ Approve as POS
+                                    </button>
+                                </form>
+
+                                <!-- Approve as Field Staff -->
+                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'field_staff']) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+                                        Approve as Field Staff
+                                    </button>
+                                </form>
+
+                                <!-- Approve as Manager -->
+                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'manager']) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant manager access to {{ $user->name }}?');">
+                                        Approve as Manager
                                     </button>
                                 </form>
 

@@ -44,6 +44,10 @@ class AuthController extends Controller
             $user = auth()->user();
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
+            } elseif ($user->isManager()) {
+                return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
+            } elseif ($user->isFieldStaff()) {
+                return redirect()->route('field.dashboard')->with('success', 'Logged in successfully!');
             } elseif ($user->isPos()) {
                 return redirect()->route('pos.index')->with('success', 'Logged in to POS!');
             }

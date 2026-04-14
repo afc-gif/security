@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\Field\FieldDashboardController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -93,9 +94,11 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 });
 
 // Admin routes
-Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Stock Alerts
     Route::get('/stock-alerts', function () {
         return view('admin.stock-alerts');
@@ -152,6 +155,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         'update' => 'admin.installations.update',
         'destroy' => 'admin.installations.destroy',
     ])->except(['show']);
+});
+
+Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function () {
+    Route::get('/dashboard', [FieldDashboardController::class, 'index'])->name('field.dashboard');
 });
 
 // POS API routes (for barcode scanning and product lookup)

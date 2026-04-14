@@ -25,7 +25,7 @@ class AdminController extends Controller
         $this->middleware(function ($request, $next) {
             /** @var \App\Models\User|null $user */
             $user = auth()->user();
-            if (!$user || !$user->isAdmin()) {
+            if (!$user || (!$user->isAdmin() && !($request->routeIs('admin.dashboard') && $user->isManager()))) {
                 abort(403, 'Unauthorized');
             }
             return $next($request);
@@ -403,7 +403,7 @@ class AdminController extends Controller
     // Approve user and assign role
     public function approveUser(User $user, $role)
     {
-        if (!in_array($role, ['admin', 'pos'])) {
+        if (!in_array($role, ['admin', 'manager', 'field_staff', 'pos', 'user'], true)) {
             return back()->withErrors('Invalid role specified.');
         }
 

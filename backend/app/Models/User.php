@@ -61,6 +61,23 @@ class User extends Model implements AuthenticatableContract
         return $this->role === 'user';
     }
 
+    public function isManager()
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isFieldStaff()
+    {
+        return $this->role === 'field_staff';
+    }
+
+    public function hasRole($roles)
+    {
+        $roles = is_array($roles) ? $roles : func_get_args();
+
+        return in_array($this->role, $roles, true);
+    }
+
     public function isPending()
     {
         return $this->status === 'pending';
