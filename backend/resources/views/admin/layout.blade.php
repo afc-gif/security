@@ -82,6 +82,7 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            width: 260px;
             padding: 18px;
             border-right: 1px solid var(--brand-border);
             background: rgba(255,255,255,0.96);
@@ -90,8 +91,9 @@
             display: grid;
             align-content: start;
             gap: 12px;
-            transition: width 0.2s ease, transform 0.2s ease, padding 0.2s ease;
+            transition: width 0.3s ease, padding 0.3s ease;
             z-index: 20;
+            overflow: hidden;
         }
 
         .sidebar.collapsed { width: 72px; padding: 12px; }
@@ -275,9 +277,9 @@
                 top: 0;
                 width: 260px;
                 transform: translateX(-110%);
+                transition: transform 0.3s ease;
             }
             .sidebar.open { transform: translateX(0); }
-            .sidebar.collapsed { width: 260px; padding: 18px; }
             .sidebar.open + .admin-sidebar-backdrop { display: block; }
             .admin-content { padding: 72px 14px 18px; }
         }
