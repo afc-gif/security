@@ -1067,6 +1067,7 @@
                         barcodeCache[item.barcode] = item;
                     }
                 });
+                posMenuCache = data; // Cache for POS instant search
                 menuCacheReady = true;
                 renderMenu(data);
             } catch (e) {
@@ -1251,27 +1252,33 @@
             posLookupResult.innerHTML = `<div class="muted">${message}</div>`;
         }
 
+        let posMenuCache = []; // Client-side cache for instant POS search
+
         const renderSuggestions = (items) => {
             if (!posSuggestions) return;
             if (!items.length) {
                 posSuggestions.innerHTML = '';
+                posSuggestions.style.display = 'none';
                 return;
             }
+            posSuggestions.style.display = '';
             posSuggestions.innerHTML = items.map(item => `
-                <button class="btn-ghost" data-suggest-id="${item.id}" data-suggest-item='${JSON.stringify(item)}' style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
-                    ${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span>
+                <button class="btn-ghost" data-suggest-id="${item.id}" data-suggest-item='${JSON.stringify(item)}' style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px; font-size:13px;">
+                    <strong>${item.name}</strong> <span class="muted">| ${item.barcode || 'n/a'}</span>
                 </button>
             `).join('');
         };
 
-        const findNameMatches = async (term) => {
-            if (!term || term.length < 2) return [];
-            try {
-                const res = await apiFetch(`/api/menu-items/search?q=${encodeURIComponent(term)}`);
-                if (!res.ok) return [];
-                const items = await res.json();
-                return Array.isArray(items) ? items.slice(0, 5) : [];
-            } catch (e) {
+        // Client-side search across name, barcode, and category
+        const searchMenuItems = (term) => {
+            if (!term || term.length < 1) return [];
+            const query = term.toLowerCase();
+            const results = posMenuCache.filter(item => {
+                const searchText = `${item.name || ''} ${item.barcode || ''} ${item.category && item.category.name ? item.category.name : ''}`;
+                return searchText.toLowerCase().includes(query);
+            });
+            return results.slice(0, 10);
+        };catch (e) {
                 console.warn('Name search failed', e);
                 return [];
             }
@@ -1526,37 +1533,31 @@
             if (!code) {
                 setPosStatus('Ready to scan.');
                 renderSuggestions([]);
-                return;
-            }
-            const isName = /^[a-zA-Z\s]+$/.test(code);
-            if (isName) {
-                if (code.length < 2) {
-                    setPosStatus('Keep typing the product name.');
-                    renderSuggestions([]);
-                    return;
-                }
-                scanDebounce = setTimeout(async () => {
-                    const matches = await findNameMatches(code);
-                    if (!matches.length) {
                 if (posLookupResult) posLookupResult.style.display = 'none';
-                        showLookupError('No item matches that name.');
-                        setPosStatus('No match found.', 'error');
-                        renderSuggestions([]);
-                        return;
-                    }
-                    showLookupResult(matches[0]);
-                    setPosStatus('Found. Press Enter or click Add to cart.');
-                    renderSuggestions(matches);
-                }, 200);
                 return;
             }
-            if (code.length < 3) {
-                setPosStatus('Keep typing or scan the barcode.');
+            
+            // Use unified client-side search (no more separate name vs barcode logic)
+            if (code.length < 1) {
+                setPosStatus('Start typing name or barcode...');
                 renderSuggestions([]);
                 return;
             }
-            scanDebounce = setTimeout(() => lookupBarcode(code, { addToCartOnSuccess: false }), 200);
-        });
+            
+            // Instant client-side search across name, barcode, and category
+            scanDebounce = setTimeout(() => {
+                const matches = searchMenuItems(code);
+                if (!matches.length) {
+                    showLookupError('No products match that search.');
+                    setPosStatus('No match found.', 'error');
+                    renderSuggestions([]);
+                    return;
+                }
+                showLookupResult(matches[0]); // Show first match
+                setPosStatus(`Found ${matches.length} item(s). Press Enter or click to add.`);
+                renderSuggestions(matches);
+            }, 100); // Faster debounce for client-side search
+        }););
 
         if (posCheckoutBtn) posCheckoutBtn.addEventListener('click', async () => {
             if (!posCart.length) {
