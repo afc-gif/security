@@ -15,6 +15,7 @@ if ! php artisan migrate --force 2>&1; then
 fi
 
 php artisan storage:link 2>&1 || true
+php artisan optimize:clear 2>&1 || true
 php artisan config:cache 2>&1 || true
 php artisan route:cache 2>&1 || true
 
