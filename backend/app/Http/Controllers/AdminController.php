@@ -370,7 +370,7 @@ class AdminController extends Controller
 
     public function orderDetails(Order $order)
     {
-        $order->load('items.product', 'user');
+        $order->load('items.product', 'items.solutionItem', 'user');
         return view('admin.orders.show', compact('order'));
     }
 

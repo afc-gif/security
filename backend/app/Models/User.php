@@ -51,6 +51,16 @@ class User extends Model implements AuthenticatableContract
         return $this->role === 'admin';
     }
 
+    public function isPos()
+    {
+        return $this->role === 'pos';
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'user';
+    }
+
     public function isPending()
     {
         return $this->status === 'pending';
@@ -61,8 +71,4 @@ class User extends Model implements AuthenticatableContract
         return $this->status === 'approved';
     }
 
-    public function isPOS()
-    {
-        return $this->role === 'pos';
-    }
 }

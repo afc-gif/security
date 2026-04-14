@@ -1,15 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>ARTSCI Admin Console</title>
-    <link rel="icon" href="{{ asset('Artsci Logo REAL 1.webp') }}" type="image/webp">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+@extends('admin.layout')
+
+@section('title', 'ARTSCI Admin Console')
+@section('admin_sidebar_mode', 'dashboard')
+
+@push('head')
     <script defer src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+@endpush
+
+@push('styles')
     <style>
         :root {
             --brand-blue: #03A9F4;
@@ -23,7 +21,7 @@
             --brand-shadow: 0 18px 48px rgba(10, 20, 40, 0.12);
         }
         * { box-sizing: border-box; }
-        body {
+        .admin-shell {
             margin: 0;
             font-family: 'Manrope', system-ui, -apple-system, sans-serif;
             color: var(--brand-ink);
@@ -36,7 +34,7 @@
             min-height: 100vh;
             transition: grid-template-columns 0.2s ease;
         }
-        body.collapsed { grid-template-columns: 72px 1fr; }
+        body.collapsed .admin-shell { grid-template-columns: 72px 1fr; }
         .sidebar {
             position: sticky;
             top: 0;
@@ -165,47 +163,15 @@
         .alert-footer { padding: 10px 14px; border-top: 1px solid var(--brand-border); text-align: center; background: #f8fafc; }
         .alert-footer a { color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none; }
         @media (max-width: 960px) {
-            body { grid-template-columns: 1fr; }
+            .admin-shell { grid-template-columns: 1fr; }
             .sidebar { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-110%); z-index: 20; }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { width: 260px; padding: 18px; }
         }
     </style>
-</head>
-<body>
-    <button class="hamburger" id="toggleSidebar">☰</button>
-    <aside class="sidebar" id="sidebar">
-        <div class="brand">
-            <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo">
-            <div>
-                <p class="brand-title">ARTSCI</p>
-                <p class="muted">Admin & POS</p>
-            </div>
-        </div>
-        <nav>
-            <button class="nav-btn active" data-tab="overview"><span class="nav-label">Overview</span></button>
-            <button class="nav-btn" data-tab="categories"><span class="nav-label">Categories</span></button>
-            <button class="nav-btn" data-tab="menu"><span class="nav-label">Products</span></button>
-            <button class="nav-btn" data-tab="users"><span class="nav-label">Users</span></button>
-            <button class="nav-btn" data-tab="orders"><span class="nav-label">Orders</span></button>
-            <button class="nav-btn" data-tab="pos"><span class="nav-label">POS</span></button>
-            <button class="nav-btn" data-tab="health"><span class="nav-label">Health</span></button>
-            <button class="nav-btn" data-tab="site"><span class="nav-label">Public Site</span></button>
-        </nav>
-        <div style="margin-top:12px;">
-            <div class="muted" style="margin-bottom:8px;">
-                Signed in as {{ auth()->user()->name ?? 'User' }}
-            </div>
-            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
-                @csrf
-                <button type="submit" class="nav-btn" style="width:100%; justify-content:center;">
-                    <span class="nav-label">Logout</span>
-                </button>
-            </form>
-        </div>
-    </aside>
+@endpush
 
-    <main>
+@section('content')
         <div class="hero">
             <div class="hero-top">
                 <div>
@@ -494,8 +460,9 @@
                 </div>
             </section>
         </div>
-    </main>
+@endsection
 
+@push('scripts')
     <script>
     (function () {
         try {
@@ -815,7 +782,7 @@
             }
         };
 
-        if (toggleSidebar) {
+        if (toggleSidebar && toggleSidebar.dataset.bound !== '1') {
             toggleSidebar.addEventListener('click', () => {
                 const isMobile = window.innerWidth <= 960;
                 if (isMobile) {
@@ -838,6 +805,10 @@
         }
         window.switchTab = switchTab;
         navBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        const initialTab = window.location.hash ? window.location.hash.slice(1) : 'overview';
+        if (initialTab && panels.some(p => p.dataset.section === initialTab)) {
+            switchTab(initialTab);
+        }
 
         async function checkHealth() {
             try {
@@ -2406,5 +2377,4 @@
         }
     })();
     </script>
-</body>
-</html>
+@endpush

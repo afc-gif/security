@@ -1,82 +1,87 @@
 @extends('admin.layout')
 
+@section('title', 'Order #' . $order->id . ' - ARTSCI Admin')
 
 @section('content')
 <div class="container mx-auto py-8 px-4">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Order #{{ $order->id }} Details</h1>
+            <p class="text-gray-600">Review order information and items.</p>
+        </div>
+        <a href="{{ route('admin.orders.index') }}" class="inline-flex rounded bg-gray-200 px-4 py-2 font-semibold text-gray-800 hover:bg-gray-300">Back to Orders</a>
+    </div>
 
-    
-        
-            
-                <button class="admin-menu-toggle" type="button" aria-label="Toggle admin menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Order #{{ $order->id }} Details</h1>
+    <div class="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <div class="rounded-lg bg-white p-6 shadow">
+            <h2 class="mb-4 text-xl font-bold text-gray-900">Order Information</h2>
+
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between gap-4">
+                    <span class="font-semibold text-gray-600">Order ID</span>
+                    <span class="text-gray-900">#{{ $order->id }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="font-semibold text-gray-600">Customer</span>
+                    <span class="text-right text-gray-900">{{ $order->user->name ?? 'Guest' }}@if($order->user) ({{ $order->user->email }})@endif</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="font-semibold text-gray-600">Date</span>
+                    <span class="text-gray-900">{{ $order->created_at->format('M d, Y - h:i A') }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="font-semibold text-gray-600">Status</span>
+                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">{{ ucfirst($order->status) }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="font-semibold text-gray-600">Total Amount</span>
+                    <span class="font-bold text-gray-900">₦{{ number_format($order->total_amount, 2) }}</span>
+                </div>
             </div>
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">Back to Orders</a>
+
+            <form method="POST" action="{{ route('admin.orders.update-status', $order) }}" class="mt-6 grid gap-3">
+                @csrf
+                @method('PATCH')
+
+                <label for="status" class="text-sm font-semibold text-gray-600">Update Status</label>
+                <select id="status" name="status" required class="rounded border border-gray-300 px-3 py-2">
+                    <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                </select>
+                <button type="submit" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">Update Status</button>
+            </form>
         </div>
 
-        <div class="order-details-container">
-            <div class="order-info-card">
-                <h2>Order Information</h2>
-                <div class="info-row">
-                    <span class="label">Order ID:</span>
-                    <span class="value">#{{ $order->id }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Customer:</span>
-                    <span class="value">{{ $order->user->name }} ({{ $order->user->email }})</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Date:</span>
-                    <span class="value">{{ $order->created_at->format('M d, Y - h:i A') }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Status:</span>
-                    <span class="status-badge status-{{ $order->status }}">{{ ucfirst($order->status) }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Total Amount:</span>
-                    <span class="value price">${{ number_format($order->total_amount, 2) }}</span>
-                </div>
+        <div class="rounded-lg bg-white p-6 shadow">
+            <h2 class="mb-4 text-xl font-bold text-gray-900">Order Items</h2>
 
-                <form method="POST" action="{{ route('admin.orders.update-status', $order) }}" class="status-form">
-                    @csrf
-                    @method('PATCH')
-                    
-                        <label for="status">Update Status:</label>
-                        <select id="status" name="status" required>
-                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary btn-sm">Update Status</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="order-items-card">
-                <h2>Order Items</h2>
-                <table class="data-table">
-                    <thead>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-blue-600 text-white">
                         <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Total</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Product</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Price</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Quantity</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Total</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-200">
                         @foreach($order->items as $item)
-                            <tr>
-                                <td>{{ $item->product->name }}</td>
-                                <td>${{ number_format($item->price, 2) }}</td>
-                                <td>{{ $item->quantity }}</td>
-                                <td>${{ number_format($item->price * $item->quantity, 2) }}</td>
+                            @php($itemName = $item->product?->name ?? $item->solutionItem?->name ?? $item->name ?? 'Item')
+                            @php($unitPrice = $item->unit_price ?? $item->price ?? 0)
+                            @php($lineTotal = $item->total ?? ($unitPrice * $item->quantity))
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-gray-900">{{ $itemName }}</td>
+                                <td class="px-4 py-3 text-gray-700">₦{{ number_format($unitPrice, 2) }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $item->quantity }}</td>
+                                <td class="px-4 py-3 font-semibold text-gray-900">₦{{ number_format($lineTotal, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 </div>
 @endsection

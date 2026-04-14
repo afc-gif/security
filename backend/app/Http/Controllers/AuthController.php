@@ -44,7 +44,7 @@ class AuthController extends Controller
             $user = auth()->user();
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
-            } elseif ($user->isPOS()) {
+            } elseif ($user->isPos()) {
                 return redirect()->route('pos.index')->with('success', 'Logged in to POS!');
             }
             

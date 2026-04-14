@@ -333,7 +333,7 @@ class OrderController extends Controller
     private function ensureAdmin(): void
     {
         $user = auth()->user();
-        if (! $user || $user->role !== 'admin') {
+        if (! $user || ! $user->isAdmin()) {
             abort(403, 'Unauthorized');
         }
     }
@@ -341,7 +341,7 @@ class OrderController extends Controller
     private function ensureStaff(): void
     {
         $user = auth()->user();
-        if (! $user || ! in_array($user->role, ['admin', 'pos'], true)) {
+        if (! $user || ! ($user->isAdmin() || $user->isPos())) {
             abort(403, 'Unauthorized');
         }
     }

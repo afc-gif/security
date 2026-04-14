@@ -46,7 +46,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if ($user->isAdmin())
                                     <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">👑 Admin</span>
-                                @elseif ($user->isPOS())
+                                @elseif ($user->isPos())
                                     <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">🛒 POS</span>
                                 @else
                                     <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">None</span>

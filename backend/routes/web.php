@@ -92,7 +92,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::get('/stock-status/{item}', [App\Http\Controllers\Api\StockAlertController::class, 'getStockStatus']);
 });
 
-// Admin routes (admin only) - Dashboard, Products & Barcodes
+// Admin routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     
@@ -109,6 +109,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
     Route::patch('/products/{product}/toggle-display', [AdminController::class, 'toggleProductDisplay'])->name('admin.products.toggleDisplay');
     Route::delete('/products/{product}', [AdminController::class, 'deleteProduct'])->name('admin.products.delete');
+
+    // Orders Management
+    Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.index');
+    Route::get('/orders/{order}', [AdminController::class, 'orderDetails'])->name('admin.orders.show');
+    Route::patch('/orders/{order}/status', [AdminController::class, 'updateOrderStatus'])->name('admin.orders.update-status');
 
     // Users Management (view pending, approve, assign roles)
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users.index');
@@ -180,7 +185,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/pos', function () {
         $user = auth()->user();
-        if (!$user || !in_array($user->role, ['admin', 'pos'], true)) {
+        if (!$user || !($user->isAdmin() || $user->isPos())) {
             abort(403, 'Unauthorized');
         }
         return view('pos.index');
@@ -190,7 +195,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pos/receipt/{order}', function (App\Models\Order $order) {
         // Ensure user can only view their own sales or admins can see all
         $user = auth()->user();
-        if ($user && $user->role === 'pos' && $order->user_id !== $user->id) {
+        if ($user && $user->isPos() && $order->user_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
         return view('pos.receipt', compact('order'));
