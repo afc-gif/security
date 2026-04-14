@@ -12,6 +12,107 @@
             </div>
         </div>
 
+        <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+            <form method="GET" action="{{ route('admin.field-reports.index') }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div>
+                        <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
+                        <input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            value="{{ $filters['start_date'] }}"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
+                        <input
+                            type="date"
+                            id="end_date"
+                            name="end_date"
+                            value="{{ $filters['end_date'] }}"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                    </div>
+                    <div>
+                        <label for="quick_range" class="block text-sm font-semibold text-gray-700 mb-1">Quick Date</label>
+                        <select id="quick_range" name="quick_range" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Custom or all dates</option>
+                            <option value="today" @selected($filters['quick_range'] === 'today')>Today</option>
+                            <option value="this_week" @selected($filters['quick_range'] === 'this_week')>This Week</option>
+                            <option value="this_month" @selected($filters['quick_range'] === 'this_month')>This Month</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="field_staff_id" class="block text-sm font-semibold text-gray-700 mb-1">Field Staff</label>
+                        <select id="field_staff_id" name="field_staff_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">All field staff</option>
+                            @foreach($fieldStaff as $staff)
+                                <option value="{{ $staff->id }}" @selected((string) $filters['field_staff_id'] === (string) $staff->id)>{{ $staff->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div>
+                        <label for="type" class="block text-sm font-semibold text-gray-700 mb-1">Report Type</label>
+                        <select id="type" name="type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="all" @selected($filters['type'] === 'all')>All activity</option>
+                            <option value="inspections" @selected($filters['type'] === 'inspections')>Inspections</option>
+                            <option value="project_updates" @selected($filters['type'] === 'project_updates')>Project Updates</option>
+                            <option value="tasks" @selected($filters['type'] === 'tasks')>Tasks</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="review_status" class="block text-sm font-semibold text-gray-700 mb-1">Review Status</label>
+                        <select id="review_status" name="review_status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="all" @selected($filters['review_status'] === 'all')>All review statuses</option>
+                            <option value="pending_review" @selected($filters['review_status'] === 'pending_review')>Pending Review</option>
+                            <option value="approved" @selected($filters['review_status'] === 'approved')>Approved</option>
+                            <option value="rejected" @selected($filters['review_status'] === 'rejected')>Rejected</option>
+                            <option value="reviewed" @selected($filters['review_status'] === 'reviewed')>Reviewed</option>
+                            <option value="needs_correction" @selected($filters['review_status'] === 'needs_correction')>Needs Correction</option>
+                        </select>
+                    </div>
+                    <div class="xl:col-span-2">
+                        <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search</label>
+                        <input
+                            type="search"
+                            id="search"
+                            name="search"
+                            value="{{ $filters['search'] }}"
+                            placeholder="Inspection code/title, project code/title, or task title"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
+                            Apply Filters
+                        </button>
+                        <a href="{{ route('admin.field-reports.index') }}" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                            Reset
+                        </a>
+                    </div>
+
+                    @if(count($activeFilters) > 0)
+                        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                            <span class="font-semibold text-gray-700">Showing results for:</span>
+                            @foreach($activeFilters as $filter)
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    {{ $filter['label'] }}: {{ $filter['value'] }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </form>
+        </section>
+
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
                 <div class="text-sm font-semibold text-gray-500">Pending inspection reviews</div>
