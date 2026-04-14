@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class FieldReportController extends Controller
@@ -23,94 +24,126 @@ class FieldReportController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $this->filters($request);
-        $fieldStaff = User::where('role', 'field_staff')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        try {
+            $filters = $this->filters($request);
+            $fieldStaff = User::where('role', 'field_staff')
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
-        $pendingInspectionReviewsQuery = $this->tableExists('inspections')
-            ? $this->inspectionQuery($filters, 'pending_review')
-            : null;
-        $recentInspectionSubmissionsQuery = $this->tableExists('inspections')
-            ? $this->inspectionQuery($filters)
-            : null;
-        $recentProjectUpdatesQuery = $this->tableExists('project_updates')
-            ? $this->projectUpdateQuery($filters)
-            : null;
-        $projectUpdatesNeedingCorrectionQuery = $this->tableExists('project_updates')
-            ? $this->projectUpdateQuery($filters, 'needs_correction')
-            : null;
-        $recentlyCompletedTasksQuery = $this->tableExists('tasks')
-            ? $this->completedTaskQuery($filters)
-            : null;
+            $pendingInspectionReviewsQuery = $this->tableExists('inspections')
+                ? $this->inspectionQuery($filters, 'pending_review')
+                : null;
+            $recentInspectionSubmissionsQuery = $this->tableExists('inspections')
+                ? $this->inspectionQuery($filters)
+                : null;
+            $recentProjectUpdatesQuery = $this->tableExists('project_updates')
+                ? $this->projectUpdateQuery($filters)
+                : null;
+            $projectUpdatesNeedingCorrectionQuery = $this->tableExists('project_updates')
+                ? $this->projectUpdateQuery($filters, 'needs_correction')
+                : null;
+            $recentlyCompletedTasksQuery = $this->tableExists('tasks')
+                ? $this->completedTaskQuery($filters)
+                : null;
 
-        $pendingInspectionReviewsCount = $this->queryCount($pendingInspectionReviewsQuery);
-        $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
-        $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
-        $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
+            $pendingInspectionReviewsCount = $this->queryCount($pendingInspectionReviewsQuery);
+            $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
+            $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
+            $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
 
-        $pendingInspectionReviews = $pendingInspectionReviewsQuery
-            ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()
-            : collect();
+            $pendingInspectionReviews = $pendingInspectionReviewsQuery
+                ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()
+                : collect();
 
-        $recentInspectionSubmissions = $recentInspectionSubmissionsQuery
-            ? $recentInspectionSubmissionsQuery->latest('submitted_at')->limit(10)->get()
-            : collect();
+            $recentInspectionSubmissions = $recentInspectionSubmissionsQuery
+                ? $recentInspectionSubmissionsQuery->latest('submitted_at')->limit(10)->get()
+                : collect();
 
-        $recentProjectUpdates = $recentProjectUpdatesQuery
-            ? $recentProjectUpdatesQuery->latest('created_at')->limit(10)->get()
-            : collect();
+            $recentProjectUpdates = $recentProjectUpdatesQuery
+                ? $recentProjectUpdatesQuery->latest('created_at')->limit(10)->get()
+                : collect();
 
-        $projectUpdatesNeedingCorrection = $projectUpdatesNeedingCorrectionQuery
-            ? $projectUpdatesNeedingCorrectionQuery
-                ->when($this->columnExists('project_updates', 'reviewed_at'), fn (Builder $q) => $q->latest('reviewed_at'))
-                ->latest('created_at')
-                ->limit(10)
-                ->get()
-            : collect();
+            $projectUpdatesNeedingCorrection = $projectUpdatesNeedingCorrectionQuery
+                ? $projectUpdatesNeedingCorrectionQuery
+                    ->when($this->columnExists('project_updates', 'reviewed_at'), fn (Builder $q) => $q->latest('reviewed_at'))
+                    ->latest('created_at')
+                    ->limit(10)
+                    ->get()
+                : collect();
 
-        $recentlyCompletedTasks = $recentlyCompletedTasksQuery
-            ? $recentlyCompletedTasksQuery->latest('completed_at')->limit(10)->get()
-            : collect();
+            $recentlyCompletedTasks = $recentlyCompletedTasksQuery
+                ? $recentlyCompletedTasksQuery->latest('completed_at')->limit(10)->get()
+                : collect();
 
-        $activityFeed = $this->buildActivityFeed(
-            $recentInspectionSubmissions,
-            $recentProjectUpdates,
-            $recentlyCompletedTasks
-        );
+            $activityFeed = $this->buildActivityFeed(
+                $recentInspectionSubmissions,
+                $recentProjectUpdates,
+                $recentlyCompletedTasks
+            );
 
-        $activeFilters = $this->activeFilterLabels($filters, $fieldStaff);
+            $activeFilters = $this->activeFilterLabels($filters, $fieldStaff);
 
-        return view('admin.field-reports.index', compact(
-            'filters',
-            'fieldStaff',
-            'activeFilters',
-            'pendingInspectionReviewsCount',
-            'pendingInspectionReviews',
-            'recentInspectionSubmissions',
-            'recentProjectUpdatesCount',
-            'recentProjectUpdates',
-            'projectUpdatesNeedingCorrectionCount',
-            'projectUpdatesNeedingCorrection',
-            'completedTasksCount',
-            'recentlyCompletedTasks',
-            'activityFeed'
-        ));
+            return view('admin.field-reports.index', compact(
+                'filters',
+                'fieldStaff',
+                'activeFilters',
+                'pendingInspectionReviewsCount',
+                'pendingInspectionReviews',
+                'recentInspectionSubmissions',
+                'recentProjectUpdatesCount',
+                'recentProjectUpdates',
+                'projectUpdatesNeedingCorrectionCount',
+                'projectUpdatesNeedingCorrection',
+                'completedTasksCount',
+                'recentlyCompletedTasks',
+                'activityFeed'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Field reports page error: ' . $e->getMessage());
+            return view('admin.field-reports.index', [
+                'filters' => [],
+                'fieldStaff' => collect(),
+                'activeFilters' => [],
+                'pendingInspectionReviewsCount' => 0,
+                'pendingInspectionReviews' => collect(),
+                'recentInspectionSubmissions' => collect(),
+                'recentProjectUpdatesCount' => 0,
+                'recentProjectUpdates' => collect(),
+                'projectUpdatesNeedingCorrectionCount' => 0,
+                'projectUpdatesNeedingCorrection' => collect(),
+                'completedTasksCount' => 0,
+                'recentlyCompletedTasks' => collect(),
+                'activityFeed' => collect(),
+                'databaseError' => true,
+            ]);
+        }
     }
 
     private function queryCount(?Builder $query): int
     {
-        return $query ? (clone $query)->count() : 0;
+        try {
+            return $query ? (clone $query)->count() : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 
     private function tableExists(string $table): bool
     {
-        return Schema::hasTable($table);
+        try {
+            return Schema::hasTable($table);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     private function columnExists(string $table, string $column): bool
     {
-        return $this->tableExists($table) && Schema::hasColumn($table, $column);
+        try {
+            return $this->tableExists($table) && Schema::hasColumn($table, $column);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     private function filters(Request $request): array

@@ -5,6 +5,12 @@
 @section('content')
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        @if(isset($databaseError) && $databaseError)
+        <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800">
+            <strong>Notice:</strong> The database connection is currently unavailable. Field reports data cannot be loaded.
+        </div>
+        @endif
+
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Field Reports</h1>
