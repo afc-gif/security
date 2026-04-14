@@ -69,6 +69,7 @@
             <a class="link" href="{{ route('field.dashboard') }}">My Dashboard</a>
             <a class="link" href="{{ route('field.inspections.index') }}">My Inspections</a>
             <a class="link active" href="{{ route('field.projects.index') }}">My Projects</a>
+            <a class="link" href="{{ route('field.tasks.index') }}">My Tasks</a>
         </nav>
 
         @if (session('success'))

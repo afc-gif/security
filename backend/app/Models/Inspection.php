@@ -58,4 +58,9 @@ class Inspection extends Model
     {
         return $this->hasOne(Project::class);
     }
+
+    public function tasks()
+    {
+        return $this->morphMany(Task::class, 'assignable');
+    }
 }

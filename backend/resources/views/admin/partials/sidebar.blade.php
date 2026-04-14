@@ -17,6 +17,7 @@
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients'],
             ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects'],
+            ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks'],
         ],
         'system' => [
             ['key' => 'users', 'label' => 'Users', 'route' => 'admin.users.index', 'tab' => 'users'],
@@ -42,6 +43,7 @@
             'clients' => request()->routeIs('admin.clients.*'),
             'inspections' => request()->routeIs('admin.inspections.*'),
             'projects' => request()->routeIs('admin.projects.*'),
+            'tasks' => request()->routeIs('admin.tasks.*'),
             'users' => request()->routeIs('admin.users.*'),
             default => false,
         };

@@ -164,6 +164,7 @@
             <a class="button active" href="{{ route('field.dashboard') }}">My Dashboard</a>
             <a class="button" href="{{ route('field.inspections.index') }}">My Inspections</a>
             <a class="button" href="{{ route('field.projects.index') }}">My Projects</a>
+            <a class="button" href="{{ route('field.tasks.index') }}">My Tasks</a>
         </nav>
 
         <section class="panel" aria-labelledby="field-dashboard-title">
@@ -196,11 +197,24 @@
                     <strong>{{ $completedProjects ?? 0 }}</strong>
                     <span>Completed projects</span>
                 </div>
+                <div class="stat">
+                    <strong>{{ $assignedTasks ?? 0 }}</strong>
+                    <span>Assigned tasks</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $pendingTasks ?? 0 }}</strong>
+                    <span>Pending tasks</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $completedTasks ?? 0 }}</strong>
+                    <span>Completed tasks</span>
+                </div>
             </div>
 
             <div class="nav" style="margin:0;">
                 <a class="button primary" href="{{ route('field.inspections.index') }}">My Inspections</a>
                 <a class="button primary" href="{{ route('field.projects.index') }}">My Projects</a>
+                <a class="button primary" href="{{ route('field.tasks.index') }}">My Tasks</a>
             </div>
         </section>
     </main>

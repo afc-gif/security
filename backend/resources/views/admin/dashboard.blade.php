@@ -390,6 +390,21 @@
                 </div>
             </section>
 
+            <section class="panel" data-section="tasks">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Tasks</h2>
+                            <p class="muted" style="margin:0;">Assign structured work items for inspections and projects.</p>
+                        </div>
+                        <a href="{{ route('admin.tasks.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            View All Tasks
+                        </a>
+                    </div>
+                    <div class="muted">Use the tasks page to create and view assigned work items.</div>
+                </div>
+            </section>
+
             <section class="panel" data-section="users">
                 <div class="card">
                     <h2>Users</h2>

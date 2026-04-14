@@ -8,6 +8,7 @@ use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\Field\FieldDashboardController;
 use App\Http\Controllers\Field\InspectionController as FieldInspectionController;
 use App\Http\Controllers\Field\ProjectController as FieldProjectController;
+use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -148,6 +149,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.projects');
 
+    // Tasks Management
+    Route::resource('tasks', \App\Http\Controllers\Admin\TaskController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->names('admin.tasks');
+
     // Solutions/Products Management
     Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
         'index' => 'admin.solutions.index',
@@ -188,6 +194,9 @@ Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function
     Route::get('/projects', [FieldProjectController::class, 'index'])->name('field.projects.index');
     Route::get('/projects/{project}', [FieldProjectController::class, 'show'])->name('field.projects.show');
     Route::post('/projects/{project}/updates', [FieldProjectController::class, 'submitUpdate'])->name('field.projects.submit-update');
+    Route::get('/tasks', [FieldTaskController::class, 'index'])->name('field.tasks.index');
+    Route::get('/tasks/{task}', [FieldTaskController::class, 'show'])->name('field.tasks.show');
+    Route::patch('/tasks/{task}/status', [FieldTaskController::class, 'updateStatus'])->name('field.tasks.update-status');
 });
 
 // POS API routes (for barcode scanning and product lookup)

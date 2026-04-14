@@ -65,4 +65,9 @@ class Project extends Model
     {
         return $this->hasMany(ProjectMedia::class);
     }
+
+    public function tasks()
+    {
+        return $this->morphMany(Task::class, 'assignable');
+    }
 }
