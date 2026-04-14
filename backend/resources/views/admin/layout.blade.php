@@ -34,6 +34,21 @@
                 radial-gradient(circle at 88% 12%, rgba(10,20,40,0.08), transparent 22%),
                 var(--brand-soft);
             min-height: 100vh;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        a,
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
         }
 
         .admin-shell {
@@ -53,10 +68,14 @@
             background: #fff;
             border: 1px solid var(--brand-border);
             border-radius: 8px;
-            padding: 10px 12px;
+            width: 44px;
+            height: 44px;
+            padding: 0;
             box-shadow: var(--brand-shadow);
             cursor: pointer;
             z-index: 30;
+            font-size: 18px;
+            line-height: 1;
         }
 
         .sidebar {
@@ -107,8 +126,9 @@
         .brand-name {
             display: block;
             margin: 0;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
             font-size: 20px;
+            font-weight: 800;
             color: var(--brand-dark);
         }
 
@@ -132,7 +152,7 @@
             color: var(--brand-muted);
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
@@ -143,9 +163,13 @@
             border: 1px solid var(--brand-border);
             background: #fff;
             color: var(--brand-dark);
-            padding: 11px 12px;
+            min-height: 44px;
+            width: 100%;
+            padding: 10px 12px;
             border-radius: 8px;
             font-weight: 700;
+            font-size: 14px;
+            line-height: 1.25;
             text-align: left;
             cursor: pointer;
             display: flex;
@@ -165,6 +189,14 @@
         .nav-label { white-space: nowrap; }
         .sidebar.collapsed .nav-label { display: none; }
 
+        .admin-sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.42);
+            z-index: 19;
+        }
+
         .admin-user {
             margin-top: 12px;
             display: grid;
@@ -174,6 +206,65 @@
         .admin-content {
             padding: 22px;
             min-width: 0;
+        }
+
+        .admin-content h1 {
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+            font-size: 28px;
+            line-height: 1.2;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .admin-content h2 {
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+            font-size: 21px;
+            line-height: 1.3;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .admin-content p,
+        .admin-content td,
+        .admin-content th,
+        .admin-content label,
+        .admin-content input,
+        .admin-content select,
+        .admin-content textarea {
+            font-size: 14px;
+        }
+
+        .admin-content button,
+        .admin-content .btn,
+        .admin-content a[class*="bg-"],
+        .admin-content a[class*="btn"],
+        .admin-content input[type="submit"] {
+            min-height: 40px;
+            max-width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 8px;
+            line-height: 1.2;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .admin-content table {
+            width: 100%;
+        }
+
+        .admin-content .container,
+        .admin-content .max-w-7xl {
+            width: 100%;
+            max-width: 1280px;
+        }
+
+        .admin-content input,
+        .admin-content select,
+        .admin-content textarea {
+            max-width: 100%;
         }
 
         @media (max-width: 960px) {
@@ -187,7 +278,62 @@
             }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { width: 260px; padding: 18px; }
+            .sidebar.open + .admin-sidebar-backdrop { display: block; }
             .admin-content { padding: 72px 14px 18px; }
+        }
+
+        @media (max-width: 640px) {
+            body { font-size: 14px; }
+
+            .hamburger {
+                top: 12px;
+                left: 12px;
+                width: 42px;
+                height: 42px;
+            }
+
+            .sidebar {
+                width: min(86vw, 300px);
+                padding: 14px;
+                overflow-y: auto;
+            }
+
+            .admin-brand img {
+                width: 42px;
+                height: 42px;
+            }
+
+            .brand-name { font-size: 18px; }
+            .brand-tagline,
+            .admin-user-meta { font-size: 12px; }
+
+            .admin-content {
+                padding: 68px 10px 16px;
+            }
+
+            .admin-content h1 { font-size: 23px; }
+            .admin-content h2 { font-size: 19px; }
+
+            .admin-content .container,
+            .admin-content .max-w-7xl {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+
+            .admin-content button,
+            .admin-content .btn,
+            .admin-content a[class*="bg-"],
+            .admin-content a[class*="btn"],
+            .admin-content input[type="submit"] {
+                min-height: 42px;
+                width: 100%;
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .admin-content table {
+                min-width: 640px;
+            }
         }
     </style>
     @stack('styles')
@@ -196,6 +342,7 @@
     <div class="admin-shell">
         <button class="hamburger" id="toggleSidebar" type="button" aria-label="Toggle admin menu" aria-expanded="false">☰</button>
         @include('admin.partials.sidebar')
+        <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop" aria-hidden="true"></div>
 
         <main class="admin-content">
             @yield('content')
@@ -206,9 +353,15 @@
         (function () {
             const sidebar = document.getElementById('sidebar');
             const toggleSidebar = document.getElementById('toggleSidebar');
+            const sidebarBackdrop = document.getElementById('adminSidebarBackdrop');
             if (!sidebar || !toggleSidebar || toggleSidebar.dataset.bound === '1') return;
 
             toggleSidebar.dataset.bound = '1';
+            const closeMobileSidebar = () => {
+                sidebar.classList.remove('open');
+                toggleSidebar.setAttribute('aria-expanded', 'false');
+            };
+
             toggleSidebar.addEventListener('click', () => {
                 const isMobile = window.innerWidth <= 960;
                 if (isMobile) {
@@ -218,6 +371,13 @@
                     sidebar.classList.toggle('collapsed');
                 }
                 toggleSidebar.setAttribute('aria-expanded', sidebar.classList.contains('open') ? 'true' : 'false');
+            });
+
+            sidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 960) {
+                    closeMobileSidebar();
+                }
             });
         })();
     </script>
