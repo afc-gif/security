@@ -365,12 +365,12 @@
             toggleSidebar.addEventListener('click', () => {
                 const isMobile = window.innerWidth <= 960;
                 if (isMobile) {
-                    sidebar.classList.toggle('open');
+                    const isOpen = sidebar.classList.toggle('open');
+                    toggleSidebar.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                 } else {
                     document.body.classList.toggle('collapsed');
                     sidebar.classList.toggle('collapsed');
                 }
-                toggleSidebar.setAttribute('aria-expanded', sidebar.classList.contains('open') ? 'true' : 'false');
             });
 
             sidebarBackdrop?.addEventListener('click', closeMobileSidebar);
