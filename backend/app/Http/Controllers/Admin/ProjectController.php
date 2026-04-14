@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Inspection;
 use App\Models\Project;
+use App\Models\ProjectUpdate;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -81,10 +82,35 @@ class ProjectController extends Controller
             'manager',
             'fieldStaff',
             'creator',
-            'updates' => fn ($query) => $query->with(['user', 'media.uploader'])->latest('work_date')->latest('id'),
+            'updates' => fn ($query) => $query->with(['user', 'reviewedBy', 'media.uploader'])->latest('work_date')->latest('id'),
         ]);
 
         return view('admin.projects.show', compact('project'));
+    }
+
+    public function reviewUpdate(Request $request, ProjectUpdate $update)
+    {
+        if (($update->review_status ?? 'pending_review') !== 'pending_review') {
+            return redirect()
+                ->route('admin.projects.show', $update->project_id)
+                ->with('success', 'This project update has already been reviewed.');
+        }
+
+        $validated = $request->validate([
+            'review_status' => ['required', Rule::in(['reviewed', 'needs_correction'])],
+            'review_notes' => 'nullable|string',
+        ]);
+
+        $update->update([
+            'review_status' => $validated['review_status'],
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+            'review_notes' => $validated['review_notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('admin.projects.show', $update->project_id)
+            ->with('success', 'Project update review saved successfully.');
     }
 
     public function convertFromInspection(Request $request, Inspection $inspection)

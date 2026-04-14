@@ -25,7 +25,7 @@ class InspectionController extends Controller
     {
         $this->authorizeAssignedInspection($inspection);
 
-        $inspection->load(['client', 'media.uploader']);
+        $inspection->load(['client', 'reviewedBy', 'media.uploader']);
 
         return view('field.inspections.show', compact('inspection'));
     }
@@ -81,6 +81,10 @@ class InspectionController extends Controller
             'recommendations' => $validated['recommendations'] ?? null,
             'submitted_at' => now(),
             'status' => 'completed',
+            'review_status' => 'pending_review',
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+            'review_notes' => null,
         ]);
 
         foreach ($uploads as $stored) {

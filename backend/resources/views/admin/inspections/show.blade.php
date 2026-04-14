@@ -21,6 +21,14 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                @foreach($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -57,6 +65,13 @@
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Created By</div>
                     <div class="text-gray-900">{{ $inspection->creator?->name ?? '—' }}</div>
                 </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Review Status</div>
+                    @php($reviewStatus = $inspection->review_status ?? 'pending_review')
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $reviewStatus === 'approved' ? 'bg-green-100 text-green-800' : ($reviewStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                        {{ str_replace('_', ' ', \Illuminate\Support\Str::title($reviewStatus)) }}
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -80,6 +95,50 @@
                     <div class="text-gray-900">{{ $inspection->submitted_at?->format('d M Y H:i') ?? '—' }}</div>
                 </div>
             </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Inspection Review</h2>
+            @php($reviewStatus = $inspection->review_status ?? 'pending_review')
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Review Status</div>
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $reviewStatus === 'approved' ? 'bg-green-100 text-green-800' : ($reviewStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                        {{ str_replace('_', ' ', \Illuminate\Support\Str::title($reviewStatus)) }}
+                    </span>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Reviewed By</div>
+                    <div class="text-gray-900">{{ $inspection->reviewedBy?->name ?? '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Reviewed At</div>
+                    <div class="text-gray-900">{{ $inspection->reviewed_at?->format('d M Y H:i') ?? '—' }}</div>
+                </div>
+            </div>
+
+            @if($reviewStatus === 'pending_review')
+                <form method="POST" action="{{ route('admin.inspections.review', $inspection) }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
+                        <textarea name="review_notes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('review_notes') }}</textarea>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="submit" name="review_status" value="approved" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                            Approve
+                        </button>
+                        <button type="submit" name="review_status" value="rejected" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                            Reject
+                        </button>
+                    </div>
+                </form>
+            @else
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Review Notes</div>
+                    <div class="text-gray-900 whitespace-pre-line">{{ $inspection->review_notes ?: '—' }}</div>
+                </div>
+            @endif
         </div>
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">

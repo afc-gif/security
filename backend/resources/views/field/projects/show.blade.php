@@ -39,6 +39,9 @@
         .status.completed { background: #dcfce7; color: #166534; }
         .status.not_started { background: #e5e7eb; color: #374151; }
         .status.on_hold { background: #fef3c7; color: #92400e; }
+        .status.pending_review { background: #fef3c7; color: #92400e; }
+        .status.reviewed { background: #dcfce7; color: #166534; }
+        .status.needs_correction { background: #fee2e2; color: #991b1b; }
         .progress { display: flex; align-items: center; gap: 10px; }
         .bar { height: 8px; flex: 1; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
         .bar span { display: block; height: 100%; background: var(--action); }
@@ -173,6 +176,16 @@
                             <div class="label">{{ $update->work_date?->format('d M Y') ?? $update->created_at?->format('d M Y') }}</div>
                             <div class="value">{{ $update->summary ?: 'Project update' }}</div>
                             <div class="muted">Submitted by {{ $update->user?->name ?? '—' }} on {{ $update->created_at?->format('d M Y H:i') ?? '—' }}</div>
+                            @php($updateReviewStatus = $update->review_status ?? 'pending_review')
+                            <div class="muted" style="margin-top:8px;">
+                                Review:
+                                <span class="status {{ $updateReviewStatus }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($updateReviewStatus)) }}</span>
+                            </div>
+                            @if($updateReviewStatus === 'needs_correction')
+                                <div class="alert error" style="margin-top:10px; margin-bottom:0;">
+                                    {{ $update->review_notes ?: 'This update needs correction. Contact an administrator for details.' }}
+                                </div>
+                            @endif
                             @if($update->progress_percentage !== null)
                                 <div class="muted" style="margin-top:8px;">Progress: {{ $update->progress_percentage }}%</div>
                             @endif

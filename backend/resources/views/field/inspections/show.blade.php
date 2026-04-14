@@ -41,6 +41,9 @@
         .status { display: inline-flex; padding: 4px 8px; border-radius: 8px; background: #e0f2fe; color: #075985; font-size: 13px; font-weight: 700; }
         .status.completed { background: #dcfce7; color: #166534; }
         .status.pending { background: #fef3c7; color: #92400e; }
+        .status.pending_review { background: #fef3c7; color: #92400e; }
+        .status.approved { background: #dcfce7; color: #166534; }
+        .status.rejected { background: #fee2e2; color: #991b1b; }
 
         @media (max-width: 640px) {
             .topbar { flex-direction: column; align-items: stretch; }
@@ -107,8 +110,24 @@
                     <div class="label">Priority</div>
                     <div class="value">{{ $inspection->priority ? ucfirst($inspection->priority) : '—' }}</div>
                 </div>
+                <div>
+                    <div class="label">Review Status</div>
+                    @php($reviewStatus = $inspection->review_status ?? 'pending_review')
+                    <div class="value">
+                        <span class="status {{ $reviewStatus }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($reviewStatus)) }}</span>
+                    </div>
+                </div>
             </div>
         </section>
+
+        @if(($inspection->review_status ?? 'pending_review') === 'rejected')
+            <section class="panel">
+                <h2>Review Notes</h2>
+                <div class="alert error" style="margin-bottom:0;">
+                    {{ $inspection->review_notes ?: 'This report needs correction. Contact an administrator for details.' }}
+                </div>
+            </section>
+        @endif
 
         <section class="panel">
             <h2>Inspection Report</h2>

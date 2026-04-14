@@ -21,6 +21,14 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                @foreach($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -114,6 +122,47 @@
                                 <div class="text-sm text-gray-700 whitespace-nowrap">
                                     Work date: {{ $update->work_date?->format('d M Y') ?? '—' }}
                                 </div>
+                            </div>
+
+                            @php($updateReviewStatus = $update->review_status ?? 'pending_review')
+                            <div class="mt-3 rounded-lg border border-gray-200 bg-white p-3">
+                                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Review Status</div>
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $updateReviewStatus === 'reviewed' ? 'bg-green-100 text-green-800' : ($updateReviewStatus === 'needs_correction' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                            {{ str_replace('_', ' ', \Illuminate\Support\Str::title($updateReviewStatus)) }}
+                                        </span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Reviewed by {{ $update->reviewedBy?->name ?? '—' }}
+                                        @if($update->reviewed_at)
+                                            on {{ $update->reviewed_at->format('d M Y H:i') }}
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if($updateReviewStatus === 'pending_review')
+                                    <form method="POST" action="{{ route('admin.project-updates.review', $update) }}" class="mt-3 space-y-3">
+                                        @csrf
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
+                                            <textarea name="review_notes" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('review_notes') }}</textarea>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <button type="submit" name="review_status" value="reviewed" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">
+                                                Mark Reviewed
+                                            </button>
+                                            <button type="submit" name="review_status" value="needs_correction" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold">
+                                                Needs Correction
+                                            </button>
+                                        </div>
+                                    </form>
+                                @elseif($update->review_notes)
+                                    <div class="mt-3">
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Review Notes</div>
+                                        <div class="text-gray-900 whitespace-pre-line">{{ $update->review_notes }}</div>
+                                    </div>
+                                @endif
                             </div>
 
                             @if($update->progress_percentage !== null)

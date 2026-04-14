@@ -19,10 +19,15 @@ class ProjectUpdate extends Model
         'progress_percentage',
         'next_step',
         'work_date',
+        'review_status',
+        'reviewed_by',
+        'reviewed_at',
+        'review_notes',
     ];
 
     protected $casts = [
         'work_date' => 'date',
+        'reviewed_at' => 'datetime',
     ];
 
     public function project()
@@ -38,5 +43,10 @@ class ProjectUpdate extends Model
     public function media()
     {
         return $this->hasMany(ProjectMedia::class);
+    }
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 }

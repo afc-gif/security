@@ -23,6 +23,8 @@ class Inspection extends Model
         'risks_identified',
         'recommendations',
         'submitted_at',
+        'review_status',
+        'reviewed_by',
         'reviewed_at',
         'review_notes',
         'created_by',
@@ -47,6 +49,11 @@ class Inspection extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function media()

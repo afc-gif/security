@@ -63,9 +63,34 @@ class InspectionController extends Controller
 
     public function show(Inspection $inspection)
     {
-        $inspection->load(['client', 'assignedUser', 'creator', 'media.uploader', 'project']);
+        $inspection->load(['client', 'assignedUser', 'creator', 'reviewedBy', 'media.uploader', 'project']);
 
         return view('admin.inspections.show', compact('inspection'));
+    }
+
+    public function review(Request $request, Inspection $inspection)
+    {
+        if (($inspection->review_status ?? 'pending_review') !== 'pending_review') {
+            return redirect()
+                ->route('admin.inspections.show', $inspection)
+                ->with('success', 'This inspection has already been reviewed.');
+        }
+
+        $validated = $request->validate([
+            'review_status' => ['required', Rule::in(['approved', 'rejected'])],
+            'review_notes' => 'nullable|string',
+        ]);
+
+        $inspection->update([
+            'review_status' => $validated['review_status'],
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+            'review_notes' => $validated['review_notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('admin.inspections.show', $inspection)
+            ->with('success', 'Inspection review saved successfully.');
     }
 
     private function generateInspectionCode(): string

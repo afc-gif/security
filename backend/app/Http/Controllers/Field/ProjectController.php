@@ -28,7 +28,7 @@ class ProjectController extends Controller
         $project->load([
             'client',
             'inspection',
-            'updates' => fn ($query) => $query->with(['user', 'media.uploader'])->latest('work_date')->latest('id'),
+            'updates' => fn ($query) => $query->with(['user', 'reviewedBy', 'media.uploader'])->latest('work_date')->latest('id'),
         ]);
 
         return view('field.projects.show', compact('project'));
@@ -89,6 +89,7 @@ class ProjectController extends Controller
             'progress_percentage' => $validated['progress_percentage'] ?? null,
             'next_step' => $validated['next_step'] ?? null,
             'work_date' => $validated['work_date'] ?? null,
+            'review_status' => 'pending_review',
         ]);
 
         foreach ($uploads as $stored) {

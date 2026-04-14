@@ -141,6 +141,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.inspections');
+    Route::post('/inspections/{inspection}/review', [\App\Http\Controllers\Admin\InspectionController::class, 'review'])
+        ->name('admin.inspections.review');
     Route::post('/inspections/{inspection}/convert-to-project', [\App\Http\Controllers\Admin\ProjectController::class, 'convertFromInspection'])
         ->name('admin.inspections.convert-to-project');
 
@@ -148,6 +150,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('projects', \App\Http\Controllers\Admin\ProjectController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.projects');
+    Route::post('/project-updates/{update}/review', [\App\Http\Controllers\Admin\ProjectController::class, 'reviewUpdate'])
+        ->name('admin.project-updates.review');
 
     // Tasks Management
     Route::resource('tasks', \App\Http\Controllers\Admin\TaskController::class)
