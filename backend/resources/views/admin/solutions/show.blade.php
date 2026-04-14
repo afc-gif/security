@@ -14,6 +14,26 @@
             </div>
         </div>
 
+        <!-- Search Bar for Items -->
+        <div class="mb-6">
+            <div class="relative">
+                <svg class="absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input id="itemSearch" type="text" placeholder="Search items by name, description, or barcode..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+        </div>
+
+        <!-- Search Bar for Items -->
+        <div class="mb-6">
+            <div class="relative">
+                <svg class="absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input id="itemSearch" type="text" placeholder="Search items by name, description, or barcode..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+        </div>
+
         @if (session('success'))
             <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
                 {{ session('success') }}
@@ -77,4 +97,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('itemSearch');
+        const itemCards = document.querySelectorAll('.grid > div');
+        
+        if (!searchInput) return;
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+            
+            itemCards.forEach(card => {
+                const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                const description = card.querySelector('p')?.textContent.toLowerCase() || '';
+                const barcode = card.querySelector('.text-xs.text-gray-500')?.textContent.toLowerCase() || '';
+                
+                if (name.includes(searchTerm) || description.includes(searchTerm) || barcode.includes(searchTerm)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show message if no results and search term is not empty
+            const gridContainer = document.querySelector('.grid');
+            let noResults = gridContainer?.querySelector('.no-results-message');
+            
+            if (visibleCount === 0 && searchTerm) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results-message col-span-full bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center text-gray-600';
+                    noResults.innerHTML = 'No items match your search.';
+                    gridContainer?.appendChild(noResults);
+                }
+            } else if (noResults) {
+                noResults.remove();
+            }
+        });
+    });
+</script>
 @endsection
