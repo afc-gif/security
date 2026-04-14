@@ -191,8 +191,9 @@
                                 <div class="files">
                                     @foreach($update->media as $media)
                                         <div class="file">
-                                            @if($media->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($media->file_path))
-                                                <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" rel="noopener">{{ $media->file_name ?? basename($media->file_path) }}</a>
+                                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                            @if($mediaUrl)
+                                                <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">{{ $media->file_name ?? basename($media->file_path) }}</a>
                                             @else
                                                 <strong>{{ $media->file_name ?? basename((string) $media->file_path) }}</strong>
                                                 <div class="muted">File unavailable</div>

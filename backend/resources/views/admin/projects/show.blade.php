@@ -161,8 +161,9 @@
                                     <div class="grid grid-cols-1 gap-2">
                                         @foreach($update->media as $media)
                                             <div class="rounded-lg border border-gray-200 bg-white p-3">
-                                                @if($media->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($media->file_path))
-                                                    <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                                @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                                @if($mediaUrl)
+                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
                                                         {{ $media->file_name ?? basename($media->file_path) }}
                                                     </a>
                                                 @else

@@ -9,6 +9,16 @@ class CloudinaryImageService
 {
     public function upload(UploadedFile $file, string $subFolder): array
     {
+        return $this->uploadWithResourceType($file, $subFolder, 'image');
+    }
+
+    public function uploadMedia(UploadedFile $file, string $subFolder): array
+    {
+        return $this->uploadWithResourceType($file, $subFolder, 'auto');
+    }
+
+    private function uploadWithResourceType(UploadedFile $file, string $subFolder, string $resourceType): array
+    {
         [$cloudName, $apiKey, $apiSecret, $rootFolder] = $this->credentials();
 
         if ($cloudName === '' || $apiKey === '' || $apiSecret === '') {
@@ -22,7 +32,7 @@ class CloudinaryImageService
             'timestamp' => $timestamp,
         ], $apiSecret);
 
-        $endpoint = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
+        $endpoint = "https://api.cloudinary.com/v1_1/{$cloudName}/{$resourceType}/upload";
 
         $payload = $this->postMultipart($endpoint, [
             'file' => new \CURLFile($file->getRealPath(), $file->getMimeType() ?: 'application/octet-stream', $file->getClientOriginalName()),
@@ -39,6 +49,7 @@ class CloudinaryImageService
         return [
             'url' => $payload['secure_url'],
             'public_id' => $payload['public_id'],
+            'resource_type' => $payload['resource_type'] ?? $resourceType,
         ];
     }
 

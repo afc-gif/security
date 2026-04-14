@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use RuntimeException;
 
 class ProjectController extends Controller
 {
@@ -33,7 +34,7 @@ class ProjectController extends Controller
         return view('field.projects.show', compact('project'));
     }
 
-    public function submitUpdate(Request $request, Project $project)
+    public function submitUpdate(Request $request, Project $project, CloudinaryImageService $cloudinary)
     {
         $this->authorizeAssignedProject($project);
 
@@ -65,6 +66,20 @@ class ProjectController extends Controller
                 ->withInput();
         }
 
+        $uploads = [];
+        try {
+            foreach ($request->file('media', []) as $file) {
+                $uploads[] = [
+                    'file' => $file,
+                    'upload' => $cloudinary->uploadMedia($file, 'projects/' . $project->project_code . '/updates'),
+                ];
+            }
+        } catch (RuntimeException $e) {
+            return back()
+                ->withErrors(['media' => 'Media upload failed. Please confirm Cloudinary is configured and try again.'])
+                ->withInput();
+        }
+
         $projectUpdate = $project->updates()->create([
             'user_id' => $request->user()->id,
             'summary' => $validated['summary'] ?? null,
@@ -76,17 +91,15 @@ class ProjectController extends Controller
             'work_date' => $validated['work_date'] ?? null,
         ]);
 
-        foreach ($request->file('media', []) as $file) {
-            $path = $file->storeAs(
-                'projects/' . $project->project_code . '/updates',
-                Str::uuid() . '.' . $file->getClientOriginalExtension(),
-                'public'
-            );
-
+        foreach ($uploads as $stored) {
+            $file = $stored['file'];
+            $upload = $stored['upload'];
             $project->media()->create([
                 'project_update_id' => $projectUpdate->id,
                 'uploaded_by' => $request->user()->id,
-                'file_path' => $path,
+                'file_path' => $upload['url'],
+                'cloudinary_public_id' => $upload['public_id'],
+                'cloudinary_resource_type' => $upload['resource_type'] ?? null,
                 'file_name' => $file->getClientOriginalName(),
                 'file_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),

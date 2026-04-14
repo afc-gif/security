@@ -25,7 +25,7 @@ class ImageUrl
         // For local paths, check if file exists
         // If it doesn't exist, return null to trigger placeholder image in frontend
         if (Storage::disk('public')->exists($value)) {
-            return Storage::url('public/' . $value);
+            return Storage::disk('public')->url($value);
         }
 
         // File not found - return null instead of broken 404 link

@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
+use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use RuntimeException;
 
 class InspectionController extends Controller
 {
@@ -29,7 +30,7 @@ class InspectionController extends Controller
         return view('field.inspections.show', compact('inspection'));
     }
 
-    public function submitReport(Request $request, Inspection $inspection)
+    public function submitReport(Request $request, Inspection $inspection, CloudinaryImageService $cloudinary)
     {
         $this->authorizeAssignedInspection($inspection);
         abort_if((int) $inspection->assigned_to !== (int) auth()->id(), 403);
@@ -60,6 +61,20 @@ class InspectionController extends Controller
                 ->withInput();
         }
 
+        $uploads = [];
+        try {
+            foreach ($request->file('media', []) as $file) {
+                $uploads[] = [
+                    'file' => $file,
+                    'upload' => $cloudinary->uploadMedia($file, 'inspections/' . $inspection->inspection_code),
+                ];
+            }
+        } catch (RuntimeException $e) {
+            return back()
+                ->withErrors(['media' => 'Media upload failed. Please confirm Cloudinary is configured and try again.'])
+                ->withInput();
+        }
+
         $inspection->update([
             'findings' => $validated['findings'] ?? null,
             'risks_identified' => $validated['risks_identified'] ?? null,
@@ -68,16 +83,14 @@ class InspectionController extends Controller
             'status' => 'completed',
         ]);
 
-        foreach ($request->file('media', []) as $file) {
-            $path = $file->storeAs(
-                'inspections/' . $inspection->inspection_code,
-                Str::uuid() . '.' . $file->getClientOriginalExtension(),
-                'public'
-            );
-
+        foreach ($uploads as $stored) {
+            $file = $stored['file'];
+            $upload = $stored['upload'];
             $inspection->media()->create([
                 'uploaded_by' => $request->user()->id,
-                'file_path' => $path,
+                'file_path' => $upload['url'],
+                'cloudinary_public_id' => $upload['public_id'],
+                'cloudinary_resource_type' => $upload['resource_type'] ?? null,
                 'file_name' => $file->getClientOriginalName(),
                 'file_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),

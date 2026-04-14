@@ -15,6 +15,8 @@ class InspectionMedia extends Model
         'inspection_id',
         'uploaded_by',
         'file_path',
+        'cloudinary_public_id',
+        'cloudinary_resource_type',
         'file_name',
         'file_type',
         'file_size',

@@ -115,8 +115,9 @@
                 <div class="grid grid-cols-1 gap-3">
                     @foreach($inspection->media as $media)
                         <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                            @if($media->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($media->file_path))
-                                <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                            @if($mediaUrl)
+                                <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
                                     {{ $media->file_name ?? basename($media->file_path) }}
                                 </a>
                             @else
