@@ -215,7 +215,7 @@ HTML;
         }
     }
 
-    private function tableExists(string $table): bool
+    protected function tableExists(string $table): bool
     {
         try {
             return Schema::hasTable($table);
