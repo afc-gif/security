@@ -163,6 +163,7 @@
         <nav class="nav" aria-label="Field navigation">
             <a class="button active" href="{{ route('field.dashboard') }}">My Dashboard</a>
             <a class="button" href="{{ route('field.inspections.index') }}">My Inspections</a>
+            <a class="button" href="{{ route('field.jobs.index') }}">Field Jobs</a>
             <a class="button" href="{{ route('field.projects.index') }}">My Projects</a>
             <a class="button" href="{{ route('field.tasks.index') }}">My Tasks</a>
         </nav>
@@ -213,6 +214,7 @@
 
             <div class="nav" style="margin:0;">
                 <a class="button primary" href="{{ route('field.inspections.index') }}">My Inspections</a>
+                <a class="button primary" href="{{ route('field.jobs.index') }}">Field Jobs</a>
                 <a class="button primary" href="{{ route('field.projects.index') }}">My Projects</a>
                 <a class="button primary" href="{{ route('field.tasks.index') }}">My Tasks</a>
             </div>

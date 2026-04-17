@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -48,6 +49,14 @@ class JobRequestItem extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Scope: items that can be claimed by field staff.
+     */
+    public function scopeAvailable(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_REOPENED]);
+    }
 
     /**
      * Get the job request for this item.

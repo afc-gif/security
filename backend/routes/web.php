@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\Field\FieldDashboardController;
 use App\Http\Controllers\Field\InspectionController as FieldInspectionController;
+use App\Http\Controllers\Field\JobController as FieldJobController;
 use App\Http\Controllers\Field\ProjectController as FieldProjectController;
 use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\ShopController;
@@ -204,6 +205,8 @@ Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function
     Route::get('/inspections', [FieldInspectionController::class, 'index'])->name('field.inspections.index');
     Route::get('/inspections/{inspection}', [FieldInspectionController::class, 'show'])->name('field.inspections.show');
     Route::post('/inspections/{inspection}/submit', [FieldInspectionController::class, 'submitReport'])->name('field.inspections.submit');
+    Route::get('/jobs', [FieldJobController::class, 'index'])->name('field.jobs.index');
+    Route::post('/jobs/{jobItem}/claim', [FieldJobController::class, 'claim'])->name('field.jobs.claim');
     Route::get('/projects', [FieldProjectController::class, 'index'])->name('field.projects.index');
     Route::get('/projects/{project}', [FieldProjectController::class, 'show'])->name('field.projects.show');
     Route::post('/projects/{project}/updates', [FieldProjectController::class, 'submitUpdate'])->name('field.projects.submit-update');
