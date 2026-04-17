@@ -83,6 +83,7 @@ class ProjectController extends Controller
             'jobRequestItem.serviceCategory',
             'manager',
             'fieldStaff',
+            'activeEditor',
             'creator',
             'updates' => fn ($query) => $query->with(['user', 'reviewedBy', 'media.uploader'])->latest('work_date')->latest('id'),
         ]);

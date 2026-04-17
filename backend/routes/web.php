@@ -221,7 +221,9 @@ Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function
     Route::post('/jobs/{jobItem}/submit', [FieldJobController::class, 'submit'])->name('field.jobs.submit');
     Route::get('/projects', [FieldProjectController::class, 'index'])->name('field.projects.index');
     Route::get('/projects/{project}', [FieldProjectController::class, 'show'])->name('field.projects.show');
+    Route::post('/projects/{project}/start-update', [FieldProjectController::class, 'startUpdate'])->name('field.projects.start-update');
     Route::post('/projects/{project}/updates', [FieldProjectController::class, 'submitUpdate'])->name('field.projects.submit-update');
+    Route::post('/projects/{project}/release-update', [FieldProjectController::class, 'releaseUpdate'])->name('field.projects.release-update');
     Route::get('/tasks', [FieldTaskController::class, 'index'])->name('field.tasks.index');
     Route::get('/tasks/{task}', [FieldTaskController::class, 'show'])->name('field.tasks.show');
     Route::patch('/tasks/{task}/status', [FieldTaskController::class, 'updateStatus'])->name('field.tasks.update-status');

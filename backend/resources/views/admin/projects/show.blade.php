@@ -75,8 +75,49 @@
                     <div class="text-gray-900">{{ $project->fieldStaff?->name ?? 'Unassigned' }}</div>
                 </div>
                 <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Active Editor</div>
+                    <div class="text-gray-900">
+                        @if($project->isBeingEdited())
+                            {{ $project->activeEditor?->name ?? 'Unknown field staff' }}
+                        @elseif($project->editingLockExpired())
+                            Lock expired
+                        @else
+                            None
+                        @endif
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Editing Started At</div>
+                    <div class="text-gray-900">{{ $project->editing_started_at?->format('d M Y H:i') ?? '—' }}</div>
+                </div>
+                <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Created By</div>
                     <div class="text-gray-900">{{ $project->creator?->name ?? '—' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Field Collaboration</h2>
+            <div class="text-gray-700">
+                Projects are visible to all field workers. Only one field worker can actively submit the next project update at a time.
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Current Lock State</div>
+                    <div class="text-gray-900 font-semibold">
+                        @if($project->isBeingEdited())
+                            Locked by {{ $project->activeEditor?->name ?? 'Unknown field staff' }}
+                        @elseif($project->editingLockExpired())
+                            Previous lock expired and can be taken by another field worker
+                        @else
+                            Available for a field worker to continue
+                        @endif
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Current Progress</div>
+                    <div class="text-gray-900 font-semibold">{{ $project->progress_percentage ?? 0 }}%</div>
                 </div>
             </div>
         </div>

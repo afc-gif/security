@@ -10,6 +10,14 @@
     <main class="app-shell">
         @include('field.partials.header')
 
+        @php
+            $isLocked = $project->isBeingEdited();
+            $lockExpired = $project->editingLockExpired();
+            $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
+            $isCompleted = $project->status === 'completed';
+            $latestProjectUpdate = $project->updates->first();
+        @endphp
+
         <section class="section" aria-labelledby="project-title">
             <p class="eyebrow">Project Details</p>
             <h1 id="project-title">{{ $project->project_code }}</h1>
@@ -49,6 +57,37 @@
                     </div>
                 </div>
                 <div>
+                    <div class="label">Last Updated By</div>
+                    <div class="value">
+                        {{ $latestProjectUpdate?->user?->name ?? '-' }}
+                        @if($latestProjectUpdate?->created_at)
+                            <span class="muted">on {{ $latestProjectUpdate->created_at->format('d M Y H:i') }}</span>
+                        @endif
+                    </div>
+                </div>
+                <div>
+                    <div class="label">Update Lock</div>
+                    <div class="value">
+                        @if($isCompleted)
+                            Project completed.
+                        @elseif($lockExpired)
+                            Previous update session expired. You can continue this project.
+                        @elseif($lockedByMe)
+                            You are currently updating this project.
+                        @elseif($isLocked)
+                            Currently being updated by {{ $project->activeEditor?->name ?? 'another field staff member' }}.
+                        @else
+                            Available to continue.
+                        @endif
+                    </div>
+                </div>
+                @if($project->editing_started_at && ($isLocked || $lockExpired))
+                    <div>
+                        <div class="label">{{ $lockExpired ? 'Expired Session Started' : 'Editing Started' }}</div>
+                        <div class="value">{{ $project->editing_started_at->format('d M Y H:i') }}</div>
+                    </div>
+                @endif
+                <div>
                     <div class="label">Deadline</div>
                     <div class="value">{{ $project->deadline?->format('d M Y') ?? '-' }}</div>
                 </div>
@@ -64,46 +103,77 @@
         </section>
 
         <section class="panel">
-            <h2>Submit Progress Update</h2>
-            <form method="POST" action="{{ route('field.projects.submit-update', $project) }}" enctype="multipart/form-data">
-                @csrf
-                <div class="form-row">
-                    <label for="summary">Summary</label>
-                    <input id="summary" type="text" name="summary" value="{{ old('summary') }}" maxlength="255">
+            <h2>Project Update</h2>
+
+            @if($isCompleted)
+                <div class="notice success" style="margin-bottom:0;">
+                    Project completed.
                 </div>
-                <div class="form-row">
-                    <label for="work_done">Work Done</label>
-                    <textarea id="work_done" name="work_done" rows="4">{{ old('work_done') }}</textarea>
+            @elseif($lockedByMe)
+                <div class="notice locked">
+                    You have the update turn. Submit the next update or release the lock when you are done.
                 </div>
-                <div class="form-row">
-                    <label for="materials_used">Materials Used</label>
-                    <textarea id="materials_used" name="materials_used" rows="3">{{ old('materials_used') }}</textarea>
-                </div>
-                <div class="form-row">
-                    <label for="issues_encountered">Issues Encountered</label>
-                    <textarea id="issues_encountered" name="issues_encountered" rows="3">{{ old('issues_encountered') }}</textarea>
-                </div>
-                <div class="grid">
+
+                <form method="POST" action="{{ route('field.projects.release-update', $project) }}" style="margin-bottom:14px;">
+                    @csrf
+                    <button class="button secondary full" type="submit">Release Lock</button>
+                </form>
+
+                <form method="POST" action="{{ route('field.projects.submit-update', $project) }}" enctype="multipart/form-data">
+                    @csrf
                     <div class="form-row">
-                        <label for="progress_percentage">Progress Percentage</label>
-                        <input id="progress_percentage" type="number" name="progress_percentage" value="{{ old('progress_percentage') }}" min="0" max="100">
+                        <label for="summary">Summary</label>
+                        <input id="summary" type="text" name="summary" value="{{ old('summary') }}" maxlength="255">
                     </div>
                     <div class="form-row">
-                        <label for="work_date">Work Date</label>
-                        <input id="work_date" type="date" name="work_date" value="{{ old('work_date') }}">
+                        <label for="work_done">Work Done</label>
+                        <textarea id="work_done" name="work_done" rows="4">{{ old('work_done') }}</textarea>
                     </div>
+                    <div class="form-row">
+                        <label for="materials_used">Materials Used</label>
+                        <textarea id="materials_used" name="materials_used" rows="3">{{ old('materials_used') }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label for="issues_encountered">Issues Encountered</label>
+                        <textarea id="issues_encountered" name="issues_encountered" rows="3">{{ old('issues_encountered') }}</textarea>
+                    </div>
+                    <div class="grid">
+                        <div class="form-row">
+                            <label for="progress_percentage">Progress Percentage</label>
+                            <input id="progress_percentage" type="number" name="progress_percentage" value="{{ old('progress_percentage', $project->progress_percentage ?? 0) }}" min="{{ (int) ($project->progress_percentage ?? 0) }}" max="100">
+                            <div class="muted">Current progress is {{ $project->progress_percentage ?? 0 }}%. Progress cannot move backwards.</div>
+                        </div>
+                        <div class="form-row">
+                            <label for="work_date">Work Date</label>
+                            <input id="work_date" type="date" name="work_date" value="{{ old('work_date') }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label for="next_step">Next Step</label>
+                        <textarea id="next_step" name="next_step" rows="3">{{ old('next_step') }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label for="media">Photos or Documents</label>
+                        <input id="media" type="file" name="media[]" multiple accept=".jpg,.jpeg,.png,.pdf">
+                        <div class="muted">JPG, PNG, or PDF. Maximum 5 MB per file.</div>
+                    </div>
+                    <button class="button full" type="submit">Submit Update</button>
+                </form>
+            @elseif($isLocked)
+                <div class="notice locked" style="margin-bottom:0;">
+                    This project is currently being updated by {{ $project->activeEditor?->name ?? 'another field staff member' }}.
                 </div>
-                <div class="form-row">
-                    <label for="next_step">Next Step</label>
-                    <textarea id="next_step" name="next_step" rows="3">{{ old('next_step') }}</textarea>
-                </div>
-                <div class="form-row">
-                    <label for="media">Photos or Documents</label>
-                    <input id="media" type="file" name="media[]" multiple accept=".jpg,.jpeg,.png,.pdf">
-                    <div class="muted">JPG, PNG, or PDF. Maximum 5 MB per file.</div>
-                </div>
-                <button class="button full" type="submit">Submit Update</button>
-            </form>
+            @else
+                @if($lockExpired)
+                    <div class="notice locked">
+                        Previous update session expired. You can continue this project.
+                    </div>
+                @endif
+                <form method="POST" action="{{ route('field.projects.start-update', $project) }}">
+                    @csrf
+                    <button class="button full" type="submit">Continue Project</button>
+                </form>
+            @endif
         </section>
 
         <section class="panel">

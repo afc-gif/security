@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Project extends Model
 {
     use HasFactory;
+
+    public const EDIT_LOCK_TIMEOUT_MINUTES = 30;
 
     protected $fillable = [
         'project_code',
@@ -24,12 +27,15 @@ class Project extends Model
         'deadline',
         'assigned_manager_id',
         'assigned_field_staff_id',
+        'active_editor_id',
+        'editing_started_at',
         'created_by',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'deadline' => 'date',
+        'editing_started_at' => 'datetime',
     ];
 
     public function client()
@@ -57,6 +63,11 @@ class Project extends Model
         return $this->belongsTo(User::class, 'assigned_field_staff_id');
     }
 
+    public function activeEditor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'active_editor_id');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -75,5 +86,22 @@ class Project extends Model
     public function tasks()
     {
         return $this->morphMany(Task::class, 'assignable');
+    }
+
+    public function isBeingEdited(): bool
+    {
+        return $this->active_editor_id !== null && !$this->editingLockExpired();
+    }
+
+    public function editingLockExpired(): bool
+    {
+        return $this->active_editor_id !== null
+            && $this->editing_started_at !== null
+            && $this->editing_started_at->lt(now()->subMinutes(self::EDIT_LOCK_TIMEOUT_MINUTES));
+    }
+
+    public function canBeUpdatedBy(User $user): bool
+    {
+        return (int) $this->active_editor_id === (int) $user->id;
     }
 }

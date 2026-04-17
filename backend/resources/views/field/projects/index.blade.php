@@ -12,8 +12,8 @@
 
         <section class="section" aria-labelledby="projects-title">
             <p class="eyebrow">Projects</p>
-            <h1 id="projects-title">My Projects</h1>
-            <p class="subtext">Track assigned project work and submit progress updates.</p>
+            <h1 id="projects-title">Projects</h1>
+            <p class="subtext">All field staff can view projects. One person can continue an update at a time.</p>
         </section>
 
         @if (session('success'))
@@ -26,6 +26,12 @@
             @else
                 <div class="card-grid">
                     @foreach($projects as $project)
+                        @php
+                            $isLocked = $project->isBeingEdited();
+                            $lockExpired = $project->editingLockExpired();
+                            $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
+                            $isCompleted = $project->status === 'completed';
+                        @endphp
                         <article class="job-card">
                             <div class="card-head">
                                 <div>
@@ -38,6 +44,19 @@
                             <div class="meta">
                                 <div>Client: {{ $project->client?->client_name ?? '-' }}</div>
                                 <div>Deadline: {{ $project->deadline?->format('d M Y') ?? '-' }}</div>
+                                <div>
+                                    @if($isCompleted)
+                                        Project completed
+                                    @elseif($lockExpired)
+                                        Previous update session expired. You can continue this project.
+                                    @elseif($lockedByMe)
+                                        Update lock: You are updating this project
+                                    @elseif($isLocked)
+                                        Currently being updated by {{ $project->activeEditor?->name ?? 'another field staff member' }}
+                                    @else
+                                        Available to continue
+                                    @endif
+                                </div>
                                 <div class="progress">
                                     <div class="bar"><span style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></span></div>
                                     <strong>{{ $project->progress_percentage ?? 0 }}%</strong>
