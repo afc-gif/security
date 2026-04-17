@@ -106,14 +106,20 @@
             @endif
         </div>
 
-        @php($latestAttempt = $jobItem->attempts->first())
-
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Submission Notes</h2>
-            <div class="text-gray-900 whitespace-pre-line">{{ $latestAttempt?->notes ?: '—' }}</div>
+            @if($latestAttempt)
+                <div class="text-sm text-gray-600 mb-2">
+                    Latest submission by {{ $latestAttempt?->user?->name ?? 'field staff' }}
+                    on {{ $latestAttempt?->created_at?->format('d M Y H:i') ?? '—' }}
+                </div>
+                <div class="text-gray-900 whitespace-pre-line">{{ optional($latestAttempt)->notes ?: '—' }}</div>
+            @else
+                <div class="text-gray-600">No submissions yet.</div>
+            @endif
         </div>
 
-        @if($jobItem->status === \App\Models\JobRequestItem::STATUS_SUBMITTED)
+        @if($jobItem->status === \App\Models\JobRequestItem::STATUS_SUBMITTED && $latestAttempt)
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Admin Review</h2>
                 <form method="POST" action="{{ route('admin.job-items.review', $jobItem) }}" class="space-y-4">
@@ -136,30 +142,31 @@
             <h2 class="text-xl font-bold text-gray-900 mb-4">Attempt History</h2>
 
             @if($jobItem->attempts->count() === 0)
-                <div class="text-gray-600">No attempts recorded yet.</div>
+                <div class="text-gray-600">No submissions yet.</div>
             @else
                 <div class="space-y-4">
                     @foreach($jobItem->attempts as $attempt)
                         @php
-                            $attemptLabel = match ($attempt->status) {
-                                \App\Models\JobItemAttempt::STATUS_SUBMITTED => 'Submitted by ' . ($attempt->user?->name ?? 'field staff'),
+                            $attemptStatus = $attempt?->status ?? 'unknown';
+                            $attemptLabel = match ($attemptStatus) {
+                                \App\Models\JobItemAttempt::STATUS_SUBMITTED => 'Submitted by ' . ($attempt?->user?->name ?? 'field staff'),
                                 \App\Models\JobItemAttempt::STATUS_APPROVED => 'Approved by Admin',
                                 \App\Models\JobItemAttempt::STATUS_RETURNED => 'Returned by Admin',
                                 \App\Models\JobItemAttempt::STATUS_REJECTED => 'Rejected by Admin',
-                                default => str_replace('_', ' ', \Illuminate\Support\Str::title($attempt->status)),
+                                default => str_replace('_', ' ', \Illuminate\Support\Str::title($attemptStatus)),
                             };
                         @endphp
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                                 <div>
                                     <div class="font-semibold text-gray-900">{{ $attemptLabel }}</div>
-                                    <div class="text-sm text-gray-600">{{ $attempt->created_at?->format('d M Y H:i') ?? '—' }}</div>
+                                    <div class="text-sm text-gray-600">{{ $attempt?->created_at?->format('d M Y H:i') ?? '—' }}</div>
                                 </div>
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($attempt->status) { 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'rejected' => 'bg-red-100 text-red-800', default => 'bg-gray-200 text-gray-700' } }}">
-                                    {{ str_replace('_', ' ', \Illuminate\Support\Str::title($attempt->status)) }}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($attemptStatus) { 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'rejected' => 'bg-red-100 text-red-800', default => 'bg-gray-200 text-gray-700' } }}">
+                                    {{ str_replace('_', ' ', \Illuminate\Support\Str::title($attemptStatus)) }}
                                 </span>
                             </div>
-                            <div class="mt-3 text-gray-900 whitespace-pre-line">{{ $attempt->notes ?: '—' }}</div>
+                            <div class="mt-3 text-gray-900 whitespace-pre-line">{{ optional($attempt)->notes ?: '—' }}</div>
                         </div>
                     @endforeach
                 </div>

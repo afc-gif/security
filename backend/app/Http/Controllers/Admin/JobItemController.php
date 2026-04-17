@@ -24,10 +24,15 @@ class JobItemController extends Controller
             'serviceCategory',
             'claimer',
             'project',
-            'attempts' => fn ($query) => $query->with('user')->latest('id'),
+            'attempts' => fn ($query) => $query
+                ->with('user')
+                ->latest('created_at')
+                ->latest('id'),
         ]);
 
-        return view('admin.job-items.show', compact('jobItem'));
+        $latestAttempt = $jobItem->attempts->first();
+
+        return view('admin.job-items.show', compact('jobItem', 'latestAttempt'));
     }
 
     public function review(Request $request, JobRequestItem $jobItem)
