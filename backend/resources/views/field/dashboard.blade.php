@@ -1,12 +1,12 @@
 @php
     $availableJobsCount = $availableJobsCount ?? 0;
-    $myClaimedJobs = $myClaimedJobs ?? 0;
-    $returnedJobs = $returnedJobs ?? 0;
-    $overdueJobs = $overdueJobs ?? 0;
-    $urgentJobs = $urgentJobs ?? collect();
-    $recentJobs = $recentJobs ?? collect();
-    $currentProjects = $currentProjects ?? collect();
-    $currentProjectsCount = $currentProjectsCount ?? 0;
+    $myJobsCount = $myJobsCount ?? $myClaimedJobs ?? 0;
+    $returnedJobsCount = $returnedJobsCount ?? $returnedJobs ?? 0;
+    $overdueJobsCount = $overdueJobsCount ?? $overdueJobs ?? 0;
+    $urgentJobs = collect($urgentJobs ?? []);
+    $recentJobs = collect($recentJobs ?? []);
+    $recentProjects = collect($recentProjects ?? $currentProjects ?? []);
+    $currentProjectsCount = $currentProjectsCount ?? $recentProjects->count();
 
     $statusClass = function ($status, $isOverdue = false) {
         if ($isOverdue) {
@@ -42,8 +42,8 @@
     <main class="app-shell">
         @include('field.partials.header', [
             'availableJobsCount' => $availableJobsCount,
-            'myClaimedJobs' => $myClaimedJobs ?? 0,
-            'overdueJobs' => $overdueJobs ?? 0,
+            'myJobsCount' => $myJobsCount,
+            'overdueJobsCount' => $overdueJobsCount,
         ])
 
         <section class="section" aria-labelledby="dashboard-title">
@@ -64,17 +64,17 @@
                     <small>Ready to claim</small>
                 </article>
                 <article class="summary-card blue">
-                    <strong>{{ $myClaimedJobs ?? 0 }}</strong>
+                    <strong>{{ $myJobsCount }}</strong>
                     <span>My Claimed Jobs</span>
                     <small>In progress</small>
                 </article>
                 <article class="summary-card orange">
-                    <strong>{{ $returnedJobs ?? 0 }}</strong>
+                    <strong>{{ $returnedJobsCount }}</strong>
                     <span>Returned Jobs</span>
                     <small>Needs fixing</small>
                 </article>
                 <article class="summary-card red">
-                    <strong>{{ $overdueJobs ?? 0 }}</strong>
+                    <strong>{{ $overdueJobsCount }}</strong>
                     <span>Overdue Jobs</span>
                     <small>Requires attention</small>
                 </article>
@@ -96,14 +96,14 @@
                 <a class="button secondary mobile-full" href="{{ route('field.projects.index') }}">View All Projects</a>
             </div>
 
-            @if($currentProjects->count() === 0)
+            @if($recentProjects->count() === 0)
                 <div class="empty-state">
                     <div>No current projects are available right now.</div>
                     <a class="button secondary mobile-full" href="{{ route('field.projects.index') }}" style="margin-top:12px;">Open Projects Page</a>
                 </div>
             @else
                 <div class="card-grid">
-                    @foreach($currentProjects as $project)
+                    @foreach($recentProjects as $project)
                         @php
                             $isLocked = $project->isBeingEdited();
                             $lockExpired = $project->editingLockExpired();
