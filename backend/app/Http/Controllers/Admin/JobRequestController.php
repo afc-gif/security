@@ -117,7 +117,7 @@ class JobRequestController extends Controller
         $jobRequest->load([
             'client',
             'creator',
-            'items' => fn ($query) => $query->with(['serviceCategory', 'claimer'])->orderBy('id'),
+            'items' => fn ($query) => $query->with(['serviceCategory', 'claimer', 'project'])->orderBy('id'),
         ]);
 
         return view('admin.job-requests.show', compact('jobRequest'));

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class JobItemController extends Controller
@@ -20,6 +23,7 @@ class JobItemController extends Controller
             'jobRequest.client',
             'serviceCategory',
             'claimer',
+            'project',
             'attempts' => fn ($query) => $query->with('user')->latest('id'),
         ]);
 
@@ -134,6 +138,57 @@ class JobItemController extends Controller
             ->with('success', 'Job reopened successfully.');
     }
 
+    public function convertToProject(JobRequestItem $jobItem)
+    {
+        $jobItem->load(['jobRequest.client', 'serviceCategory', 'project']);
+
+        if ($jobItem->project) {
+            return redirect()
+                ->route('admin.projects.show', $jobItem->project)
+                ->with('success', 'This category item has already been converted to a project.');
+        }
+
+        if ($jobItem->status !== JobRequestItem::STATUS_APPROVED) {
+            return back()->withErrors(['conversion' => 'Only approved category items can be converted to a project.']);
+        }
+
+        $project = DB::transaction(function () use ($jobItem) {
+            $lockedItem = JobRequestItem::query()
+                ->where('id', $jobItem->id)
+                ->where('status', JobRequestItem::STATUS_APPROVED)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedItem->load(['jobRequest.client', 'serviceCategory', 'project']);
+
+            if ($lockedItem->project) {
+                return $lockedItem->project;
+            }
+
+            $projectPayload = [
+                'project_code' => $this->generateProjectCode(),
+                'job_request_item_id' => $lockedItem->id,
+                'client_id' => $lockedItem->jobRequest->client_id,
+                'title' => $this->buildProjectTitle($lockedItem),
+                'description' => $this->buildProjectDescription($lockedItem),
+                'status' => 'not_started',
+                'priority' => $lockedItem->priority,
+                'deadline' => $lockedItem->due_date?->toDateString(),
+                'created_by' => auth()->id(),
+            ];
+
+            if ($lockedItem->claimed_by && Schema::hasColumn('projects', 'assigned_field_staff_id')) {
+                $projectPayload['assigned_field_staff_id'] = $lockedItem->claimed_by;
+            }
+
+            return Project::create($projectPayload);
+        });
+
+        return redirect()
+            ->route('admin.projects.show', $project)
+            ->with('success', 'Category item converted to project successfully.');
+    }
+
     private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote): void
     {
         $jobItem->update([
@@ -188,5 +243,41 @@ class JobItemController extends Controller
         }
 
         return "{$existingNotes}\n\nAdmin note: {$adminNote}";
+    }
+
+    private function generateProjectCode(): string
+    {
+        do {
+            $code = 'PROJ-' . now()->format('Ymd') . '-' . Str::upper(Str::random(4));
+        } while (Project::where('project_code', $code)->exists());
+
+        return $code;
+    }
+
+    private function buildProjectTitle(JobRequestItem $jobItem): string
+    {
+        $category = $jobItem->serviceCategory?->name ?? $jobItem->title ?? 'Service';
+        $client = $jobItem->jobRequest?->client?->client_name;
+
+        return Str::limit(trim($category . ($client ? " - {$client}" : '')), 255, '');
+    }
+
+    private function buildProjectDescription(JobRequestItem $jobItem): ?string
+    {
+        $parts = [];
+
+        if ($jobItem->jobRequest?->title) {
+            $parts[] = "Job Request: {$jobItem->jobRequest->title}";
+        }
+
+        if ($jobItem->jobRequest?->description) {
+            $parts[] = "Request Description:\n{$jobItem->jobRequest->description}";
+        }
+
+        if ($jobItem->description) {
+            $parts[] = "Category Item Description:\n{$jobItem->description}";
+        }
+
+        return $parts ? implode("\n\n", $parts) : null;
     }
 }

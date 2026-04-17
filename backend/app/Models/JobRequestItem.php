@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobRequestItem extends Model
 {
@@ -101,6 +102,14 @@ class JobRequestItem extends Model
     }
 
     /**
+     * Determine if this approved item can create a project.
+     */
+    public function isConvertibleToProject(): bool
+    {
+        return $this->status === self::STATUS_APPROVED && !$this->project()->exists();
+    }
+
+    /**
      * Persist overdue status when the item is touched by field or admin flows.
      */
     public function markOverdueIfPast(): bool
@@ -128,6 +137,14 @@ class JobRequestItem extends Model
     public function serviceCategory(): BelongsTo
     {
         return $this->belongsTo(ServiceCategory::class);
+    }
+
+    /**
+     * Get the project created from this category item.
+     */
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
     }
 
     /**

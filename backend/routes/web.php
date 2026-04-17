@@ -148,6 +148,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.job-items.review');
     Route::post('/job-items/{jobItem}/reopen', [\App\Http\Controllers\Admin\JobItemController::class, 'reopen'])
         ->name('admin.job-items.reopen');
+    Route::post('/job-items/{jobItem}/convert-to-project', [\App\Http\Controllers\Admin\JobItemController::class, 'convertToProject'])
+        ->name('admin.job-items.convert-to-project');
 
     // Inspections Management
     Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)

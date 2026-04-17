@@ -81,6 +81,31 @@
             </div>
         @endif
 
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Project Conversion</h2>
+
+            @if($jobItem->project)
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+                    <div>
+                        <div class="font-semibold text-green-900">Converted to Project</div>
+                        <div class="text-sm text-green-800">{{ $jobItem->project->project_code }} - {{ $jobItem->project->title }}</div>
+                    </div>
+                    <a href="{{ route('admin.projects.show', $jobItem->project) }}" class="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        View Project
+                    </a>
+                </div>
+            @elseif($jobItem->isConvertibleToProject())
+                <form method="POST" action="{{ route('admin.job-items.convert-to-project', $jobItem) }}">
+                    @csrf
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                        Convert to Project
+                    </button>
+                </form>
+            @else
+                <div class="text-gray-600">Only approved items can be converted to a project.</div>
+            @endif
+        </div>
+
         @php($latestAttempt = $jobItem->attempts->first())
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">

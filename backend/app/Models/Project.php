@@ -12,6 +12,7 @@ class Project extends Model
     protected $fillable = [
         'project_code',
         'inspection_id',
+        'job_request_item_id',
         'client_id',
         'title',
         'location',
@@ -39,6 +40,11 @@ class Project extends Model
     public function inspection()
     {
         return $this->belongsTo(Inspection::class);
+    }
+
+    public function jobRequestItem()
+    {
+        return $this->belongsTo(JobRequestItem::class);
     }
 
     public function manager()

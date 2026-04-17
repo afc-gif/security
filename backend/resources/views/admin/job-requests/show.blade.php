@@ -104,6 +104,22 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Project Conversion</div>
+                                @if($item->project)
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Converted to Project</span>
+                                    <a href="{{ route('admin.projects.show', $item->project) }}" class="block mt-2 font-semibold text-green-700 hover:text-green-900">
+                                        {{ $item->project->project_code }} - {{ $item->project->title }}
+                                    </a>
+                                @elseif($item->status === \App\Models\JobRequestItem::STATUS_APPROVED)
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">Not yet converted</span>
+                                    <a href="{{ route('admin.job-items.show', $item) }}" class="block mt-2 font-semibold text-blue-700 hover:text-blue-900">
+                                        Open item to convert
+                                    </a>
+                                @else
+                                    <div class="text-gray-600">Not yet converted.</div>
+                                @endif
+                            </div>
                             <div class="mt-4">
                                 <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center w-full bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition">
                                     Review Item

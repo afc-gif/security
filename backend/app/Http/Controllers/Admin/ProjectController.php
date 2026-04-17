@@ -79,6 +79,8 @@ class ProjectController extends Controller
         $project->load([
             'client',
             'inspection',
+            'jobRequestItem.jobRequest.client',
+            'jobRequestItem.serviceCategory',
             'manager',
             'fieldStaff',
             'creator',

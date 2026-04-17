@@ -99,9 +99,38 @@
                     </a>
                 </div>
             @else
-                <div class="text-gray-600">This project was created manually and is not linked to an inspection.</div>
+                <div class="text-gray-600">This project is not linked to an inspection.</div>
             @endif
         </div>
+
+        @if($project->jobRequestItem)
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Linked Job Request Item</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Job Request</div>
+                        <div class="text-gray-900 font-semibold">{{ $project->jobRequestItem->jobRequest?->title ?? '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Service Category</div>
+                        <div class="text-gray-900 font-semibold">{{ $project->jobRequestItem->serviceCategory?->name ?? '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Client</div>
+                        <div class="text-gray-900">{{ $project->jobRequestItem->jobRequest?->client?->client_name ?? $project->client?->client_name ?? '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Category Item Status</div>
+                        <div class="text-gray-900">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->jobRequestItem->status)) }}</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ route('admin.job-items.show', $project->jobRequestItem) }}" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition">
+                        View Job Item
+                    </a>
+                </div>
+            </div>
+        @endif
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Project Update Timeline</h2>
