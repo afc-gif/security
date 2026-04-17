@@ -472,6 +472,10 @@
             color: #fff;
         }
 
+        .bottom-nav a[aria-current="page"] {
+            pointer-events: none;
+        }
+
         .bottom-nav a.active b {
             background: rgba(255, 255, 255, 0.18);
         }
@@ -683,7 +687,7 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Field navigation">
-        <a class="active" href="{{ route('field.dashboard') }}" aria-current="page">
+        <a class="active" href="{{ route('field.dashboard') }}" aria-current="page" aria-disabled="true" tabindex="-1">
             <b>DB</b>
             <span>Dashboard</span>
         </a>
