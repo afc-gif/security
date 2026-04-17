@@ -7,15 +7,23 @@ use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class FieldDashboardController extends Controller
 {
     public function index()
     {
-        $userId = auth()->id();
+        try {
+            $userId = auth()->id();
+            
+            // If job_request_items table doesn't exist, return empty dashboard
+            if (!$this->tableExists('job_request_items')) {
+                Log::info('FieldDashboard: job_request_items table does not exist, returning minimal view');
+                return $this->emptyDashboard();
+            }
 
-        $availableJobsCount = $this->safely(fn () => $this->availableJobsQuery($userId)->count(), 0);
+            $availableJobsCount = $this->safely(fn () => $this->availableJobsQuery($userId)->count(), 0);
         $myJobsCount = $this->safely(fn () => JobRequestItem::where('claimed_by', $userId)
             ->where('status', JobRequestItem::STATUS_CLAIMED)
             ->count(), 0);
@@ -108,6 +116,45 @@ class FieldDashboardController extends Controller
             'currentProjects',
             'currentProjectsCount'
         ));
+        } catch (Throwable $e) {
+            Log::error('FieldDashboard index error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return $this->emptyDashboard();
+        }
+    }
+
+    /**
+     * Return an empty dashboard for error cases.
+     */
+    private function emptyDashboard()
+    {
+        return view('field.dashboard', [
+            'totalInspections' => 0,
+            'completedInspections' => 0,
+            'pendingInspections' => 0,
+            'assignedProjects' => 0,
+            'ongoingProjects' => 0,
+            'completedProjects' => 0,
+            'assignedTasks' => 0,
+            'pendingTasks' => 0,
+            'completedTasks' => 0,
+            'availableJobsCount' => 0,
+            'myJobsCount' => 0,
+            'myClaimedJobs' => 0,
+            'returnedJobsCount' => 0,
+            'returnedJobs' => 0,
+            'overdueJobsCount' => 0,
+            'overdueJobs' => 0,
+            'dueTodayJobs' => 0,
+            'urgentJobs' => collect(),
+            'recentJobs' => collect(),
+            'recentProjects' => collect(),
+            'currentProjects' => collect(),
+            'currentProjectsCount' => 0,
+        ]);
     }
 
     private function availableJobsQuery(?int $userId): Builder
