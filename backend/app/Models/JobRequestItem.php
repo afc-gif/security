@@ -74,6 +74,14 @@ class JobRequestItem extends Model
     }
 
     /**
+     * Get the user who claimed this item.
+     */
+    public function claimer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'claimed_by');
+    }
+
+    /**
      * Get the user who created this item.
      */
     public function creator(): BelongsTo

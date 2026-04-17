@@ -137,6 +137,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->except(['show'])
         ->names('admin.clients');
 
+    // Job Requests Management
+    Route::resource('job-requests', \App\Http\Controllers\Admin\JobRequestController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->names('admin.job-requests');
+
     // Inspections Management
     Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)
         ->only(['index', 'create', 'store', 'show'])

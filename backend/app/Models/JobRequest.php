@@ -50,6 +50,14 @@ class JobRequest extends Model
     }
 
     /**
+     * Get all category items for this job request.
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(JobRequestItem::class);
+    }
+
+    /**
      * Scope: Get available items for a specific user (not rejected by that user).
      * Excludes items where the user has a rejected attempt.
      */

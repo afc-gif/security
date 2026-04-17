@@ -15,7 +15,7 @@
         ],
         'operations' => [
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
-            ['key' => 'inspections', 'label' => 'Inspections', 'route' => 'admin.inspections.index', 'tab' => 'inspections', 'icon' => 'IN'],
+            ['key' => 'job-requests', 'label' => 'Job Requests', 'route' => 'admin.job-requests.index', 'tab' => 'job-requests', 'icon' => 'JR'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
             ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks', 'icon' => 'TK'],
             ['key' => 'field-reports', 'label' => 'Field Reports', 'route' => 'admin.field-reports.index', 'tab' => 'field-reports', 'icon' => 'FR'],
@@ -42,7 +42,7 @@
             'orders' => request()->routeIs('admin.orders.*'),
             'pos' => request()->routeIs('pos.*'),
             'clients' => request()->routeIs('admin.clients.*'),
-            'inspections' => request()->routeIs('admin.inspections.*'),
+            'job-requests' => request()->routeIs('admin.job-requests.*'),
             'projects' => request()->routeIs('admin.projects.*'),
             'tasks' => request()->routeIs('admin.tasks.*'),
             'field-reports' => request()->routeIs('admin.field-reports.*'),
