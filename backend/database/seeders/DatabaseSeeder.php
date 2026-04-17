@@ -140,5 +140,8 @@ class DatabaseSeeder extends Seeder
             'stock' => 3,
             'category' => 'FULL INTEGRATION',
         ]);
+
+        // Seed service categories for job request workflow
+        $this->call(ServiceCategorySeeder::class);
     }
 }
