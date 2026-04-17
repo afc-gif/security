@@ -67,6 +67,7 @@ class JobRequestController extends Controller
                 'client_id' => 'required|exists:clients,id',
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
+                'due_date' => 'nullable|date',
                 'categories' => 'required|array|min:1',
                 'categories.*' => 'integer|exists:service_categories,id',
             ],
@@ -101,6 +102,7 @@ class JobRequestController extends Controller
                     'created_by' => $request->user()->id,
                     'status' => 'open',
                     'title' => $category->name,
+                    'due_date' => $validated['due_date'] ?? null,
                 ]);
             }
 

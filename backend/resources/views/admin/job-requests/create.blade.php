@@ -43,6 +43,11 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Submission Deadline</label>
+                    <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+
+                <div>
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Service Categories *</label>
