@@ -142,6 +142,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('job-requests', \App\Http\Controllers\Admin\JobRequestController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.job-requests');
+    Route::get('/job-items/{jobItem}', [\App\Http\Controllers\Admin\JobItemController::class, 'show'])
+        ->name('admin.job-items.show');
+    Route::post('/job-items/{jobItem}/review', [\App\Http\Controllers\Admin\JobItemController::class, 'review'])
+        ->name('admin.job-items.review');
 
     // Inspections Management
     Route::resource('inspections', \App\Http\Controllers\Admin\InspectionController::class)
@@ -207,6 +211,8 @@ Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function
     Route::post('/inspections/{inspection}/submit', [FieldInspectionController::class, 'submitReport'])->name('field.inspections.submit');
     Route::get('/jobs', [FieldJobController::class, 'index'])->name('field.jobs.index');
     Route::post('/jobs/{jobItem}/claim', [FieldJobController::class, 'claim'])->name('field.jobs.claim');
+    Route::get('/jobs/{jobItem}', [FieldJobController::class, 'show'])->name('field.jobs.show');
+    Route::post('/jobs/{jobItem}/submit', [FieldJobController::class, 'submit'])->name('field.jobs.submit');
     Route::get('/projects', [FieldProjectController::class, 'index'])->name('field.projects.index');
     Route::get('/projects/{project}', [FieldProjectController::class, 'show'])->name('field.projects.show');
     Route::post('/projects/{project}/updates', [FieldProjectController::class, 'submitUpdate'])->name('field.projects.submit-update');

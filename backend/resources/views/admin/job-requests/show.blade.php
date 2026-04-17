@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Status</div>
-                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-200 text-gray-700">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ in_array($jobRequest->status, ['open', 'reopened'], true) ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700' }}">
                         {{ str_replace('_', ' ', \Illuminate\Support\Str::title($jobRequest->status)) }}
                     </span>
                 </div>
@@ -62,9 +62,11 @@
                     @foreach($jobRequest->items as $item)
                         @php
                             $itemStatusClass = match ($item->status) {
+                                'open', 'reopened' => 'bg-blue-100 text-blue-800',
                                 'claimed' => 'bg-blue-100 text-blue-800',
                                 'submitted' => 'bg-yellow-100 text-yellow-800',
                                 'approved' => 'bg-green-100 text-green-800',
+                                'returned' => 'bg-orange-100 text-orange-800',
                                 'rejected' => 'bg-red-100 text-red-800',
                                 default => 'bg-gray-200 text-gray-700',
                             };
@@ -91,6 +93,11 @@
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Due Date</div>
                                     <div class="text-gray-900">{{ $item->due_date?->format('d M Y H:i') ?? '—' }}</div>
                                 </div>
+                            </div>
+                            <div class="mt-4">
+                                <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center w-full bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition">
+                                    Review Item
+                                </a>
                             </div>
                         </div>
                     @endforeach

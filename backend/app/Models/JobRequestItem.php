@@ -18,6 +18,7 @@ class JobRequestItem extends Model
     const STATUS_SUBMITTED = 'submitted';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
+    const STATUS_RETURNED = 'returned';
     const STATUS_REOPENED = 'reopened';
     const STATUS_OVERDUE = 'overdue';
 

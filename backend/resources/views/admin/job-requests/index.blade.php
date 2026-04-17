@@ -51,7 +51,7 @@
                                     <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $jobRequest->client?->client_name ?? '—' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ $jobRequest->items_count }}</td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-200 text-gray-700">
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ in_array($jobRequest->status, ['open', 'reopened'], true) ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700' }}">
                                             {{ str_replace('_', ' ', \Illuminate\Support\Str::title($jobRequest->status)) }}
                                         </span>
                                     </td>

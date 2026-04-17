@@ -14,6 +14,7 @@ class JobItemAttempt extends Model
     const STATUS_SUBMITTED = 'submitted';
     const STATUS_REJECTED = 'rejected';
     const STATUS_APPROVED = 'approved';
+    const STATUS_RETURNED = 'returned';
 
     protected $fillable = [
         'job_request_item_id',

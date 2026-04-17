@@ -27,6 +27,7 @@
         .link.active, .button.primary { background: var(--action); border-color: var(--action); color: #fff; }
         .button.primary { width: 100%; min-height: 48px; cursor: pointer; }
         .button.primary:hover { background: var(--action-dark); border-color: var(--action-dark); }
+        .button.secondary { width: 100%; margin-top: 8px; }
         .button[disabled] { background: #e5e7eb; border-color: #d1d5db; color: #6b7280; cursor: not-allowed; }
         .section { margin-top: 20px; }
         .list { display: grid; gap: 12px; }
@@ -36,9 +37,13 @@
         .muted { color: var(--muted); font-size: 14px; }
         .meta { display: grid; gap: 6px; margin: 12px 0; color: var(--muted); font-size: 14px; }
         .status { display: inline-flex; padding: 4px 8px; border-radius: 8px; background: #e5e7eb; color: #374151; font-size: 13px; font-weight: 700; white-space: nowrap; }
+        .status.open { background: #e0f2fe; color: #075985; }
         .status.claimed { background: #dbeafe; color: #1d4ed8; }
         .status.submitted { background: #fef3c7; color: #92400e; }
-        .status.reopened { background: #f3f4f6; color: #374151; }
+        .status.returned { background: #ffedd5; color: #9a3412; }
+        .status.approved { background: #dcfce7; color: #166534; }
+        .status.reopened { background: #e0f2fe; color: #075985; }
+        .status.rejected { background: #fee2e2; color: #991b1b; }
         .empty, .notice { padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); text-align: center; }
         .success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; margin-bottom: 12px; }
         .error { border-color: #fecaca; background: #fef2f2; color: var(--danger); margin-bottom: 12px; }
@@ -125,19 +130,26 @@
             @else
                 <div class="list">
                     @foreach($myJobs as $job)
+                        @php
+                            $latestOwnAttempt = $job->attempts->first();
+                            $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
+                                ? \App\Models\JobItemAttempt::STATUS_REJECTED
+                                : $job->status;
+                        @endphp
                         <article class="item">
                             <div class="item-head">
                                 <div>
                                     <div class="title">{{ $job->jobRequest?->title ?? 'Job request unavailable' }}</div>
                                     <div class="muted">{{ $job->serviceCategory?->name ?? $job->title ?? 'Service category' }}</div>
                                 </div>
-                                <span class="status {{ $job->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($job->status)) }}</span>
+                                <span class="status {{ $displayStatus }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($displayStatus)) }}</span>
                             </div>
                             <div class="meta">
                                 <div>Client: {{ $job->jobRequest?->client?->client_name ?? '—' }}</div>
                                 <div>Category: {{ $job->serviceCategory?->name ?? '—' }}</div>
                                 <div>Claimed: {{ $job->claimed_at?->format('d M Y H:i') ?? '—' }}</div>
                             </div>
+                            <a class="button secondary" href="{{ route('field.jobs.show', $job) }}">Open Job</a>
                         </article>
                     @endforeach
                 </div>
