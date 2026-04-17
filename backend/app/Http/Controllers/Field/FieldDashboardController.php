@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
+use App\Models\JobRequestItem;
 use App\Models\Project;
 use App\Models\Task;
 
@@ -34,6 +35,32 @@ class FieldDashboardController extends Controller
         $completedTasks = Task::where('assigned_to', $userId)
             ->where('status', 'completed')
             ->count();
+        $myClaimedJobs = JobRequestItem::where('claimed_by', $userId)
+            ->where('status', JobRequestItem::STATUS_CLAIMED)
+            ->count();
+        $returnedJobs = JobRequestItem::where('claimed_by', $userId)
+            ->where('status', JobRequestItem::STATUS_RETURNED)
+            ->count();
+        $overdueJobs = JobRequestItem::where('claimed_by', $userId)
+            ->where(function ($query) {
+                $query->where('status', JobRequestItem::STATUS_OVERDUE)
+                    ->orWhere(function ($overdueQuery) {
+                        $overdueQuery->whereNotNull('due_date')
+                            ->where('due_date', '<', now())
+                            ->whereIn('status', [
+                                JobRequestItem::STATUS_CLAIMED,
+                                JobRequestItem::STATUS_RETURNED,
+                            ]);
+                    });
+            })
+            ->count();
+        $dueTodayJobs = JobRequestItem::where('claimed_by', $userId)
+            ->whereDate('due_date', today())
+            ->whereIn('status', [
+                JobRequestItem::STATUS_CLAIMED,
+                JobRequestItem::STATUS_RETURNED,
+            ])
+            ->count();
 
         return view('field.dashboard', compact(
             'totalInspections',
@@ -44,7 +71,11 @@ class FieldDashboardController extends Controller
             'completedProjects',
             'assignedTasks',
             'pendingTasks',
-            'completedTasks'
+            'completedTasks',
+            'myClaimedJobs',
+            'returnedJobs',
+            'overdueJobs',
+            'dueTodayJobs'
         ));
     }
 }

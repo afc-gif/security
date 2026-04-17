@@ -34,6 +34,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Title</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Client</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Category Items</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Due / Overdue</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Created Date</th>
                                 <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Action</th>
@@ -50,6 +51,10 @@
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $jobRequest->client?->client_name ?? '—' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ $jobRequest->items_count }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                        <div>Due today: {{ $jobRequest->due_today_items_count }}</div>
+                                        <div class="{{ $jobRequest->overdue_items_count > 0 ? 'font-semibold text-red-700' : 'text-gray-500' }}">Overdue: {{ $jobRequest->overdue_items_count }}</div>
+                                    </td>
                                     <td class="px-4 py-3">
                                         <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ in_array($jobRequest->status, ['open', 'reopened'], true) ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700' }}">
                                             {{ str_replace('_', ' ', \Illuminate\Support\Str::title($jobRequest->status)) }}

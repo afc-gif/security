@@ -45,9 +45,20 @@
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Status</div>
-                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($jobItem->status) { 'open', 'reopened' => 'bg-blue-100 text-blue-800', 'claimed' => 'bg-blue-100 text-blue-800', 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'rejected' => 'bg-red-100 text-red-800', default => 'bg-gray-200 text-gray-700' } }}">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($jobItem->status) { 'open', 'reopened' => 'bg-blue-100 text-blue-800', 'claimed' => 'bg-blue-100 text-blue-800', 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'overdue', 'rejected' => 'bg-red-100 text-red-800', 'closed' => 'bg-gray-300 text-gray-800', default => 'bg-gray-200 text-gray-700' } }}">
                         {{ str_replace('_', ' ', \Illuminate\Support\Str::title($jobItem->status)) }}
                     </span>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Due Date</div>
+                    <div class="{{ $jobItem->isOverdue() ? 'font-semibold text-red-700' : 'text-gray-900' }}">
+                        {{ $jobItem->due_date?->format('d M Y H:i') ?? '—' }}
+                        @if($jobItem->isOverdue())
+                            (overdue)
+                        @elseif($jobItem->due_date?->isToday())
+                            (due today)
+                        @endif
+                    </div>
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Submitted At</div>
@@ -55,6 +66,20 @@
                 </div>
             </div>
         </div>
+
+        @if(in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_OVERDUE, \App\Models\JobRequestItem::STATUS_CLOSED, \App\Models\JobRequestItem::STATUS_REJECTED], true))
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Reopen Job</h2>
+                <form method="POST" action="{{ route('admin.job-items.reopen', $jobItem) }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Admin Note</label>
+                        <textarea name="admin_note" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('admin_note') }}</textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold">Reopen Job</button>
+                </form>
+            </div>
+        @endif
 
         @php($latestAttempt = $jobItem->attempts->first())
 

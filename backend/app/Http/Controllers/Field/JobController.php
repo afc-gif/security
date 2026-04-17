@@ -41,6 +41,7 @@ class JobController extends Controller
                             JobRequestItem::STATUS_SUBMITTED,
                             JobRequestItem::STATUS_RETURNED,
                             JobRequestItem::STATUS_APPROVED,
+                            JobRequestItem::STATUS_OVERDUE,
                         ]);
                 })->orWhereHas('attempts', function ($attemptQuery) use ($userId) {
                     $attemptQuery->where('user_id', $userId)
@@ -60,6 +61,10 @@ class JobController extends Controller
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->whereIn('status', [JobRequestItem::STATUS_OPEN, JobRequestItem::STATUS_REOPENED])
+                ->where(function ($query) {
+                    $query->whereNull('due_date')
+                        ->orWhere('due_date', '>=', now());
+                })
                 ->lockForUpdate()
                 ->first();
 
@@ -89,6 +94,13 @@ class JobController extends Controller
             'attempts' => fn ($query) => $query->where('user_id', auth()->id())->latest('id'),
         ]);
 
+        $jobItem->markOverdueIfPast();
+        $jobItem->refresh()->load([
+            'jobRequest.client',
+            'serviceCategory',
+            'attempts' => fn ($query) => $query->where('user_id', auth()->id())->latest('id'),
+        ]);
+
         return view('field.jobs.show', compact('jobItem'));
     }
 
@@ -110,6 +122,12 @@ class JobController extends Controller
                 abort(409, 'This job cannot be submitted in its current state.');
             }
 
+            if ($lockedItem->isOverdue()) {
+                $lockedItem->markOverdueIfPast();
+
+                return;
+            }
+
             $lockedItem->update([
                 'status' => JobRequestItem::STATUS_SUBMITTED,
                 'submitted_at' => now(),
@@ -122,6 +140,14 @@ class JobController extends Controller
                 'notes' => $validated['notes'],
             ]);
         });
+
+        $jobItem->refresh();
+
+        if ($jobItem->status === JobRequestItem::STATUS_OVERDUE) {
+            return redirect()
+                ->route('field.jobs.show', $jobItem)
+                ->withErrors(['deadline' => 'Submission deadline exceeded. Contact admin.']);
+        }
 
         return redirect()
             ->route('field.jobs.show', $jobItem)

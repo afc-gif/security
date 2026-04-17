@@ -13,6 +13,9 @@ class JobItemController extends Controller
 {
     public function show(JobRequestItem $jobItem)
     {
+        $jobItem->markOverdueIfPast();
+        $jobItem->refresh();
+
         $jobItem->load([
             'jobRequest.client',
             'serviceCategory',
@@ -83,6 +86,52 @@ class JobItemController extends Controller
                 'return' => 'Job returned for correction.',
                 'reject' => 'Job rejected and reopened.',
             });
+    }
+
+    public function reopen(Request $request, JobRequestItem $jobItem)
+    {
+        $validated = $request->validate([
+            'admin_note' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($jobItem, $request, $validated) {
+            $lockedItem = JobRequestItem::query()
+                ->where('id', $jobItem->id)
+                ->whereIn('status', [
+                    JobRequestItem::STATUS_OVERDUE,
+                    JobRequestItem::STATUS_CLOSED,
+                    JobRequestItem::STATUS_REJECTED,
+                ])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedItem) {
+                abort(409, 'This job item cannot be reopened in its current state.');
+            }
+
+            $lockedItem->update([
+                'status' => JobRequestItem::STATUS_REOPENED,
+                'claimed_by' => null,
+                'claimed_at' => null,
+                'submitted_at' => null,
+                'reopened_at' => now(),
+            ]);
+
+            $adminNote = trim((string) ($validated['admin_note'] ?? ''));
+
+            if ($adminNote !== '') {
+                JobItemAttempt::create([
+                    'job_request_item_id' => $lockedItem->id,
+                    'user_id' => $request->user()->id,
+                    'status' => JobRequestItem::STATUS_REOPENED,
+                    'notes' => "Reopened by admin: {$adminNote}",
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('admin.job-items.show', $jobItem)
+            ->with('success', 'Job reopened successfully.');
     }
 
     private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote): void

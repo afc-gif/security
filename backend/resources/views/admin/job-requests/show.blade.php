@@ -61,7 +61,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach($jobRequest->items as $item)
                         @php
-                            $itemStatusClass = match ($item->status) {
+                            $displayStatus = $item->isOverdue() ? \App\Models\JobRequestItem::STATUS_OVERDUE : $item->status;
+                            $itemStatusClass = match ($displayStatus) {
+                                'overdue' => 'bg-red-100 text-red-800',
+                                'closed' => 'bg-gray-300 text-gray-800',
                                 'open', 'reopened' => 'bg-blue-100 text-blue-800',
                                 'claimed' => 'bg-blue-100 text-blue-800',
                                 'submitted' => 'bg-yellow-100 text-yellow-800',
@@ -80,7 +83,7 @@
                                     @endif
                                 </div>
                                 <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold whitespace-nowrap {{ $itemStatusClass }}">
-                                    {{ str_replace('_', ' ', \Illuminate\Support\Str::title($item->status)) }}
+                                    {{ str_replace('_', ' ', \Illuminate\Support\Str::title($displayStatus)) }}
                                 </span>
                             </div>
 
@@ -91,7 +94,14 @@
                                 </div>
                                 <div>
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Due Date</div>
-                                    <div class="text-gray-900">{{ $item->due_date?->format('d M Y H:i') ?? '—' }}</div>
+                                    <div class="{{ $item->isOverdue() ? 'font-semibold text-red-700' : 'text-gray-900' }}">
+                                        {{ $item->due_date?->format('d M Y H:i') ?? '—' }}
+                                        @if($item->isOverdue())
+                                            (overdue)
+                                        @elseif($item->due_date?->isToday())
+                                            (due today)
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                             <div class="mt-4">

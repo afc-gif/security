@@ -36,6 +36,7 @@
         .status.returned { background: #ffedd5; color: #9a3412; }
         .status.approved { background: #dcfce7; color: #166534; }
         .status.reopened { background: #e0f2fe; color: #075985; }
+        .status.overdue { background: #fee2e2; color: #991b1b; }
         .status.rejected { background: #fee2e2; color: #991b1b; }
         textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; resize: vertical; }
         .notice { padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); margin-bottom: 12px; }
@@ -43,6 +44,8 @@
         .error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
         .locked { border-color: #fde68a; background: #fffbeb; color: #92400e; }
         .admin-note { margin-top: 10px; padding: 12px; border-radius: 8px; border: 1px solid #fed7aa; background: #fff7ed; color: #9a3412; white-space: pre-line; }
+        .deadline.overdue { color: #991b1b; }
+        .deadline.today { color: #92400e; }
 
         @media (max-width: 640px) {
             .link, .button { width: 100%; }
@@ -71,9 +74,10 @@
 
         @php
             $latestOwnAttempt = $jobItem->attempts->first();
+            $isOverdue = $jobItem->isOverdue();
             $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
                 ? \App\Models\JobItemAttempt::STATUS_REJECTED
-                : $jobItem->status;
+                : ($isOverdue ? \App\Models\JobRequestItem::STATUS_OVERDUE : $jobItem->status);
             $adminNote = null;
 
             if (in_array($latestOwnAttempt?->status, [\App\Models\JobItemAttempt::STATUS_RETURNED, \App\Models\JobItemAttempt::STATUS_REJECTED], true)) {
@@ -103,13 +107,26 @@
                         <span class="status {{ $displayStatus }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($displayStatus)) }}</span>
                     </div>
                 </div>
+                <div>
+                    <div class="label">Due Date</div>
+                    <div class="value deadline {{ $isOverdue ? 'overdue' : ($jobItem->due_date?->isToday() ? 'today' : '') }}">
+                        {{ $jobItem->due_date?->format('d M Y H:i') ?? '—' }}
+                        @if($isOverdue)
+                            (overdue)
+                        @elseif($jobItem->due_date?->isToday())
+                            (due today)
+                        @endif
+                    </div>
+                </div>
             </div>
         </section>
 
         <section class="panel" aria-labelledby="submission-title">
             <h2 id="submission-title">Job Report</h2>
 
-            @if(in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_CLAIMED, \App\Models\JobRequestItem::STATUS_RETURNED], true))
+            @if($isOverdue)
+                <div class="notice error">Submission deadline exceeded. Contact admin.</div>
+            @elseif(in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_CLAIMED, \App\Models\JobRequestItem::STATUS_RETURNED], true))
                 @if($jobItem->status === \App\Models\JobRequestItem::STATUS_RETURNED)
                     <div class="notice locked">
                         This job was returned for updates. Submit the corrected report when ready.

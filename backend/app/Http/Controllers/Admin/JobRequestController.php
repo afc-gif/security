@@ -16,6 +16,30 @@ class JobRequestController extends Controller
     {
         $jobRequests = JobRequest::with('client')
             ->withCount('items')
+            ->withCount([
+                'items as overdue_items_count' => fn ($query) => $query
+                    ->where(function ($overdueQuery) {
+                        $overdueQuery->where('status', JobRequestItem::STATUS_OVERDUE)
+                            ->orWhere(function ($dateQuery) {
+                                $dateQuery->whereNotNull('due_date')
+                                    ->where('due_date', '<', now())
+                                    ->whereIn('status', [
+                                        JobRequestItem::STATUS_OPEN,
+                                        JobRequestItem::STATUS_CLAIMED,
+                                        JobRequestItem::STATUS_RETURNED,
+                                        JobRequestItem::STATUS_REOPENED,
+                                    ]);
+                            });
+                    }),
+                'items as due_today_items_count' => fn ($query) => $query
+                    ->whereDate('due_date', today())
+                    ->whereIn('status', [
+                        JobRequestItem::STATUS_OPEN,
+                        JobRequestItem::STATUS_CLAIMED,
+                        JobRequestItem::STATUS_RETURNED,
+                        JobRequestItem::STATUS_REOPENED,
+                    ]),
+            ])
             ->latest()
             ->paginate(20);
 

@@ -210,6 +210,22 @@
                     <strong>{{ $completedTasks ?? 0 }}</strong>
                     <span>Completed tasks</span>
                 </div>
+                <div class="stat">
+                    <strong>{{ $myClaimedJobs ?? 0 }}</strong>
+                    <span>Claimed jobs</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $returnedJobs ?? 0 }}</strong>
+                    <span>Returned jobs</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $overdueJobs ?? 0 }}</strong>
+                    <span>Overdue jobs</span>
+                </div>
+                <div class="stat">
+                    <strong>{{ $dueTodayJobs ?? 0 }}</strong>
+                    <span>Due today</span>
+                </div>
             </div>
 
             <div class="nav" style="margin:0;">

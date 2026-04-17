@@ -43,7 +43,11 @@
         .status.returned { background: #ffedd5; color: #9a3412; }
         .status.approved { background: #dcfce7; color: #166534; }
         .status.reopened { background: #e0f2fe; color: #075985; }
+        .status.overdue { background: #fee2e2; color: #991b1b; }
         .status.rejected { background: #fee2e2; color: #991b1b; }
+        .deadline { font-weight: 700; }
+        .deadline.today { color: #92400e; }
+        .deadline.overdue { color: #991b1b; }
         .empty, .notice { padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); text-align: center; }
         .success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; margin-bottom: 12px; }
         .error { border-color: #fecaca; background: #fef2f2; color: var(--danger); margin-bottom: 12px; }
@@ -105,6 +109,15 @@
                             <div class="meta">
                                 <div>Client: {{ $job->jobRequest?->client?->client_name ?? '—' }}</div>
                                 <div>Category: {{ $job->serviceCategory?->name ?? '—' }}</div>
+                                <div>
+                                    Due:
+                                    <span class="deadline {{ $job->due_date?->isToday() ? 'today' : '' }}">
+                                        {{ $job->due_date?->format('d M Y H:i') ?? '—' }}
+                                        @if($job->due_date?->isToday())
+                                            (due today)
+                                        @endif
+                                    </span>
+                                </div>
                             </div>
                             <form method="POST" action="{{ route('field.jobs.claim', $job) }}">
                                 @csrf
@@ -134,7 +147,7 @@
                             $latestOwnAttempt = $job->attempts->first();
                             $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
                                 ? \App\Models\JobItemAttempt::STATUS_REJECTED
-                                : $job->status;
+                                : ($job->isOverdue() ? \App\Models\JobRequestItem::STATUS_OVERDUE : $job->status);
                         @endphp
                         <article class="item">
                             <div class="item-head">
@@ -148,6 +161,17 @@
                                 <div>Client: {{ $job->jobRequest?->client?->client_name ?? '—' }}</div>
                                 <div>Category: {{ $job->serviceCategory?->name ?? '—' }}</div>
                                 <div>Claimed: {{ $job->claimed_at?->format('d M Y H:i') ?? '—' }}</div>
+                                <div>
+                                    Due:
+                                    <span class="deadline {{ $job->isOverdue() ? 'overdue' : ($job->due_date?->isToday() ? 'today' : '') }}">
+                                        {{ $job->due_date?->format('d M Y H:i') ?? '—' }}
+                                        @if($job->isOverdue())
+                                            (overdue)
+                                        @elseif($job->due_date?->isToday())
+                                            (due today)
+                                        @endif
+                                    </span>
+                                </div>
                             </div>
                             <a class="button secondary" href="{{ route('field.jobs.show', $job) }}">Open Job</a>
                         </article>

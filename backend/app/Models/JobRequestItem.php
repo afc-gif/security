@@ -21,6 +21,7 @@ class JobRequestItem extends Model
     const STATUS_RETURNED = 'returned';
     const STATUS_REOPENED = 'reopened';
     const STATUS_OVERDUE = 'overdue';
+    const STATUS_CLOSED = 'closed';
 
     // Priority Constants
     const PRIORITY_LOW = 'low';
@@ -56,7 +57,61 @@ class JobRequestItem extends Model
      */
     public function scopeAvailable(Builder $query): Builder
     {
-        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_REOPENED]);
+        return $query
+            ->whereIn('status', [self::STATUS_OPEN, self::STATUS_REOPENED])
+            ->where(function (Builder $dateQuery) {
+                $dateQuery->whereNull('due_date')
+                    ->orWhere('due_date', '>=', now());
+            });
+    }
+
+    /**
+     * Determine if this item is past deadline and still actionable.
+     */
+    public function isOverdue(): bool
+    {
+        return $this->status === self::STATUS_OVERDUE || (
+            $this->due_date !== null
+            && now()->greaterThan($this->due_date)
+            && in_array($this->status, [
+                self::STATUS_OPEN,
+                self::STATUS_CLAIMED,
+                self::STATUS_RETURNED,
+                self::STATUS_REOPENED,
+            ], true)
+        );
+    }
+
+    /**
+     * Determine if this item can still be claimed.
+     */
+    public function isClaimable(): bool
+    {
+        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_REOPENED], true)
+            && !$this->isOverdue();
+    }
+
+    /**
+     * Determine if this item can still be submitted.
+     */
+    public function isSubmittable(): bool
+    {
+        return in_array($this->status, [self::STATUS_CLAIMED, self::STATUS_RETURNED], true)
+            && !$this->isOverdue();
+    }
+
+    /**
+     * Persist overdue status when the item is touched by field or admin flows.
+     */
+    public function markOverdueIfPast(): bool
+    {
+        if ($this->status !== self::STATUS_OVERDUE && $this->isOverdue()) {
+            $this->forceFill(['status' => self::STATUS_OVERDUE])->save();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
