@@ -48,6 +48,14 @@
         ->limit(4)
         ->get();
 
+    $currentProjects = \App\Models\Project::query()
+        ->with(['client', 'activeEditor'])
+        ->where('status', '!=', 'completed')
+        ->latest('updated_at')
+        ->latest('id')
+        ->limit(4)
+        ->get();
+
     $statusClass = function ($status, $isOverdue = false) {
         if ($isOverdue) {
             return 'overdue';
@@ -139,7 +147,64 @@
                     <strong>View Tasks</strong>
                     <span>&rarr;</span>
                 </a>
+                <a class="action-card" href="{{ route('field.projects.index') }}">
+                    <strong>View Projects</strong>
+                    <span>&rarr;</span>
+                </a>
             </div>
+        </section>
+
+        <section class="section" aria-labelledby="projects-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="projects-title">Current Projects</h2>
+                    <p class="subtext">Available project work for field staff.</p>
+                </div>
+            </div>
+
+            @if($currentProjects->count() === 0)
+                <div class="empty-state">No active projects right now.</div>
+            @else
+                <div class="card-grid">
+                    @foreach($currentProjects as $project)
+                        @php
+                            $isLocked = $project->isBeingEdited();
+                            $lockExpired = $project->editingLockExpired();
+                            $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
+                        @endphp
+                        <article class="job-card">
+                            <div class="card-head">
+                                <div>
+                                    <h3 class="card-title">{{ $project->project_code }}</h3>
+                                    <p class="card-subtitle">{{ $project->title }}</p>
+                                </div>
+                                <span class="status {{ $project->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}</span>
+                            </div>
+
+                            <div class="meta">
+                                <div>Client: {{ $project->client?->client_name ?? '-' }}</div>
+                                <div>
+                                    @if($lockExpired)
+                                        Previous update session expired. You can continue this project.
+                                    @elseif($lockedByMe)
+                                        Update lock: You are updating this project
+                                    @elseif($isLocked)
+                                        Currently being updated by {{ $project->activeEditor?->name ?? 'another field staff member' }}
+                                    @else
+                                        Available to continue
+                                    @endif
+                                </div>
+                                <div class="progress">
+                                    <div class="bar"><span style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></span></div>
+                                    <strong>{{ $project->progress_percentage ?? 0 }}%</strong>
+                                </div>
+                            </div>
+
+                            <a class="card-button" href="{{ route('field.projects.show', $project) }}">Open Project</a>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
         </section>
 
         <section class="section" aria-labelledby="urgent-title">
