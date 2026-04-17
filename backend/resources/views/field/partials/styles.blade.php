@@ -636,10 +636,10 @@
         left: 50%;
         bottom: 12px;
         z-index: 30;
-        width: min(620px, calc(100% - 24px));
+        width: min(460px, calc(100% - 24px));
         transform: translateX(-50%);
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 5px;
         padding: 7px;
         border: 1px solid rgba(217, 226, 236, 0.95);

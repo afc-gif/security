@@ -1,70 +1,12 @@
 @php
-    $userId = auth()->id();
-
-    $availableJobsCount = \App\Models\JobRequestItem::query()
-        ->available()
-        ->when($userId, function ($query) use ($userId) {
-            $query->whereNotExists(function ($attemptQuery) use ($userId) {
-                $attemptQuery->selectRaw('1')
-                    ->from('job_item_attempts')
-                    ->whereColumn('job_item_attempts.job_request_item_id', 'job_request_items.id')
-                    ->where('job_item_attempts.user_id', $userId)
-                    ->where('job_item_attempts.status', \App\Models\JobItemAttempt::STATUS_REJECTED);
-            });
-        })
-        ->count();
-
-    $urgentJobs = \App\Models\JobRequestItem::query()
-        ->with(['jobRequest.client', 'serviceCategory'])
-        ->where('claimed_by', $userId)
-        ->where(function ($query) {
-            $query->where('status', \App\Models\JobRequestItem::STATUS_RETURNED)
-                ->orWhere('status', \App\Models\JobRequestItem::STATUS_OVERDUE)
-                ->orWhere(function ($overdueQuery) {
-                    $overdueQuery->whereNotNull('due_date')
-                        ->where('due_date', '<', now())
-                        ->whereIn('status', [
-                            \App\Models\JobRequestItem::STATUS_CLAIMED,
-                            \App\Models\JobRequestItem::STATUS_RETURNED,
-                        ]);
-                });
-        })
-        ->orderByRaw("CASE WHEN status = ? THEN 0 ELSE 1 END", [\App\Models\JobRequestItem::STATUS_OVERDUE])
-        ->orderBy('due_date')
-        ->limit(4)
-        ->get();
-
-    $recentJobs = \App\Models\JobRequestItem::query()
-        ->with(['jobRequest.client', 'serviceCategory'])
-        ->where('claimed_by', $userId)
-        ->whereIn('status', [
-            \App\Models\JobRequestItem::STATUS_CLAIMED,
-            \App\Models\JobRequestItem::STATUS_SUBMITTED,
-            \App\Models\JobRequestItem::STATUS_APPROVED,
-            \App\Models\JobRequestItem::STATUS_RETURNED,
-            \App\Models\JobRequestItem::STATUS_OVERDUE,
-        ])
-        ->latest('updated_at')
-        ->limit(4)
-        ->get();
-
-    $currentProjects = \App\Models\Project::query()
-        ->with(['client', 'activeEditor'])
-        ->where(function ($query) {
-            $query->whereNull('status')
-                ->orWhere('status', '!=', 'completed');
-        })
-        ->latest('updated_at')
-        ->latest('id')
-        ->limit(6)
-        ->get();
-
-    $currentProjectsCount = \App\Models\Project::query()
-        ->where(function ($query) {
-            $query->whereNull('status')
-                ->orWhere('status', '!=', 'completed');
-        })
-        ->count();
+    $availableJobsCount = $availableJobsCount ?? 0;
+    $myClaimedJobs = $myClaimedJobs ?? 0;
+    $returnedJobs = $returnedJobs ?? 0;
+    $overdueJobs = $overdueJobs ?? 0;
+    $urgentJobs = $urgentJobs ?? collect();
+    $recentJobs = $recentJobs ?? collect();
+    $currentProjects = $currentProjects ?? collect();
+    $currentProjectsCount = $currentProjectsCount ?? 0;
 
     $statusClass = function ($status, $isOverdue = false) {
         if ($isOverdue) {
