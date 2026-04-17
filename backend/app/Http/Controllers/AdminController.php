@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Client;
+use App\Models\JobRequest;
+use App\Models\JobRequestItem;
+use App\Models\Project;
 use App\Models\Solution;
 use App\Models\SolutionItem;
 use App\Models\StockAlert;
@@ -40,14 +44,103 @@ class AdminController extends Controller
         $totalRevenue = Order::where('status', 'completed')->sum('total_amount');
         $totalUsers = User::where('role', 'user')->count();
         $recentOrders = Order::with('user')->latest()->limit(5)->get();
+        $clientsCount = $this->dashboardPreviewValue(fn () => Client::count(), 0);
+        $clientsPreview = $this->dashboardPreviewValue(fn () => Client::query()
+            ->latest()
+            ->limit(3)
+            ->get(), collect());
+        $jobRequestsCount = $this->dashboardPreviewValue(fn () => JobRequest::count(), 0);
+        $jobRequestsPreview = $this->dashboardPreviewValue(fn () => JobRequest::query()
+            ->with('client')
+            ->latest()
+            ->limit(3)
+            ->get(), collect());
+        $pendingReviewCount = $this->dashboardPreviewValue(fn () => JobRequestItem::query()
+            ->where('status', JobRequestItem::STATUS_SUBMITTED)
+            ->count(), 0);
+        $overdueItemsCount = $this->dashboardPreviewValue(fn () => $this->overdueJobItemsQuery()->count(), 0);
+        $jobInboxPreview = $this->dashboardPreviewValue(fn () => JobRequestItem::query()
+            ->with(['jobRequest.client', 'serviceCategory'])
+            ->where(function ($query) {
+                $query->where('status', JobRequestItem::STATUS_SUBMITTED)
+                    ->orWhere('status', JobRequestItem::STATUS_OVERDUE)
+                    ->orWhere(function ($overdueQuery) {
+                        $overdueQuery->whereNotNull('due_date')
+                            ->where('due_date', '<', now())
+                            ->whereIn('status', [
+                                JobRequestItem::STATUS_OPEN,
+                                JobRequestItem::STATUS_CLAIMED,
+                                JobRequestItem::STATUS_RETURNED,
+                                JobRequestItem::STATUS_REOPENED,
+                            ]);
+                    });
+            })
+            ->latest('updated_at')
+            ->latest('id')
+            ->limit(3)
+            ->get(), collect());
+        $activeProjectsCount = $this->dashboardPreviewValue(fn () => $this->activeProjectsQuery()->count(), 0);
+        $projectsPreview = $this->dashboardPreviewValue(fn () => $this->activeProjectsQuery()
+            ->with(['client', 'activeEditor'])
+            ->latest('updated_at')
+            ->latest('id')
+            ->limit(3)
+            ->get(), collect());
 
         return view('admin.dashboard', compact(
             'totalProducts',
             'totalOrders',
             'totalRevenue',
             'totalUsers',
-            'recentOrders'
+            'recentOrders',
+            'clientsCount',
+            'clientsPreview',
+            'jobRequestsCount',
+            'jobRequestsPreview',
+            'pendingReviewCount',
+            'overdueItemsCount',
+            'jobInboxPreview',
+            'activeProjectsCount',
+            'projectsPreview'
         ));
+    }
+
+    private function overdueJobItemsQuery()
+    {
+        return JobRequestItem::query()
+            ->where(function ($query) {
+                $query->where('status', JobRequestItem::STATUS_OVERDUE)
+                    ->orWhere(function ($overdueQuery) {
+                        $overdueQuery->whereNotNull('due_date')
+                            ->where('due_date', '<', now())
+                            ->whereIn('status', [
+                                JobRequestItem::STATUS_OPEN,
+                                JobRequestItem::STATUS_CLAIMED,
+                                JobRequestItem::STATUS_RETURNED,
+                                JobRequestItem::STATUS_REOPENED,
+                            ]);
+                    });
+            });
+    }
+
+    private function activeProjectsQuery()
+    {
+        return Project::query()
+            ->where(function ($query) {
+                $query->whereNull('status')
+                    ->orWhere('status', '!=', 'completed');
+            });
+    }
+
+    private function dashboardPreviewValue(callable $callback, mixed $fallback): mixed
+    {
+        try {
+            return $callback();
+        } catch (\Throwable $exception) {
+            Log::warning('Admin dashboard preview data unavailable: ' . $exception->getMessage());
+
+            return $fallback;
+        }
     }
 
     // Products Management

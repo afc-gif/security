@@ -162,6 +162,20 @@
         .panel.active { display: block; }
         .card { background: #fff; border: 1px solid var(--brand-border); border-radius: 8px; padding: 16px; box-shadow: var(--brand-shadow); }
         .card h2 { margin: 0 0 8px; font-size: 18px; font-family: 'Manrope', system-ui, -apple-system, sans-serif; font-weight: 800; }
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
+        .preview-card { border: 1px solid var(--brand-border); border-radius: 8px; background: #fff; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); display: grid; gap: 12px; }
+        .preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .preview-title { margin: 0; font-size: 15px; font-weight: 800; }
+        .preview-count { font-size: 24px; line-height: 1; font-weight: 900; color: var(--brand-dark); }
+        .preview-list { display: grid; gap: 8px; }
+        .preview-item { border: 1px solid var(--brand-border); border-radius: 8px; padding: 10px; background: #f8fbff; }
+        .preview-item strong { display: block; font-size: 14px; line-height: 1.25; }
+        .preview-item span { display: block; margin-top: 3px; color: var(--brand-muted); font-size: 12px; line-height: 1.35; }
+        .preview-empty { border: 1px dashed var(--brand-border); border-radius: 8px; padding: 14px; color: var(--brand-muted); font-size: 13px; font-weight: 700; text-align: center; background: #f8fbff; }
+        .preview-actions { display: flex; justify-content: flex-start; }
+        .preview-button { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 12px; border-radius: 8px; background: var(--brand-dark); color: #fff; font-weight: 800; font-size: 13px; }
+        .preview-meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .preview-pill { display: inline-flex; align-items: center; border: 1px solid var(--brand-border); border-radius: 999px; padding: 4px 8px; background: #fff; color: var(--brand-muted); font-size: 11px; font-weight: 800; }
         form { display: grid; gap: 8px; margin-top: 10px; }
         label { font-size: 13px; color: var(--brand-muted); }
         input, textarea, select {
@@ -300,6 +314,19 @@
 @endpush
 
 @section('content')
+        @php
+            $clientsCount = $clientsCount ?? 0;
+            $clientsPreview = collect($clientsPreview ?? []);
+            $jobRequestsCount = $jobRequestsCount ?? 0;
+            $jobRequestsPreview = collect($jobRequestsPreview ?? []);
+            $pendingReviewCount = $pendingReviewCount ?? 0;
+            $overdueItemsCount = $overdueItemsCount ?? 0;
+            $jobInboxPreview = collect($jobInboxPreview ?? []);
+            $activeProjectsCount = $activeProjectsCount ?? 0;
+            $projectsPreview = collect($projectsPreview ?? []);
+            $formatPreviewStatus = fn ($status) => str_replace('_', ' ', \Illuminate\Support\Str::title($status ?? 'Unknown'));
+        @endphp
+
         <div class="hero">
             <div class="hero-top">
                 <div>
@@ -344,6 +371,125 @@
                         <button class="btn-ghost" onclick="switchTab('categories')">Manage Categories</button>
                         <button class="btn-ghost" onclick="switchTab('orders')">View Orders</button>
                         <button class="btn-ghost" onclick="switchTab('pos')">Open POS</button>
+                    </div>
+
+                    <div class="preview-grid" aria-label="Operations preview">
+                        <article class="preview-card">
+                            <div class="preview-head">
+                                <div>
+                                    <h3 class="preview-title">Clients</h3>
+                                    <p class="muted">Latest client records</p>
+                                </div>
+                                <div class="preview-count">{{ $clientsCount }}</div>
+                            </div>
+                            @if($clientsPreview->isEmpty())
+                                <div class="preview-empty">No clients yet.</div>
+                            @else
+                                <div class="preview-list">
+                                    @foreach($clientsPreview as $client)
+                                        <div class="preview-item">
+                                            <strong>{{ $client->client_name ?? 'Unnamed client' }}</strong>
+                                            <span>{{ $client->email ?? $client->phone ?? 'No contact details' }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="preview-actions">
+                                <a class="preview-button" href="{{ route('admin.clients.index') }}">View Clients</a>
+                            </div>
+                        </article>
+
+                        <article class="preview-card">
+                            <div class="preview-head">
+                                <div>
+                                    <h3 class="preview-title">Job Requests</h3>
+                                    <p class="muted">Latest requests</p>
+                                </div>
+                                <div class="preview-count">{{ $jobRequestsCount }}</div>
+                            </div>
+                            @if($jobRequestsPreview->isEmpty())
+                                <div class="preview-empty">No job requests yet.</div>
+                            @else
+                                <div class="preview-list">
+                                    @foreach($jobRequestsPreview as $jobRequest)
+                                        <div class="preview-item">
+                                            <strong>{{ $jobRequest->title ?? 'Untitled request' }}</strong>
+                                            <span>{{ $jobRequest->client?->client_name ?? 'Client unavailable' }}</span>
+                                            <div class="preview-meta-row">
+                                                <span class="preview-pill">{{ $formatPreviewStatus($jobRequest->status) }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="preview-actions">
+                                <a class="preview-button" href="{{ route('admin.job-requests.index') }}">View Job Requests</a>
+                            </div>
+                        </article>
+
+                        <article class="preview-card">
+                            <div class="preview-head">
+                                <div>
+                                    <h3 class="preview-title">Job Inbox</h3>
+                                    <p class="muted">Items needing attention</p>
+                                </div>
+                                <div>
+                                    <div class="preview-count">{{ $pendingReviewCount }}</div>
+                                    <p class="muted">pending review</p>
+                                </div>
+                            </div>
+                            <div class="preview-meta-row">
+                                <span class="preview-pill">{{ $overdueItemsCount }} overdue</span>
+                            </div>
+                            @if($jobInboxPreview->isEmpty())
+                                <div class="preview-empty">No pending job items.</div>
+                            @else
+                                <div class="preview-list">
+                                    @foreach($jobInboxPreview as $jobItem)
+                                        <div class="preview-item">
+                                            <strong>{{ $jobItem->jobRequest?->title ?? $jobItem->title ?? 'Job item' }}</strong>
+                                            <span>{{ $jobItem->jobRequest?->client?->client_name ?? 'Client unavailable' }}</span>
+                                            <div class="preview-meta-row">
+                                                <span class="preview-pill">{{ $formatPreviewStatus($jobItem->status) }}</span>
+                                                <span class="preview-pill">{{ $jobItem->serviceCategory?->name ?? 'Category unavailable' }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="preview-actions">
+                                <a class="preview-button" href="{{ route('admin.job-inbox.index') }}">Open Job Inbox</a>
+                            </div>
+                        </article>
+
+                        <article class="preview-card">
+                            <div class="preview-head">
+                                <div>
+                                    <h3 class="preview-title">Projects</h3>
+                                    <p class="muted">Active project work</p>
+                                </div>
+                                <div class="preview-count">{{ $activeProjectsCount }}</div>
+                            </div>
+                            @if($projectsPreview->isEmpty())
+                                <div class="preview-empty">No active projects yet.</div>
+                            @else
+                                <div class="preview-list">
+                                    @foreach($projectsPreview as $project)
+                                        <div class="preview-item">
+                                            <strong>{{ $project->title ?? $project->project_code ?? 'Project' }}</strong>
+                                            <span>{{ $project->client?->client_name ?? 'Client unavailable' }}</span>
+                                            <div class="preview-meta-row">
+                                                <span class="preview-pill">{{ (int) ($project->progress_percentage ?? 0) }}% progress</span>
+                                                <span class="preview-pill">{{ $formatPreviewStatus($project->status ?? 'active') }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="preview-actions">
+                                <a class="preview-button" href="{{ route('admin.projects.index') }}">View Projects</a>
+                            </div>
+                        </article>
                     </div>
                 </div>
             </section>
@@ -413,10 +559,114 @@
                             <p class="muted" style="margin:0;">Manage customer records for inspections and field work.</p>
                         </div>
                         <a href="{{ route('admin.clients.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
-                            👥 View All Clients
+                            View Clients
                         </a>
                     </div>
-                    <div class="list" id="clientList"></div>
+                    <div class="preview-head" style="margin-bottom:12px;">
+                        <div>
+                            <h3 class="preview-title">Total clients</h3>
+                            <p class="muted">Latest 3 records</p>
+                        </div>
+                        <div class="preview-count">{{ $clientsCount }}</div>
+                    </div>
+                    @if($clientsPreview->isEmpty())
+                        <div class="preview-empty">No clients yet.</div>
+                    @else
+                        <div class="preview-list">
+                            @foreach($clientsPreview as $client)
+                                <div class="preview-item">
+                                    <strong>{{ $client->client_name ?? 'Unnamed client' }}</strong>
+                                    <span>{{ $client->company_name ?? $client->contact_person ?? 'No company/contact person' }}</span>
+                                    <div class="preview-meta-row">
+                                        <span class="preview-pill">{{ $client->phone ?? 'No phone' }}</span>
+                                        <span class="preview-pill">{{ $client->status ?? 'active' }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
+
+            <section class="panel" data-section="job-requests">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Job Requests</h2>
+                            <p class="muted" style="margin:0;">Preview recent requests before opening the full job request page.</p>
+                        </div>
+                        <a href="{{ route('admin.job-requests.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            View Job Requests
+                        </a>
+                    </div>
+                    <div class="preview-head" style="margin-bottom:12px;">
+                        <div>
+                            <h3 class="preview-title">Total job requests</h3>
+                            <p class="muted">Latest 3 requests</p>
+                        </div>
+                        <div class="preview-count">{{ $jobRequestsCount }}</div>
+                    </div>
+                    @if($jobRequestsPreview->isEmpty())
+                        <div class="preview-empty">No job requests yet.</div>
+                    @else
+                        <div class="preview-list">
+                            @foreach($jobRequestsPreview as $jobRequest)
+                                <div class="preview-item">
+                                    <strong>{{ $jobRequest->title ?? 'Untitled request' }}</strong>
+                                    <span>{{ $jobRequest->client?->client_name ?? 'Client unavailable' }}</span>
+                                    <div class="preview-meta-row">
+                                        <span class="preview-pill">{{ $formatPreviewStatus($jobRequest->status) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
+
+            <section class="panel" data-section="job-inbox">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h2 style="margin:0 0 4px;">Job Inbox</h2>
+                            <p class="muted" style="margin:0;">Preview pending review and overdue job items.</p>
+                        </div>
+                        <a href="{{ route('admin.job-inbox.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            Open Job Inbox
+                        </a>
+                    </div>
+                    <div class="preview-grid" style="margin-top:0;">
+                        <div class="preview-card">
+                            <div class="preview-head">
+                                <h3 class="preview-title">Pending review</h3>
+                                <div class="preview-count">{{ $pendingReviewCount }}</div>
+                            </div>
+                        </div>
+                        <div class="preview-card">
+                            <div class="preview-head">
+                                <h3 class="preview-title">Overdue</h3>
+                                <div class="preview-count">{{ $overdueItemsCount }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;">
+                        @if($jobInboxPreview->isEmpty())
+                            <div class="preview-empty">No pending job items.</div>
+                        @else
+                            <div class="preview-list">
+                                @foreach($jobInboxPreview as $jobItem)
+                                    <div class="preview-item">
+                                        <strong>{{ $jobItem->jobRequest?->title ?? $jobItem->title ?? 'Job item' }}</strong>
+                                        <span>{{ $jobItem->jobRequest?->client?->client_name ?? 'Client unavailable' }}</span>
+                                        <div class="preview-meta-row">
+                                            <span class="preview-pill">{{ $formatPreviewStatus($jobItem->status) }}</span>
+                                            <span class="preview-pill">{{ $jobItem->serviceCategory?->name ?? 'Category unavailable' }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </section>
 
@@ -443,10 +693,32 @@
                             <p class="muted" style="margin:0;">Track client projects created manually or converted from inspections.</p>
                         </div>
                         <a href="{{ route('admin.projects.index') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
-                            View All Projects
+                            View Projects
                         </a>
                     </div>
-                    <div class="muted">Use the projects page to create and view project records.</div>
+                    <div class="preview-head" style="margin-bottom:12px;">
+                        <div>
+                            <h3 class="preview-title">Active projects</h3>
+                            <p class="muted">Latest 3 active projects</p>
+                        </div>
+                        <div class="preview-count">{{ $activeProjectsCount }}</div>
+                    </div>
+                    @if($projectsPreview->isEmpty())
+                        <div class="preview-empty">No active projects yet.</div>
+                    @else
+                        <div class="preview-list">
+                            @foreach($projectsPreview as $project)
+                                <div class="preview-item">
+                                    <strong>{{ $project->title ?? $project->project_code ?? 'Project' }}</strong>
+                                    <span>{{ $project->client?->client_name ?? 'Client unavailable' }}</span>
+                                    <div class="preview-meta-row">
+                                        <span class="preview-pill">{{ (int) ($project->progress_percentage ?? 0) }}% progress</span>
+                                        <span class="preview-pill">{{ $formatPreviewStatus($project->status ?? 'active') }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </section>
 
