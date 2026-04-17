@@ -139,6 +139,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->names('admin.clients');
 
     // Job Requests Management
+    Route::get('/job-inbox', [\App\Http\Controllers\Admin\JobInboxController::class, 'index'])
+        ->name('admin.job-inbox.index');
     Route::resource('job-requests', \App\Http\Controllers\Admin\JobRequestController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.job-requests');

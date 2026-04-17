@@ -16,6 +16,7 @@
         'operations' => [
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
             ['key' => 'job-requests', 'label' => 'Job Requests', 'route' => 'admin.job-requests.index', 'tab' => 'job-requests', 'icon' => 'JR'],
+            ['key' => 'job-inbox', 'label' => 'Job Inbox', 'route' => 'admin.job-inbox.index', 'tab' => 'job-inbox', 'icon' => 'JI'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
             ['key' => 'tasks', 'label' => 'Tasks', 'route' => 'admin.tasks.index', 'tab' => 'tasks', 'icon' => 'TK'],
             ['key' => 'field-reports', 'label' => 'Field Reports', 'route' => 'admin.field-reports.index', 'tab' => 'field-reports', 'icon' => 'FR'],
@@ -43,6 +44,7 @@
             'pos' => request()->routeIs('pos.*'),
             'clients' => request()->routeIs('admin.clients.*'),
             'job-requests' => request()->routeIs('admin.job-requests.*'),
+            'job-inbox' => request()->routeIs('admin.job-inbox.*'),
             'projects' => request()->routeIs('admin.projects.*'),
             'tasks' => request()->routeIs('admin.tasks.*'),
             'field-reports' => request()->routeIs('admin.field-reports.*'),
