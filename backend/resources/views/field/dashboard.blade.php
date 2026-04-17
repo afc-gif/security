@@ -189,9 +189,10 @@
                                         Available to continue
                                     @endif
                                 </div>
+                                @php($progressPercentage = min(100, max(0, (int) ($project->progress_percentage ?? 0))))
                                 <div class="progress">
-                                    <div class="bar"><span style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></span></div>
-                                    <strong>{{ $project->progress_percentage ?? 0 }}%</strong>
+                                    <div class="bar"><span @style(['width: ' . $progressPercentage . '%;'])></span></div>
+                                    <strong>{{ $progressPercentage }}%</strong>
                                 </div>
                             </div>
 
@@ -214,10 +215,6 @@
                 </a>
                 <a class="action-card" href="{{ route('field.jobs.index') }}">
                     <strong>Continue My Jobs</strong>
-                    <span>&rarr;</span>
-                </a>
-                <a class="action-card" href="{{ route('field.tasks.index') }}">
-                    <strong>View Tasks</strong>
                     <span>&rarr;</span>
                 </a>
                 <a class="action-card" href="{{ route('field.projects.index') }}">
