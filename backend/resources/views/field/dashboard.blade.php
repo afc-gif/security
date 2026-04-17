@@ -1,240 +1,215 @@
+@php
+    $userId = auth()->id();
+
+    $availableJobsCount = \App\Models\JobRequestItem::query()
+        ->available()
+        ->when($userId, function ($query) use ($userId) {
+            $query->whereNotExists(function ($attemptQuery) use ($userId) {
+                $attemptQuery->selectRaw('1')
+                    ->from('job_item_attempts')
+                    ->whereColumn('job_item_attempts.job_request_item_id', 'job_request_items.id')
+                    ->where('job_item_attempts.user_id', $userId)
+                    ->where('job_item_attempts.status', \App\Models\JobItemAttempt::STATUS_REJECTED);
+            });
+        })
+        ->count();
+
+    $urgentJobs = \App\Models\JobRequestItem::query()
+        ->with(['jobRequest.client', 'serviceCategory'])
+        ->where('claimed_by', $userId)
+        ->where(function ($query) {
+            $query->where('status', \App\Models\JobRequestItem::STATUS_RETURNED)
+                ->orWhere('status', \App\Models\JobRequestItem::STATUS_OVERDUE)
+                ->orWhere(function ($overdueQuery) {
+                    $overdueQuery->whereNotNull('due_date')
+                        ->where('due_date', '<', now())
+                        ->whereIn('status', [
+                            \App\Models\JobRequestItem::STATUS_CLAIMED,
+                            \App\Models\JobRequestItem::STATUS_RETURNED,
+                        ]);
+                });
+        })
+        ->orderByRaw("CASE WHEN status = ? THEN 0 ELSE 1 END", [\App\Models\JobRequestItem::STATUS_OVERDUE])
+        ->orderBy('due_date')
+        ->limit(4)
+        ->get();
+
+    $recentJobs = \App\Models\JobRequestItem::query()
+        ->with(['jobRequest.client', 'serviceCategory'])
+        ->where('claimed_by', $userId)
+        ->whereIn('status', [
+            \App\Models\JobRequestItem::STATUS_CLAIMED,
+            \App\Models\JobRequestItem::STATUS_SUBMITTED,
+            \App\Models\JobRequestItem::STATUS_APPROVED,
+            \App\Models\JobRequestItem::STATUS_RETURNED,
+            \App\Models\JobRequestItem::STATUS_OVERDUE,
+        ])
+        ->latest('updated_at')
+        ->limit(4)
+        ->get();
+
+    $statusClass = function ($status, $isOverdue = false) {
+        if ($isOverdue) {
+            return 'overdue';
+        }
+
+        return match ($status) {
+            \App\Models\JobRequestItem::STATUS_OPEN,
+            \App\Models\JobRequestItem::STATUS_REOPENED => 'open',
+            \App\Models\JobRequestItem::STATUS_CLAIMED => 'claimed',
+            \App\Models\JobRequestItem::STATUS_SUBMITTED => 'submitted',
+            \App\Models\JobRequestItem::STATUS_APPROVED => 'approved',
+            \App\Models\JobRequestItem::STATUS_RETURNED => 'returned',
+            \App\Models\JobRequestItem::STATUS_REJECTED => 'rejected',
+            \App\Models\JobRequestItem::STATUS_OVERDUE => 'overdue',
+            \App\Models\JobRequestItem::STATUS_CLOSED => 'closed',
+            default => 'closed',
+        };
+    };
+
+    $statusLabel = fn ($status) => str_replace('_', ' ', \Illuminate\Support\Str::title($status ?? 'unknown'));
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Staff Dashboard</title>
-    <style>
-        :root {
-            color-scheme: light;
-            --text: #111827;
-            --muted: #4b5563;
-            --border: #d1d5db;
-            --surface: #ffffff;
-            --page: #f3f4f6;
-            --accent: #047857;
-            --action: #0f766e;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
-            color: var(--text);
-            background: var(--page);
-        }
-
-        .page {
-            width: min(960px, 100%);
-            margin: 0 auto;
-            padding: 24px 16px;
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .nav {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 18px;
-        }
-
-        .brand {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .logout,
-        .button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 44px;
-            padding: 10px 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
-            color: var(--text);
-            font: inherit;
-            font-weight: 700;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .button.active {
-            background: var(--action);
-            border-color: var(--action);
-            color: #fff;
-        }
-
-        .button.primary {
-            background: var(--action);
-            border-color: var(--action);
-            color: #fff;
-        }
-
-        .panel {
-            padding: 24px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
-        }
-
-        .eyebrow {
-            margin: 0 0 8px;
-            color: var(--accent);
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0;
-        }
-
-        h1 {
-            margin: 0 0 12px;
-            font-size: 32px;
-            line-height: 1.2;
-        }
-
-        p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .stat {
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #f9fafb;
-        }
-
-        .stat strong {
-            display: block;
-            font-size: 28px;
-            line-height: 1;
-        }
-
-        .stat span {
-            display: block;
-            margin-top: 8px;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        @media (max-width: 640px) {
-            .topbar {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            h1 { font-size: 26px; }
-            .stats { grid-template-columns: 1fr; }
-            .button, .logout { width: 100%; }
-            .nav { display: grid; }
-        }
-    </style>
+    <title>ARTSCI Field</title>
+    @include('field.partials.styles')
 </head>
 <body>
-    <main class="page">
-        <div class="topbar">
-            <div class="brand">{{ config('app.name', 'Security') }}</div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="logout" type="submit">Log out</button>
-            </form>
-        </div>
+    <main class="app-shell">
+        @include('field.partials.header', [
+            'availableJobsCount' => $availableJobsCount,
+            'myClaimedJobs' => $myClaimedJobs ?? 0,
+            'overdueJobs' => $overdueJobs ?? 0,
+        ])
 
-        <nav class="nav" aria-label="Field navigation">
-            <a class="button active" href="{{ route('field.dashboard') }}">My Dashboard</a>
-            <a class="button" href="{{ route('field.inspections.index') }}">My Inspections</a>
-            <a class="button" href="{{ route('field.jobs.index') }}">Field Jobs</a>
-            <a class="button" href="{{ route('field.projects.index') }}">My Projects</a>
-            <a class="button" href="{{ route('field.tasks.index') }}">My Tasks</a>
-        </nav>
+        <section class="section" aria-labelledby="dashboard-title">
+            <p class="eyebrow">Field Dashboard</p>
+            <h1 id="dashboard-title">Today's work queue</h1>
+            <p class="subtext">Track claimable jobs, active submissions, projects, and tasks from one mobile-ready workspace.</p>
+        </section>
 
-        <section class="panel" aria-labelledby="field-dashboard-title">
-            <p class="eyebrow">Field Staff</p>
-            <h1 id="field-dashboard-title">Field staff dashboard</h1>
-            <p>Track assigned inspections, project work, and site reports.</p>
-
-            <div class="stats">
-                <div class="stat">
-                    <strong>{{ $totalInspections ?? 0 }}</strong>
-                    <span>Total inspections</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $pendingInspections ?? 0 }}</strong>
-                    <span>Pending inspections</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $completedInspections ?? 0 }}</strong>
-                    <span>Completed inspections</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $assignedProjects ?? 0 }}</strong>
-                    <span>Assigned projects</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $ongoingProjects ?? 0 }}</strong>
-                    <span>Ongoing projects</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $completedProjects ?? 0 }}</strong>
-                    <span>Completed projects</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $assignedTasks ?? 0 }}</strong>
-                    <span>Assigned tasks</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $pendingTasks ?? 0 }}</strong>
-                    <span>Pending tasks</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $completedTasks ?? 0 }}</strong>
-                    <span>Completed tasks</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $myClaimedJobs ?? 0 }}</strong>
-                    <span>Claimed jobs</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $returnedJobs ?? 0 }}</strong>
-                    <span>Returned jobs</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $overdueJobs ?? 0 }}</strong>
-                    <span>Overdue jobs</span>
-                </div>
-                <div class="stat">
-                    <strong>{{ $dueTodayJobs ?? 0 }}</strong>
-                    <span>Due today</span>
-                </div>
+        <section class="section" aria-labelledby="summary-title">
+            <div class="section-heading">
+                <h2 id="summary-title">Summary</h2>
             </div>
 
-            <div class="nav" style="margin:0;">
-                <a class="button primary" href="{{ route('field.inspections.index') }}">My Inspections</a>
-                <a class="button primary" href="{{ route('field.jobs.index') }}">Field Jobs</a>
-                <a class="button primary" href="{{ route('field.projects.index') }}">My Projects</a>
-                <a class="button primary" href="{{ route('field.tasks.index') }}">My Tasks</a>
+            <div class="summary-grid">
+                <article class="summary-card blue">
+                    <strong>{{ $availableJobsCount }}</strong>
+                    <span>Available Jobs</span>
+                    <small>Ready to claim</small>
+                </article>
+                <article class="summary-card blue">
+                    <strong>{{ $myClaimedJobs ?? 0 }}</strong>
+                    <span>My Claimed Jobs</span>
+                    <small>In progress</small>
+                </article>
+                <article class="summary-card orange">
+                    <strong>{{ $returnedJobs ?? 0 }}</strong>
+                    <span>Returned Jobs</span>
+                    <small>Needs fixing</small>
+                </article>
+                <article class="summary-card red">
+                    <strong>{{ $overdueJobs ?? 0 }}</strong>
+                    <span>Overdue Jobs</span>
+                    <small>Requires attention</small>
+                </article>
             </div>
         </section>
+
+        <section class="section" aria-labelledby="actions-title">
+            <div class="section-heading">
+                <h2 id="actions-title">Quick Actions</h2>
+            </div>
+
+            <div class="action-grid">
+                <a class="action-card" href="{{ route('field.jobs.index') }}">
+                    <strong>View Available Jobs</strong>
+                    <span>&rarr;</span>
+                </a>
+                <a class="action-card" href="{{ route('field.jobs.index') }}">
+                    <strong>Continue My Jobs</strong>
+                    <span>&rarr;</span>
+                </a>
+                <a class="action-card" href="{{ route('field.tasks.index') }}">
+                    <strong>View Tasks</strong>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="section" aria-labelledby="urgent-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="urgent-title">Urgent Items</h2>
+                    <p class="subtext">Overdue and returned jobs appear here first.</p>
+                </div>
+            </div>
+
+            @if($urgentJobs->count() === 0)
+                <div class="empty-state">No urgent jobs right now.</div>
+            @else
+                <div class="job-grid">
+                    @foreach($urgentJobs as $job)
+                        @php
+                            $isOverdue = $job->isOverdue();
+                            $displayStatus = $isOverdue ? \App\Models\JobRequestItem::STATUS_OVERDUE : $job->status;
+                            $buttonClass = $isOverdue ? 'danger' : ($job->status === \App\Models\JobRequestItem::STATUS_RETURNED ? 'warning' : '');
+                            $buttonLabel = $job->status === \App\Models\JobRequestItem::STATUS_RETURNED ? 'Fix Submission' : 'Continue';
+                        @endphp
+                        <article class="job-card">
+                            <div class="job-top">
+                                <div>
+                                    <h3 class="client-name">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</h3>
+                                    <p class="job-title">{{ $job->jobRequest?->title ?? $job->title ?? 'Job request unavailable' }}</p>
+                                </div>
+                                <span class="badge {{ $statusClass($displayStatus, $isOverdue) }}">{{ $statusLabel($displayStatus) }}</span>
+                            </div>
+
+                            <span class="category-pill">{{ $job->serviceCategory?->name ?? 'Service category' }}</span>
+
+                            <div class="job-meta">
+                                <span class="{{ $isOverdue ? 'due-overdue' : '' }}">Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}</span>
+                            </div>
+
+                            <a class="card-button {{ $buttonClass }}" href="{{ route('field.jobs.show', $job) }}">{{ $buttonLabel }}</a>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
+        <section class="section" aria-labelledby="activity-title">
+            <div class="section-heading">
+                <h2 id="activity-title">Recent Activity</h2>
+            </div>
+
+            @if($recentJobs->count() === 0)
+                <div class="empty-state">No recent job activity yet.</div>
+            @else
+                <div class="activity-list">
+                    @foreach($recentJobs as $job)
+                        @php
+                            $isOverdue = $job->isOverdue();
+                            $displayStatus = $isOverdue ? \App\Models\JobRequestItem::STATUS_OVERDUE : $job->status;
+                        @endphp
+                        <a class="activity-item" href="{{ route('field.jobs.show', $job) }}">
+                            <div>
+                                <strong>{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</strong>
+                                <span>{{ $job->serviceCategory?->name ?? 'Service category' }} &middot; {{ $job->updated_at?->format('d M Y H:i') ?? 'Recently updated' }}</span>
+                            </div>
+                            <span class="badge {{ $statusClass($displayStatus, $isOverdue) }}">{{ $statusLabel($displayStatus) }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </section>
     </main>
+
+    @include('field.partials.bottom-nav')
 </body>
 </html>
