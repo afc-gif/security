@@ -50,11 +50,21 @@
 
     $currentProjects = \App\Models\Project::query()
         ->with(['client', 'activeEditor'])
-        ->where('status', '!=', 'completed')
+        ->where(function ($query) {
+            $query->whereNull('status')
+                ->orWhere('status', '!=', 'completed');
+        })
         ->latest('updated_at')
         ->latest('id')
-        ->limit(4)
+        ->limit(6)
         ->get();
+
+    $currentProjectsCount = \App\Models\Project::query()
+        ->where(function ($query) {
+            $query->whereNull('status')
+                ->orWhere('status', '!=', 'completed');
+        })
+        ->count();
 
     $statusClass = function ($status, $isOverdue = false) {
         if ($isOverdue) {
@@ -126,44 +136,29 @@
                     <span>Overdue Jobs</span>
                     <small>Requires attention</small>
                 </article>
-            </div>
-        </section>
-
-        <section class="section" aria-labelledby="actions-title">
-            <div class="section-heading">
-                <h2 id="actions-title">Quick Actions</h2>
-            </div>
-
-            <div class="action-grid">
-                <a class="action-card" href="{{ route('field.jobs.index') }}">
-                    <strong>View Available Jobs</strong>
-                    <span>&rarr;</span>
-                </a>
-                <a class="action-card" href="{{ route('field.jobs.index') }}">
-                    <strong>Continue My Jobs</strong>
-                    <span>&rarr;</span>
-                </a>
-                <a class="action-card" href="{{ route('field.tasks.index') }}">
-                    <strong>View Tasks</strong>
-                    <span>&rarr;</span>
-                </a>
-                <a class="action-card" href="{{ route('field.projects.index') }}">
-                    <strong>View Projects</strong>
-                    <span>&rarr;</span>
-                </a>
+                <article class="summary-card green">
+                    <strong>{{ $currentProjectsCount }}</strong>
+                    <span>Current Projects</span>
+                    <small>Visible to field staff</small>
+                </article>
             </div>
         </section>
 
         <section class="section" aria-labelledby="projects-title">
             <div class="section-heading">
                 <div>
-                    <h2 id="projects-title">Current Projects</h2>
-                    <p class="subtext">Available project work for field staff.</p>
+                    <p class="eyebrow">Projects</p>
+                    <h2 id="projects-title">Current Projects Available</h2>
+                    <p class="subtext">Open project work all field staff can view and continue when available.</p>
                 </div>
+                <a class="button secondary mobile-full" href="{{ route('field.projects.index') }}">View All Projects</a>
             </div>
 
             @if($currentProjects->count() === 0)
-                <div class="empty-state">No active projects right now.</div>
+                <div class="empty-state">
+                    <div>No current projects are available right now.</div>
+                    <a class="button secondary mobile-full" href="{{ route('field.projects.index') }}" style="margin-top:12px;">Open Projects Page</a>
+                </div>
             @else
                 <div class="card-grid">
                     @foreach($currentProjects as $project)
@@ -178,7 +173,7 @@
                                     <h3 class="card-title">{{ $project->project_code }}</h3>
                                     <p class="card-subtitle">{{ $project->title }}</p>
                                 </div>
-                                <span class="status {{ $project->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}</span>
+                                <span class="status {{ $project->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status ?? 'active')) }}</span>
                             </div>
 
                             <div class="meta">
@@ -205,6 +200,31 @@
                     @endforeach
                 </div>
             @endif
+        </section>
+
+        <section class="section" aria-labelledby="actions-title">
+            <div class="section-heading">
+                <h2 id="actions-title">Quick Actions</h2>
+            </div>
+
+            <div class="action-grid">
+                <a class="action-card" href="{{ route('field.jobs.index') }}">
+                    <strong>View Available Jobs</strong>
+                    <span>&rarr;</span>
+                </a>
+                <a class="action-card" href="{{ route('field.jobs.index') }}">
+                    <strong>Continue My Jobs</strong>
+                    <span>&rarr;</span>
+                </a>
+                <a class="action-card" href="{{ route('field.tasks.index') }}">
+                    <strong>View Tasks</strong>
+                    <span>&rarr;</span>
+                </a>
+                <a class="action-card" href="{{ route('field.projects.index') }}">
+                    <strong>View Projects</strong>
+                    <span>&rarr;</span>
+                </a>
+            </div>
         </section>
 
         <section class="section" aria-labelledby="urgent-title">
