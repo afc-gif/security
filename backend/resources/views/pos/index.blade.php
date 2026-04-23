@@ -408,27 +408,57 @@
             }
         };
 
+        const normalizePrice = (value, fallback = 0) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+        };
+
+        const formatCurrency = (value) => `₦${normalizePrice(value).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })}`;
+
+        const normalizePosItem = (item = {}) => {
+            const price = normalizePrice(item.price ?? item.unit_price ?? item.amount ?? item.sale_price, 0);
+            const qty = Math.max(1, normalizePrice(item.qty ?? item.quantity, 1));
+
+            return {
+                ...item,
+                id: item.id ?? item.menu_item_id ?? item.solution_item_id,
+                name: item.name || item.title || 'Unnamed item',
+                barcode: item.barcode || item.sku || '',
+                price,
+                qty,
+            };
+        };
+
         const renderSuggestions = (items) => {
             if (!posSuggestions) return;
             if (!items.length) {
                 posSuggestions.innerHTML = '';
                 return;
             }
-            posSuggestions.innerHTML = items.map(item => `
+            posSuggestions.innerHTML = items.map((rawItem) => {
+                const item = normalizePosItem(rawItem);
+                return `
                 <button class="btn-ghost" data-suggest-id="${item.id}" data-suggest-item='${JSON.stringify(item)}' style="display:block; width:100%; text-align:left; padding:8px 10px; margin-top:4px;">
-                    ${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span>
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+                        <span>${item.name} <span class="muted">(${item.barcode || 'no barcode'})</span></span>
+                        <strong>${formatCurrency(item.price)}</strong>
+                    </div>
                 </button>
-            `).join('');
+            `;
+            }).join('');
         };
 
         const loadMenuCacheFromStorage = () => {
             try {
                 const cached = JSON.parse(localStorage.getItem('pos_menu_cache') || '[]');
                 if (Array.isArray(cached) && cached.length) {
-                    menuCache = cached;
+                    menuCache = cached.map(item => normalizePosItem(item));
                     menuCacheReady = true;
                     Object.keys(barcodeCache).forEach(k => delete barcodeCache[k]);
-                    cached.forEach(item => {
+                    menuCache.forEach(item => {
                         if (item.barcode) barcodeCache[item.barcode] = item;
                     });
                 }
@@ -492,18 +522,18 @@
         function renderTotals() {
             const subtotal = computePosTotal();
             const grand = computeGrandTotal();
-            if (posSubtotal) posSubtotal.textContent = '₦' + subtotal.toLocaleString();
-            if (posGrandTotal) posGrandTotal.textContent = '₦' + grand.toLocaleString();
-            if (posCartTotal) posCartTotal.textContent = '₦' + grand.toLocaleString();
+            if (posSubtotal) posSubtotal.textContent = formatCurrency(subtotal);
+            if (posGrandTotal) posGrandTotal.textContent = formatCurrency(grand);
+            if (posCartTotal) posCartTotal.textContent = formatCurrency(grand);
         }
 
         function renderPosCart() {
             if (!posCartList || !posCartTotal) return;
             if (!posCart.length) {
                 posCartList.innerHTML = '<div class="item">Cart is empty.</div>';
-                posCartTotal.textContent = '₦0';
-                if (posSubtotal) posSubtotal.textContent = '₦0';
-                if (posGrandTotal) posGrandTotal.textContent = '₦0';
+                posCartTotal.textContent = formatCurrency(0);
+                if (posSubtotal) posSubtotal.textContent = formatCurrency(0);
+                if (posGrandTotal) posGrandTotal.textContent = formatCurrency(0);
                 return;
             }
             const total = computePosTotal();
@@ -515,8 +545,8 @@
                             <strong>${item.name}</strong>
                             <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
                                 <span class="pill">Barcode: ${item.barcode || 'n/a'}</span>
-                                <span class="pill">₦${Number(item.price).toLocaleString()} × ${item.qty}</span>
-                                <span class="pill">Line: ₦${line.toLocaleString()}</span>
+                                <span class="pill">${formatCurrency(item.price)} × ${item.qty}</span>
+                                <span class="pill">Line: ${formatCurrency(line)}</span>
                             </div>
                         </div>
                         <div style="display:flex; gap:6px;">
@@ -527,22 +557,18 @@
                     </div>
                 `;
             }).join('');
-            posCartTotal.textContent = '₦' + total.toLocaleString();
+            posCartTotal.textContent = formatCurrency(total);
             renderTotals();
         }
 
-        function addToPosCart(item) {
+        function addToPosCart(rawItem) {
+            const item = normalizePosItem(rawItem);
             const existing = posCart.find((i) => i.id === item.id);
             if (existing) {
                 existing.qty += 1;
+                existing.price = normalizePrice(item.price, existing.price);
             } else {
-                posCart.push({
-                    id: item.id,
-                    name: item.name,
-                    price: Number(item.price) || 0,
-                    barcode: item.barcode,
-                    qty: 1,
-                });
+                posCart.push(item);
             }
             renderPosCart();
         }
@@ -558,14 +584,16 @@
 
         function showLookupResult(item) {
             if (!posLookupResult) return;
-            lastLookup = item;
+            const normalizedItem = normalizePosItem(item);
+            lastLookup = normalizedItem;
+            posLookupResult.style.display = 'block';
             posLookupResult.innerHTML = `
                 <div class="item" style="flex-direction:column; align-items:flex-start;">
-                    <strong>${item.name}</strong>
+                    <strong>${normalizedItem.name}</strong>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
-                        <span class="pill">Price: ₦${Number(item.price).toLocaleString()}</span>
-                        <span class="pill">Barcode: ${item.barcode}</span>
-                        <span class="pill">${item.category && item.category.name ? item.category.name : 'Uncategorized'}</span>
+                        <span class="pill">Price: ${formatCurrency(normalizedItem.price)}</span>
+                        <span class="pill">Barcode: ${normalizedItem.barcode || 'n/a'}</span>
+                        <span class="pill">${normalizedItem.category && normalizedItem.category.name ? normalizedItem.category.name : 'Uncategorized'}</span>
                     </div>
                 </div>
             `;
@@ -574,6 +602,7 @@
         function showLookupError(message) {
             if (!posLookupResult) return;
             lastLookup = null;
+            posLookupResult.style.display = 'block';
             posLookupResult.innerHTML = `<div class="muted">${message}</div>`;
         }
 
@@ -584,7 +613,8 @@
                 menuCache = Array.isArray(data) ? data : [];
                 Object.keys(barcodeCache).forEach(k => delete barcodeCache[k]);
                 menuCache.forEach(item => {
-                    if (item.barcode) barcodeCache[item.barcode] = item;
+                    const normalizedItem = normalizePosItem(item);
+                    if (normalizedItem.barcode) barcodeCache[normalizedItem.barcode] = normalizedItem;
                 });
                 localStorage.setItem('pos_menu_cache', JSON.stringify(menuCache.slice(0, 200)));
                 menuCacheReady = true;
@@ -653,11 +683,12 @@
                     return;
                 }
                 const item = await res.json();
-                if (item.barcode) barcodeCache[item.barcode] = item;
-                showLookupResult(item);
+                const normalizedItem = normalizePosItem(item);
+                if (normalizedItem.barcode) barcodeCache[normalizedItem.barcode] = normalizedItem;
+                showLookupResult(normalizedItem);
                 if (addToCartOnSuccess) {
-                    addToPosCart(item);
-                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                    addToPosCart(normalizedItem);
+                    setPosStatus(`Added ${normalizedItem.name}. Ready for next scan.`);
                     if (posBarcodeInput) {
                         posBarcodeInput.value = '';
                         posBarcodeInput.focus();
@@ -826,6 +857,10 @@
                         <strong>${t.name || 'Walk-in'}</strong>
                         <div class="muted" style="font-size:12px;">${new Date(t.created_at).toLocaleTimeString()}</div>
                         <div class="muted" style="font-size:12px;">Items: ${t.cart.length}</div>
+                        <div class="muted" style="font-size:12px;">Total: ${formatCurrency((t.cart || []).reduce((sum, item) => {
+                            const normalizedItem = normalizePosItem(item);
+                            return sum + (normalizedItem.price * normalizedItem.qty);
+                        }, 0))}</div>
                     </div>
                     <div style="display:flex; gap:6px;">
                         <button class="btn-ghost" data-resume="${idx}">Resume</button>
@@ -842,7 +877,7 @@
             const list = loadParkedTickets();
             list.unshift({
                 created_at: Date.now(),
-                cart: posCart.map(i => ({ ...i })),
+                cart: posCart.map(i => normalizePosItem(i)),
                 name: posCustomerName ? posCustomerName.value : '',
                 phone: posCustomerPhone ? posCustomerPhone.value : '',
                 method: posPaymentMethod ? posPaymentMethod.value : 'cash',
@@ -864,7 +899,7 @@
                 const idx = Number(resume.getAttribute('data-resume'));
                 const ticket = list[idx];
                 if (ticket) {
-                    posCart = ticket.cart || [];
+                    posCart = Array.isArray(ticket.cart) ? ticket.cart.map(item => normalizePosItem(item)) : [];
                     if (posCustomerName) posCustomerName.value = ticket.name || '';
                     if (posCustomerPhone) posCustomerPhone.value = ticket.phone || '';
                     if (posPaymentMethod) posPaymentMethod.value = ticket.method || 'cash';
@@ -896,7 +931,7 @@
                     <div class="item-row">
                         <span class="item-name">${item.name || 'Product #' + item.product_id}</span>
                         <span class="item-qty">${item.quantity}</span>
-                        <span class="item-price">₦${Number(item.unit_price || item.price || 0).toLocaleString()}</span>
+                        <span class="item-price">${formatCurrency((item.total ?? ((item.unit_price || item.price || 0) * (item.quantity || 1))))}</span>
                     </div>
                 `).join('');
                 const totalAmount = Number(order.total_amount || order.total || 0);

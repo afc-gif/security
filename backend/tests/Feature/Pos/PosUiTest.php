@@ -20,7 +20,12 @@ class PosUiTest extends TestCase
         $posUser = $this->createPosUser();
         $this->actingAs($posUser)
             ->get('/pos')
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('id="posCartTotal"', false)
+            ->assertSee('id="posSubtotal"', false)
+            ->assertSee('id="posGrandTotal"', false)
+            ->assertSee('Price:', false)
+            ->assertSee('formatCurrency(', false);
 
         $admin = $this->createAdmin();
         $this->actingAs($admin)
