@@ -16,7 +16,7 @@ class MenuItemController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = SolutionItem::with('solution')
+            $query = SolutionItem::with(['solution', 'product'])
                 ->orderBy('sort_order')
                 ->orderBy('name');
 
@@ -77,7 +77,7 @@ class MenuItemController extends Controller
 
         $item = SolutionItem::create($payload);
 
-        $item->load('solution');
+        $item->load(['solution', 'product']);
 
         return response()->json($this->transformItem($item), 201);
     }
@@ -135,7 +135,7 @@ class MenuItemController extends Controller
 
         $menuItem->update($payload);
 
-        $menuItem->refresh()->load('solution');
+        $menuItem->refresh()->load(['solution', 'product']);
 
         return response()->json($this->transformItem($menuItem));
     }
@@ -144,7 +144,7 @@ class MenuItemController extends Controller
     {
         $menuItem->update(['barcode' => $this->generateBarcode()]);
 
-        return response()->json($this->transformItem($menuItem->load('solution')));
+        return response()->json($this->transformItem($menuItem->load(['solution', 'product'])));
     }
 
     public function lookup(Request $request)
@@ -154,7 +154,7 @@ class MenuItemController extends Controller
         ]);
 
         try {
-            $item = SolutionItem::with('solution')
+            $item = SolutionItem::with(['solution', 'product'])
                 ->where('barcode', $data['barcode'])
                 ->first();
         } catch (QueryException $e) {
@@ -180,7 +180,7 @@ class MenuItemController extends Controller
         ]);
 
         try {
-            $items = SolutionItem::with('solution')
+            $items = SolutionItem::with(['solution', 'product'])
                 ->where('active', true)
                 ->where(function ($q) use ($query) {
                     $q->where('name', 'like', '%' . $query['q'] . '%')
@@ -201,14 +201,14 @@ class MenuItemController extends Controller
     {
         $menuItem->update(['is_sold_out' => ! (bool) $menuItem->is_sold_out]);
 
-        return response()->json($this->transformItem($menuItem->load('solution')));
+        return response()->json($this->transformItem($menuItem->load(['solution', 'product'])));
     }
 
     public function toggleDisplayOnWebsite(SolutionItem $menuItem)
     {
         $menuItem->update(['display_on_website' => ! (bool) $menuItem->display_on_website]);
 
-        return response()->json($this->transformItem($menuItem->load('solution')));
+        return response()->json($this->transformItem($menuItem->load(['solution', 'product'])));
     }
 
     public function destroy(SolutionItem $menuItem)
@@ -251,12 +251,15 @@ class MenuItemController extends Controller
 
     private function transformItem(SolutionItem $item): array
     {
+        $price = $this->resolvePosPrice($item);
+
         return [
             'id' => $item->id,
             'category_id' => $item->solution_id,
             'name' => $item->name,
             'description' => $item->description,
-            'price' => $item->price,
+            'price' => $price,
+            'unit_price' => $price,
             'barcode' => $item->barcode,
             'is_sold_out' => (bool) $item->is_sold_out,
             'stock' => $item->stock,
@@ -269,5 +272,20 @@ class MenuItemController extends Controller
                 'name' => $item->solution->name,
             ] : null,
         ];
+    }
+
+    private function resolvePosPrice(SolutionItem $item): float
+    {
+        foreach ([$item->price, $item->product?->price] as $candidate) {
+            if ($candidate === null || $candidate === '') {
+                continue;
+            }
+
+            if (is_numeric($candidate)) {
+                return (float) $candidate;
+            }
+        }
+
+        return 0.0;
     }
 }

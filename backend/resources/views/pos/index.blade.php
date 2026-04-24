@@ -409,6 +409,9 @@
         };
 
         const normalizePrice = (value, fallback = 0) => {
+            if (typeof value === 'string') {
+                value = value.replace(/[^0-9.-]/g, '');
+            }
             const parsed = Number(value);
             return Number.isFinite(parsed) ? parsed : fallback;
         };
@@ -419,7 +422,7 @@
         })}`;
 
         const normalizePosItem = (item = {}) => {
-            const price = normalizePrice(item.price ?? item.unit_price ?? item.amount ?? item.sale_price, 0);
+            const price = normalizePrice(item.price ?? item.selling_price ?? item.unit_price ?? item.amount ?? item.sale_price, 0);
             const qty = Math.max(1, normalizePrice(item.qty ?? item.quantity, 1));
 
             return {
@@ -431,6 +434,8 @@
                 qty,
             };
         };
+
+        const getMissingPriceMessage = (item) => `${item?.name || 'This product'} price is missing. Please check product setup.`;
 
         const renderSuggestions = (items) => {
             if (!posSuggestions) return;
@@ -499,11 +504,12 @@
                 }
                 renderSuggestions([]);
                 showLookupResult(item);
-                addToPosCart(item);
-                setPosStatus(`Added ${item.name}. Ready for next scan.`);
-                if (posBarcodeInput) {
-                    posBarcodeInput.value = '';
-                    posBarcodeInput.focus();
+                if (addToPosCart(item)) {
+                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                    if (posBarcodeInput) {
+                        posBarcodeInput.value = '';
+                        posBarcodeInput.focus();
+                    }
                 }
             });
         }
@@ -563,6 +569,13 @@
 
         function addToPosCart(rawItem) {
             const item = normalizePosItem(rawItem);
+            if (item.price <= 0) {
+                const message = getMissingPriceMessage(item);
+                showLookupError(message);
+                setPosStatus(message, 'error');
+                alert(message);
+                return false;
+            }
             const existing = posCart.find((i) => i.id === item.id);
             if (existing) {
                 existing.qty += 1;
@@ -571,6 +584,7 @@
                 posCart.push(item);
             }
             renderPosCart();
+            return true;
         }
 
         window.updatePosQty = (index, action) => {
@@ -591,7 +605,7 @@
                 <div class="item" style="flex-direction:column; align-items:flex-start;">
                     <strong>${normalizedItem.name}</strong>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
-                        <span class="pill">Price: ${formatCurrency(normalizedItem.price)}</span>
+                        <span class="pill">Price: ${normalizedItem.price > 0 ? formatCurrency(normalizedItem.price) : 'Missing'}</span>
                         <span class="pill">Barcode: ${normalizedItem.barcode || 'n/a'}</span>
                         <span class="pill">${normalizedItem.category && normalizedItem.category.name ? normalizedItem.category.name : 'Uncategorized'}</span>
                     </div>
@@ -640,12 +654,13 @@
                 const item = matches[0];
                 showLookupResult(item);
                 if (addToCartOnSuccess) {
-                    addToPosCart(item);
-                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
-                    if (posBarcodeInput) {
-                        posBarcodeInput.value = '';
-                        posSuggestions.innerHTML = '';
-                        posBarcodeInput.focus();
+                    if (addToPosCart(item)) {
+                        setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                        if (posBarcodeInput) {
+                            posBarcodeInput.value = '';
+                            posSuggestions.innerHTML = '';
+                            posBarcodeInput.focus();
+                        }
                     }
                 } else {
                     setPosStatus('Found. Add to cart or scan next.');
@@ -657,11 +672,12 @@
                 const item = barcodeCache[barcode];
                 showLookupResult(item);
                 if (addToCartOnSuccess) {
-                    addToPosCart(item);
-                    setPosStatus(`Added ${item.name}. Ready for next scan.`);
-                    if (posBarcodeInput) {
-                        posBarcodeInput.value = '';
-                        posBarcodeInput.focus();
+                    if (addToPosCart(item)) {
+                        setPosStatus(`Added ${item.name}. Ready for next scan.`);
+                        if (posBarcodeInput) {
+                            posBarcodeInput.value = '';
+                            posBarcodeInput.focus();
+                        }
                     }
                 } else {
                     setPosStatus('Found. Price pulled live; add to cart.');
@@ -687,11 +703,12 @@
                 if (normalizedItem.barcode) barcodeCache[normalizedItem.barcode] = normalizedItem;
                 showLookupResult(normalizedItem);
                 if (addToCartOnSuccess) {
-                    addToPosCart(normalizedItem);
-                    setPosStatus(`Added ${normalizedItem.name}. Ready for next scan.`);
-                    if (posBarcodeInput) {
-                        posBarcodeInput.value = '';
-                        posBarcodeInput.focus();
+                    if (addToPosCart(normalizedItem)) {
+                        setPosStatus(`Added ${normalizedItem.name}. Ready for next scan.`);
+                        if (posBarcodeInput) {
+                            posBarcodeInput.value = '';
+                            posBarcodeInput.focus();
+                        }
                     }
                 } else {
                     setPosStatus('Found. Price pulled live; add to cart.');

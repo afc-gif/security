@@ -69,6 +69,11 @@ class SolutionItem extends Model
         return $this->belongsTo(Solution::class);
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function stockTransactions()
     {
         return $this->hasMany(StockTransaction::class);

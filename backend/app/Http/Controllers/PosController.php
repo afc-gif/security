@@ -22,7 +22,8 @@ class PosController extends Controller
     {
         try {
             // Search for solution item with matching barcode (database products only)
-            $solutionItem = SolutionItem::where('barcode', $barcode)
+            $solutionItem = SolutionItem::with('product')
+                ->where('barcode', $barcode)
                 ->where('active', true)
                 ->first();
 
@@ -33,13 +34,16 @@ class PosController extends Controller
                 );
             }
 
+            $price = $this->resolvePosPrice($solutionItem);
+
             // Return product data in format compatible with POS
             return response()->json([
                 'id' => $solutionItem->id,
                 'name' => $solutionItem->name,
                 'sku' => $solutionItem->barcode,
                 'barcode' => $solutionItem->barcode,
-                'price' => (int) $solutionItem->price,
+                'price' => $price,
+                'unit_price' => $price,
                 'stock' => $solutionItem->stock ?? 999,
                 'category' => 'product'
             ]);
@@ -60,17 +64,20 @@ class PosController extends Controller
     {
         try {
             $items = SolutionItem::where('active', true)
-                ->with('solution')
-                ->select('id', 'solution_id', 'barcode', 'name', 'description', 'price', 'stock', 'image')
+                ->with(['solution', 'product'])
+                ->select('id', 'solution_id', 'product_id', 'barcode', 'name', 'description', 'price', 'stock', 'image')
                 ->get()
                 ->map(function ($item) {
+                    $price = $this->resolvePosPrice($item);
+
                     return [
                         'id' => $item->id,
                         'name' => $item->name,
                         'description' => $item->description ?? 'Enterprise-grade solution product',
                         'sku' => $item->barcode,
                         'barcode' => $item->barcode,
-                        'price' => (float) $item->price,
+                        'price' => $price,
+                        'unit_price' => $price,
                         'stock' => $item->stock ?? 999,
                         'image' => $item->image,
                         'solution' => [
@@ -105,16 +112,20 @@ class PosController extends Controller
             })
             ->where('barcode', '!=', null)
             ->where('active', true)
-            ->select('id', 'barcode', 'name', 'price', 'stock')
+            ->with('product')
+            ->select('id', 'product_id', 'barcode', 'name', 'price', 'stock')
             ->limit(20)
             ->get()
             ->map(function ($item) {
+                $price = $this->resolvePosPrice($item);
+
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
                     'sku' => $item->barcode,
                     'barcode' => $item->barcode,
-                    'price' => (int) $item->price,
+                    'price' => $price,
+                    'unit_price' => $price,
                     'stock' => $item->stock ?? 999,
                     'category' => 'product'
                 ];
@@ -272,5 +283,20 @@ class PosController extends Controller
                 500
             );
         }
+    }
+
+    private function resolvePosPrice(SolutionItem $solutionItem): float
+    {
+        foreach ([$solutionItem->price, $solutionItem->product?->price] as $candidate) {
+            if ($candidate === null || $candidate === '') {
+                continue;
+            }
+
+            if (is_numeric($candidate)) {
+                return (float) $candidate;
+            }
+        }
+
+        return 0.0;
     }
 }
