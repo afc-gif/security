@@ -765,6 +765,11 @@
       z-index: 900;
     }
 
+    .whatsapp-sticky {
+      right: 24px;
+      bottom: 100px;
+    }
+
     .cart-button {
       width: 60px;
       height: 60px;
@@ -1170,6 +1175,11 @@
         bottom: 80px;
       }
 
+      .whatsapp-sticky {
+        right: 16px;
+        bottom: 152px;
+      }
+
       .cart-button {
         width: 56px;
         height: 56px;
@@ -1188,6 +1198,11 @@
       .floating-cart {
         right: 12px;
         bottom: 80px;
+      }
+
+      .whatsapp-sticky {
+        right: 12px;
+        bottom: 144px;
       }
 
       .cart-button {
