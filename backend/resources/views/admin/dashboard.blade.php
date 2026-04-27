@@ -211,18 +211,29 @@
         .menu-actions { display:flex; gap:6px; flex-wrap:wrap; }
         .alert-wrap { position: relative; }
         .alert-bell { background: #fff; border: 1px solid var(--brand-border); border-radius: 8px; padding: 8px 10px; font-size: 18px; cursor: pointer; position: relative; }
+        .alert-bell.has-critical { border-color: #fca5a5; box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
         .alert-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
-        .alert-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: 320px; background: #fff; border: 1px solid var(--brand-border); border-radius: 8px; box-shadow: var(--brand-shadow); display: none; z-index: 40; max-height: 420px; overflow: auto; }
+        .alert-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: min(420px, calc(100vw - 32px)); background: #fff; border: 1px solid var(--brand-border); border-radius: 8px; box-shadow: var(--brand-shadow); display: none; z-index: 40; max-height: 520px; overflow: auto; }
         .alert-wrap.open .alert-dropdown { display: block; }
-        .alert-head { padding: 12px 14px; font-weight: 700; border-bottom: 1px solid var(--brand-border); position: sticky; top: 0; background: #fff; }
+        .alert-head { padding: 12px 14px; border-bottom: 1px solid var(--brand-border); position: sticky; top: 0; background: #fff; z-index: 1; }
+        .alert-head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 800; }
+        .alert-summary { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .alert-chip { border: 1px solid var(--brand-border); border-radius: 999px; padding: 4px 8px; background: #f8fbff; color: var(--brand-muted); font-size: 11px; font-weight: 800; }
+        .alert-chip.critical { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+        .alert-chip.warning { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+        .alert-toolbar { display: flex; gap: 6px; align-items: center; }
+        .alert-mini-btn { border: 1px solid var(--brand-border); background: #fff; color: var(--brand-dark); border-radius: 8px; padding: 6px 8px; font-size: 11px; font-weight: 800; }
         .alert-list { display: grid; }
-        .alert-item { padding: 12px 14px; border-bottom: 1px solid var(--brand-border); display: flex; gap: 10px; align-items: flex-start; }
+        .alert-item { padding: 12px 14px; border-bottom: 1px solid var(--brand-border); display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 10px; align-items: flex-start; }
         .alert-item:last-child { border-bottom: none; }
+        .alert-severity { width: 8px; min-height: 100%; border-radius: 999px; background: #facc15; align-self: stretch; }
+        .alert-item.critical .alert-severity { background: #ef4444; }
         .alert-title { font-weight: 700; font-size: 13px; }
         .alert-meta { font-size: 12px; color: var(--brand-muted); margin-top: 4px; }
+        .alert-detail { font-size: 12px; margin-top: 6px; color: var(--brand-ink); }
         .alert-actions { margin-left: auto; }
         .alert-btn { border: none; background: transparent; color: #2563eb; font-weight: 700; font-size: 12px; cursor: pointer; }
-        .alert-empty { padding: 12px 14px; color: var(--brand-muted); font-size: 12px; }
+        .alert-empty { padding: 18px 14px; color: var(--brand-muted); font-size: 12px; text-align: center; }
         .alert-footer { padding: 10px 14px; border-top: 1px solid var(--brand-border); text-align: center; background: #f8fafc; }
         .alert-footer a { color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none; }
         @media (max-width: 960px) {
@@ -340,7 +351,16 @@
                             <span id="adminAlertBadge" class="alert-badge hidden">0</span>
                         </button>
                         <div id="adminAlertDropdown" class="alert-dropdown">
-                            <div class="alert-head">📦 Stock Alerts</div>
+                            <div class="alert-head">
+                                <div class="alert-head-row">
+                                    <span>Stock Alerts</span>
+                                    <div class="alert-toolbar">
+                                        <button type="button" class="alert-mini-btn" data-refresh-alerts>Refresh</button>
+                                        <button type="button" class="alert-mini-btn hidden" data-ack-all-alerts>Mark all read</button>
+                                    </div>
+                                </div>
+                                <div id="adminAlertSummary" class="alert-summary hidden"></div>
+                            </div>
                             <div id="adminAlertList" class="alert-list">
                                 <div class="alert-empty">Loading alerts...</div>
                             </div>
@@ -1091,7 +1111,17 @@
         const adminAlertBell = document.getElementById('adminAlertBell');
         const adminAlertBadge = document.getElementById('adminAlertBadge');
         const adminAlertList = document.getElementById('adminAlertList');
+        const adminAlertSummary = document.getElementById('adminAlertSummary');
+        const adminAlertRefresh = document.querySelector('[data-refresh-alerts]');
+        const adminAlertAckAll = document.querySelector('[data-ack-all-alerts]');
         const REQUEST_TIMEOUT_MS = 20000;
+
+        const escapeHtml = (value = '') => String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
         const escapeAttr = (value = '') => String(value)
             .replace(/&/g, '&amp;')
@@ -1136,50 +1166,149 @@
                 if (!btn) return;
                 const alertId = btn.getAttribute('data-ack-alert');
                 if (!alertId) return;
-                acknowledgeAdminAlert(alertId);
+                acknowledgeAdminAlert(alertId, btn);
             });
         }
 
-        const loadAdminAlerts = () => {
-            if (!adminAlertList) return;
-            apiFetch('/api/stock-alerts')
-                .then(r => r.json())
-                .then(alerts => {
-                    if (!Array.isArray(alerts) || alerts.length === 0) {
-                        adminAlertBadge?.classList.add('hidden');
-                        adminAlertList.innerHTML = '<div class="alert-empty">✅ No active alerts</div>';
-                        return;
-                    }
-                    adminAlertBadge?.classList.remove('hidden');
-                    if (adminAlertBadge) adminAlertBadge.textContent = alerts.length;
-                    adminAlertList.innerHTML = alerts.map(alert => `
-                        <div class="alert-item">
-                            <div>
-                                <div class="alert-title">${alert.product_name}</div>
-                                <div class="alert-meta">
-                                    ${alert.alert_type === 'out_of_stock' ? '🔴 Out of Stock' : '🟡 Low Stock (' + alert.current_stock + ' left)'}
-                                </div>
-                                <div class="alert-meta">${alert.barcode || ''}</div>
-                            </div>
-                            <div class="alert-actions">
-                                <button class="alert-btn" data-ack-alert="${alert.id}">Mark as read</button>
-                            </div>
-                        </div>
-                    `).join('');
-                })
-                .catch(err => console.error('Error loading alerts:', err));
+        if (adminAlertRefresh) {
+            adminAlertRefresh.addEventListener('click', () => loadAdminAlerts({ forceLoading: true }));
+        }
+
+        if (adminAlertAckAll) {
+            adminAlertAckAll.addEventListener('click', () => acknowledgeAllAdminAlerts());
+        }
+
+        const formatAlertTime = (createdAt) => {
+            const date = createdAt ? new Date(createdAt) : null;
+            if (!date || Number.isNaN(date.getTime())) return '';
+            const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
         };
 
-        const acknowledgeAdminAlert = (id) => {
+        const renderAdminAlerts = (alerts) => {
+            const total = alerts.length;
+            const criticalCount = alerts.filter(alert => alert.alert_type === 'out_of_stock').length;
+            const lowCount = alerts.filter(alert => alert.alert_type === 'low_stock').length;
+
+            adminAlertBell?.classList.toggle('has-critical', criticalCount > 0);
+            adminAlertAckAll?.classList.toggle('hidden', total === 0);
+
+            if (adminAlertSummary) {
+                adminAlertSummary.classList.toggle('hidden', total === 0);
+                adminAlertSummary.innerHTML = total === 0 ? '' : `
+                    <span class="alert-chip critical">${criticalCount} out of stock</span>
+                    <span class="alert-chip warning">${lowCount} low stock</span>
+                    <span class="alert-chip">${total} unread</span>
+                `;
+            }
+
+            if (total === 0) {
+                adminAlertBadge?.classList.add('hidden');
+                if (adminAlertBadge) adminAlertBadge.textContent = '0';
+                adminAlertList.innerHTML = '<div class="alert-empty">No active stock alerts</div>';
+                return;
+            }
+
+            adminAlertBadge?.classList.remove('hidden');
+            if (adminAlertBadge) adminAlertBadge.textContent = total > 99 ? '99+' : String(total);
+
+            adminAlertList.innerHTML = alerts.map(alert => {
+                const isCritical = alert.alert_type === 'out_of_stock';
+                const status = isCritical
+                    ? 'Out of stock'
+                    : `Low stock: ${Number(alert.current_stock ?? 0)} left`;
+                const threshold = Number(alert.threshold ?? 0);
+                const barcode = alert.barcode ? `<div class="alert-meta">Barcode: ${escapeHtml(alert.barcode)}</div>` : '';
+                const thresholdText = threshold > 0 ? `Threshold ${threshold}` : 'Stock threshold reached';
+
+                return `
+                    <div class="alert-item ${isCritical ? 'critical' : 'warning'}">
+                        <span class="alert-severity" aria-hidden="true"></span>
+                        <div>
+                            <div class="alert-title">${escapeHtml(alert.product_name || 'Unnamed product')}</div>
+                            <div class="alert-detail">${escapeHtml(status)} · ${escapeHtml(thresholdText)}</div>
+                            <div class="alert-meta">${escapeHtml(formatAlertTime(alert.created_at))}</div>
+                            ${barcode}
+                        </div>
+                        <div class="alert-actions">
+                            <button type="button" class="alert-btn" data-ack-alert="${escapeAttr(alert.id)}">Mark read</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const loadAdminAlerts = ({ forceLoading = false } = {}) => {
+            if (!adminAlertList) return;
+            if (forceLoading) {
+                adminAlertList.innerHTML = '<div class="alert-empty">Refreshing alerts...</div>';
+            }
+            apiFetch('/api/stock-alerts')
+                .then(r => {
+                    if (!r.ok) throw new Error('Could not load alerts');
+                    return r.json();
+                })
+                .then(alerts => {
+                    renderAdminAlerts(Array.isArray(alerts) ? alerts : []);
+                })
+                .catch(err => {
+                    console.error('Error loading alerts:', err);
+                    adminAlertBell?.classList.remove('has-critical');
+                    adminAlertBadge?.classList.add('hidden');
+                    adminAlertAckAll?.classList.add('hidden');
+                    adminAlertSummary?.classList.add('hidden');
+                    adminAlertList.innerHTML = '<div class="alert-empty">Could not load alerts. Use Refresh to retry.</div>';
+                });
+        };
+
+        const acknowledgeAdminAlert = (id, btn = null) => {
+            setBusy(btn, true);
             return apiFetch(`/api/stock-alerts/${id}/acknowledge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('Could not mark alert as read');
+                return r.json();
+            })
             .then(result => {
                 if (result && result.success) loadAdminAlerts();
             })
-            .catch(err => console.error('Error acknowledging alert:', err));
+            .catch(err => {
+                console.error('Error acknowledging alert:', err);
+                toast(err.message || 'Could not mark alert as read.', 'error');
+            })
+            .finally(() => setBusy(btn, false));
+        };
+
+        const acknowledgeAllAdminAlerts = () => {
+            setBusy(adminAlertAckAll, true);
+            return apiFetch('/api/stock-alerts/acknowledge-all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('Could not mark alerts as read');
+                return r.json();
+            })
+            .then(result => {
+                if (result && result.success) {
+                    toast(`${result.updated || 0} alert${Number(result.updated) === 1 ? '' : 's'} marked read`);
+                    loadAdminAlerts();
+                }
+            })
+            .catch(err => {
+                console.error('Error acknowledging alerts:', err);
+                toast(err.message || 'Could not mark alerts as read.', 'error');
+            })
+            .finally(() => setBusy(adminAlertAckAll, false));
         };
 
         const setBusy = (btn, busy) => {

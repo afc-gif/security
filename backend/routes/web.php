@@ -133,6 +133,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 
     // Stock alerts endpoints (accessible to authenticated users)
     Route::get('/stock-alerts', [App\Http\Controllers\Api\StockAlertController::class, 'getActiveAlerts']);
+    Route::post('/stock-alerts/acknowledge-all', [App\Http\Controllers\Api\StockAlertController::class, 'acknowledgeAll']);
     Route::post('/stock-alerts/{alert}/acknowledge', [App\Http\Controllers\Api\StockAlertController::class, 'acknowledge']);
     Route::get('/stock-status/{item}', [App\Http\Controllers\Api\StockAlertController::class, 'getStockStatus']);
 });

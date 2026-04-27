@@ -12,7 +12,7 @@ class StockAlertController extends Controller
     {
         $alerts = StockAlert::with('solutionItem')
             ->whereNull('acknowledged_at')
-            ->orderBy('alert_type', 'desc')
+            ->orderByRaw("CASE WHEN alert_type = 'out_of_stock' THEN 0 ELSE 1 END")
             ->orderBy('created_at', 'desc')
             ->get()
             ->filter(fn ($alert) => $alert->solutionItem !== null)
@@ -39,6 +39,23 @@ class StockAlertController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Stock alert acknowledged',
+        ]);
+    }
+
+    public function acknowledgeAll()
+    {
+        $updated = StockAlert::query()
+            ->whereNull('acknowledged_at')
+            ->update([
+                'acknowledged_at' => now(),
+                'acknowledged_by' => auth()->id(),
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Stock alerts acknowledged',
+            'updated' => $updated,
         ]);
     }
 
