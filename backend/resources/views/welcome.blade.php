@@ -18,7 +18,7 @@
     <div class="nav-container">
       <div class="nav-logo">
         <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI" class="logo-img">
-        <span class="brand-name">ARTSCI</span>
+        <img src="{{ asset('head.png') }}" alt="ARTSCI" class="brand-name-img receipt-title">
       </div>
       <button class="nav-toggle" aria-label="Toggle menu">
         <span></span>
@@ -419,7 +419,7 @@
         <div class="footer-logo-section">
           <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" class="footer-logo">
           <div>
-            <h3>ARTSCI</h3>
+            <img src="{{ asset('head.png') }}" alt="ARTSCI" class="footer-brand-img receipt-title">
             <p>Enterprise Security & Power Solutions Since 2015</p>
           </div>
         </div>
