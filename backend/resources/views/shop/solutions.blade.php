@@ -63,8 +63,8 @@
   <meta name="twitter:title" content="{{ $seoTitle }}">
   <meta name="twitter:description" content="{{ $seoDescription }}">
   <meta name="twitter:image" content="{{ $seoImage }}">
-  <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}">
-  <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}">
+  <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+  <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="{{ asset('modern-design.css') }}">
   <script type="application/ld+json">{!! json_encode($seoSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>

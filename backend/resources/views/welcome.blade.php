@@ -14,7 +14,7 @@
           '@id' => $canonicalUrl . '#organization',
           'name' => 'ARTSCI Security & Power Solutions',
           'url' => $canonicalUrl,
-          'logo' => asset('Artsci Logo REAL 1.webp'),
+          'logo' => asset('logo.png'),
           'image' => $seoImage,
           'description' => $seoDescription,
           'telephone' => '+2349016045077',
@@ -72,8 +72,8 @@
   <meta name="twitter:title" content="{{ $seoTitle }}" />
   <meta name="twitter:description" content="{{ $seoDescription }}" />
   <meta name="twitter:image" content="{{ $seoImage }}" />
-  <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
-  <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
+  <link rel="icon" type="image/png" href="{{ asset('logo.png') }}" />
+  <link rel="apple-touch-icon" href="{{ asset('logo.png') }}" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
