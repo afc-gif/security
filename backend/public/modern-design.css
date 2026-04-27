@@ -81,13 +81,11 @@ body {
 .nav-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-weight: 700;
   font-size: 20px;
   color: var(--dark);
   cursor: pointer;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .logo-img {
@@ -99,25 +97,10 @@ body {
   box-shadow: none;
 }
 
-.brand-name,
-.brand-name-img {
-  display: block;
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
 .brand-name {
   font-size: 18px;
   font-weight: 800;
   color: var(--primary-blue);
-}
-
-.brand-name-img {
-  width: auto;
-  height: 22px;
-  max-width: min(150px, 24vw);
-  object-fit: contain;
-  object-position: left center;
 }
 
 .nav-menu {
@@ -1399,16 +1382,6 @@ body.installation-lightbox-open {
   color: var(--primary-blue);
 }
 
-.footer-brand-img {
-  display: block;
-  width: auto;
-  height: 28px;
-  max-width: min(190px, 100%);
-  object-fit: contain;
-  object-position: left center;
-  margin-bottom: 8px;
-}
-
 .footer-logo-section p {
   font-size: 13px;
   color: var(--gray-medium);
@@ -1735,11 +1708,6 @@ body.installation-lightbox-open {
     width: 110px;
   }
 
-  .footer-brand-img {
-    height: 24px;
-    max-width: 170px;
-  }
-
   .footer-middle {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
@@ -1777,11 +1745,6 @@ body.installation-lightbox-open {
 
   .brand-name {
     font-size: 16px;
-  }
-
-  .brand-name-img {
-    height: 18px;
-    max-width: min(110px, 28vw);
   }
 
   .nav-menu {
@@ -2067,11 +2030,6 @@ body.installation-lightbox-open {
     width: 200px;
   }
 
-  .footer-brand-img {
-    height: 22px;
-    max-width: 150px;
-  }
-
   .footer-middle {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -2167,23 +2125,18 @@ body.installation-lightbox-open {
     font-size: 9px;
   }
 
-.nav-logo {
-  gap: 6px;
-}
+  .nav-logo {
+    gap: 6px;
+  }
 
   .logo-img {
     width: 60px;
     height: 60px;
   }
 
-.brand-name {
-  font-size: 14px;
-}
-
-.brand-name-img {
-  height: 16px;
-  max-width: 96px;
-}
+  .brand-name {
+    font-size: 14px;
+  }
 }
 
 /* ============================================
