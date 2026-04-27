@@ -1,9 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  @php
+    $canonicalUrl = url('/');
+    $seoTitle = 'ARTSCI Security & Power Solutions in Nigeria | CCTV, Solar, Access Control';
+    $seoDescription = 'ARTSCI delivers CCTV surveillance, solar power systems, access control, perimeter security, and smart automation for homes, estates, offices, schools, and enterprise sites across Nigeria.';
+    $seoImage = asset('Desktop-012.webp');
+    $seoSchema = [
+      '@context' => 'https://schema.org',
+      '@graph' => [
+        [
+          '@type' => 'Organization',
+          '@id' => $canonicalUrl . '#organization',
+          'name' => 'ARTSCI Security & Power Solutions',
+          'url' => $canonicalUrl,
+          'logo' => asset('Artsci Logo REAL 1.webp'),
+          'image' => $seoImage,
+          'description' => $seoDescription,
+          'telephone' => '+2349016045077',
+          'email' => 'support@artsci.com.ng',
+          'sameAs' => [
+            'https://instagram.com/artsci_official',
+          ],
+          'areaServed' => 'Nigeria',
+        ],
+        [
+          '@type' => 'WebSite',
+          '@id' => $canonicalUrl . '#website',
+          'url' => $canonicalUrl,
+          'name' => 'ARTSCI Security & Power Solutions',
+          'publisher' => [
+            '@id' => $canonicalUrl . '#organization',
+          ],
+          'inLanguage' => 'en-NG',
+        ],
+        [
+          '@type' => 'LocalBusiness',
+          '@id' => $canonicalUrl . '#localbusiness',
+          'name' => 'ARTSCI Security & Power Solutions',
+          'url' => $canonicalUrl,
+          'image' => $seoImage,
+          'telephone' => '+2349016045077',
+          'email' => 'support@artsci.com.ng',
+          'priceRange' => '$$',
+          'areaServed' => 'Nigeria',
+          'serviceType' => [
+            'CCTV installation',
+            'Solar power installation',
+            'Access control systems',
+            'Electric fence installation',
+            'Smart automation systems',
+          ],
+        ],
+      ],
+    ];
+  @endphp
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ARTSCI | Enterprise Security & Power Solutions</title>
+  <title>{{ $seoTitle }}</title>
+  <meta name="description" content="{{ $seoDescription }}" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <link rel="canonical" href="{{ $canonicalUrl }}" />
+  <meta property="og:locale" content="en_NG" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ $seoTitle }}" />
+  <meta property="og:description" content="{{ $seoDescription }}" />
+  <meta property="og:url" content="{{ $canonicalUrl }}" />
+  <meta property="og:site_name" content="ARTSCI Security & Power Solutions" />
+  <meta property="og:image" content="{{ $seoImage }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ $seoTitle }}" />
+  <meta name="twitter:description" content="{{ $seoDescription }}" />
+  <meta name="twitter:image" content="{{ $seoImage }}" />
   <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
   <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +79,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="{{ asset('modern-design.css') }}" />
+  <script type="application/ld+json">{!! json_encode($seoSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 </head>
 <body>
   <!-- Premium Navigation -->
@@ -39,10 +108,23 @@
   <!-- Hero Section - Security Focus -->
   <section class="hero">
     <div class="hero-media">
-      <img class="hero-slide-bg active" src="{{ asset('Desktop-012.webp') }}" alt="High-tech security operations center" />
+      <img class="hero-slide-bg active" src="{{ asset('Desktop-012.webp') }}" alt="High-tech security operations center" fetchpriority="high" />
       <img class="hero-slide-bg" src="{{ asset('Desktop-013.webp') }}" alt="Central command station display wall" />
       <img class="hero-slide-bg" src="{{ asset('Desktop-014.webp') }}" alt="Enterprise surveillance workspace" />
       <img class="hero-slide-bg" src="{{ asset('Desktop-015.webp') }}" alt="Security network monitoring dashboard" />
+    </div>
+    <div class="hero-scrim"></div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">Nigeria-Wide Security & Power Integrator</div>
+        <h1 class="hero-title">CCTV, Solar Power, Access Control, and Enterprise Security Systems</h1>
+        <p class="hero-subtitle">Design, Installation, Monitoring, and Preventive Support</p>
+        <p class="hero-description">ARTSCI builds and supports integrated surveillance, backup power, perimeter protection, and automation systems for homes, estates, schools, offices, and industrial facilities.</p>
+        <div class="hero-actions">
+          <a href="{{ url('/solutions') }}" class="btn btn-primary">Explore Solutions</a>
+          <a href="#contact" class="btn btn-secondary">Request a Consultation</a>
+        </div>
+      </div>
     </div>
   </section>
 

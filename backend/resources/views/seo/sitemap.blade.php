@@ -1,0 +1,1 @@
+{{-- Sitemap XML is generated directly in routes/web.php to avoid editor parsing issues in Blade. --}}

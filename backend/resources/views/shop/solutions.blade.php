@@ -1,13 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  @php
+    $canonicalUrl = url('/solutions');
+    $seoTitle = 'Security Products, CCTV, Solar & Access Control Solutions | ARTSCI Nigeria';
+    $seoDescription = 'Browse ARTSCI security and power products including CCTV systems, solar power equipment, access control devices, perimeter security, and smart automation solutions in Nigeria.';
+    $seoImage = asset('images/survelliance.webp');
+    $seoSchema = [
+      '@context' => 'https://schema.org',
+      '@graph' => [
+        [
+          '@type' => 'CollectionPage',
+          '@id' => $canonicalUrl . '#collection',
+          'url' => $canonicalUrl,
+          'name' => $seoTitle,
+          'description' => $seoDescription,
+          'isPartOf' => [
+            '@id' => url('/') . '#website',
+          ],
+          'about' => [
+            ['@type' => 'Thing', 'name' => 'CCTV systems'],
+            ['@type' => 'Thing', 'name' => 'Solar power systems'],
+            ['@type' => 'Thing', 'name' => 'Access control systems'],
+            ['@type' => 'Thing', 'name' => 'Perimeter security'],
+            ['@type' => 'Thing', 'name' => 'Smart automation'],
+          ],
+        ],
+        [
+          '@type' => 'BreadcrumbList',
+          'itemListElement' => [
+            [
+              '@type' => 'ListItem',
+              'position' => 1,
+              'name' => 'Home',
+              'item' => url('/'),
+            ],
+            [
+              '@type' => 'ListItem',
+              'position' => 2,
+              'name' => 'Solutions',
+              'item' => $canonicalUrl,
+            ],
+          ],
+        ],
+      ],
+    ];
+  @endphp
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enterprise Solutions - ARTSCI Security</title>
+  <title>{{ $seoTitle }}</title>
+  <meta name="description" content="{{ $seoDescription }}">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <link rel="canonical" href="{{ $canonicalUrl }}">
+  <meta property="og:locale" content="en_NG">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ $seoTitle }}">
+  <meta property="og:description" content="{{ $seoDescription }}">
+  <meta property="og:url" content="{{ $canonicalUrl }}">
+  <meta property="og:site_name" content="ARTSCI Security & Power Solutions">
+  <meta property="og:image" content="{{ $seoImage }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ $seoTitle }}">
+  <meta name="twitter:description" content="{{ $seoDescription }}">
+  <meta name="twitter:image" content="{{ $seoImage }}">
   <link rel="icon" type="image/webp" href="{{ asset('Artsci Logo REAL 1.webp') }}">
   <link rel="apple-touch-icon" href="{{ asset('Artsci Logo REAL 1.webp') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="{{ asset('modern-design.css') }}">
+  <script type="application/ld+json">{!! json_encode($seoSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
   <style>
     /* ============================================
        SOLUTIONS PAGE SPECIFIC STYLES
