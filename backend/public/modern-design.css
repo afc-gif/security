@@ -2145,8 +2145,8 @@ body.installation-lightbox-open {
 
 .whatsapp-sticky {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 100px;
+  right: 24px;
   width: 60px;
   height: 60px;
   background: #25D366;
@@ -2173,11 +2173,18 @@ body.installation-lightbox-open {
 
 @media (max-width: 768px) {
   .whatsapp-sticky {
-    bottom: 20px;
-    right: 20px;
+    bottom: 152px;
+    right: 16px;
     width: 50px;
     height: 50px;
     font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .whatsapp-sticky {
+    bottom: 144px;
+    right: 12px;
   }
 }
 
