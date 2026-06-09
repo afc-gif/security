@@ -114,18 +114,6 @@
       <img class="hero-slide-bg" src="{{ asset('Desktop-015.webp') }}" alt="Security network monitoring dashboard" />
     </div>
     <div class="hero-scrim"></div>
-    <div class="hero-inner">
-      <div class="hero-content">
-        <div class="hero-badge">Nigeria-Wide Security & Power Integrator</div>
-        <h1 class="hero-title">CCTV, Solar Power, Access Control, and Enterprise Security Systems</h1>
-        <p class="hero-subtitle">Design, Installation, Monitoring, and Preventive Support</p>
-        <p class="hero-description">ARTSCI builds and supports integrated surveillance, backup power, perimeter protection, and automation systems for homes, estates, schools, offices, and industrial facilities.</p>
-        <div class="hero-actions">
-          <a href="{{ url('/solutions') }}" class="btn btn-primary">Explore Solutions</a>
-          <a href="#contact" class="btn btn-secondary">Request a Consultation</a>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- Solutions Section -->
