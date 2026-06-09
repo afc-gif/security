@@ -1542,19 +1542,20 @@ body.installation-lightbox-open {
 
   .hero {
     margin-top: 72px;
-    min-height: calc(100svh - 72px);
+    min-height: 0;
+    aspect-ratio: 16 / 9;
     padding: 0;
   }
 
   .hero-inner {
-    min-height: calc(100svh - 72px);
+    min-height: 0;
     padding: 44px 16px;
   }
 
   .hero-slide-bg {
     background-attachment: scroll;
     background-position: center;
-    object-fit: cover;
+    object-fit: contain;
     background-color: #0a1428;
   }
 
@@ -1758,12 +1759,13 @@ body.installation-lightbox-open {
 
   .hero {
     padding: 0;
-    min-height: calc(100svh - 72px);
+    min-height: 0;
+    aspect-ratio: 16 / 9;
     margin-top: 72px;
   }
 
   .hero-inner {
-    min-height: calc(100svh - 72px);
+    min-height: 0;
     justify-content: center;
     padding: 36px 12px;
   }
@@ -1776,7 +1778,7 @@ body.installation-lightbox-open {
   }
 
   .hero-slide-bg {
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     background-color: #0a1428;
     filter: brightness(1.22) contrast(1.04) saturate(1.04);
@@ -2054,17 +2056,18 @@ body.installation-lightbox-open {
 
 @media (max-width: 360px) {
   .hero {
-    min-height: calc(100svh - 64px);
+    min-height: 0;
+    aspect-ratio: 16 / 9;
     margin-top: 64px;
   }
 
   .hero-inner {
-    min-height: calc(100svh - 64px);
+    min-height: 0;
     padding: 28px 10px;
   }
 
   .hero-slide-bg {
-    object-fit: cover;
+    object-fit: contain;
     background-position: center;
     background-color: #0a1428;
     filter: brightness(1.24) contrast(1.05) saturate(1.04);
