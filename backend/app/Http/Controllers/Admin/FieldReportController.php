@@ -71,7 +71,7 @@ class FieldReportController extends Controller
                 $recentProjectUpdatesCount = $this->queryCount($recentProjectUpdatesQuery);
                 $projectUpdatesNeedingCorrectionCount = $this->queryCount($projectUpdatesNeedingCorrectionQuery);
                 $completedTasksCount = $this->queryCount($recentlyCompletedTasksQuery);
-                Log::debug('Query counts: ' . compact('pendingInspectionReviewsCount', 'recentProjectUpdatesCount', 'projectUpdatesNeedingCorrectionCount', 'completedTasksCount'));
+                Log::debug('Query counts', compact('pendingInspectionReviewsCount', 'recentProjectUpdatesCount', 'projectUpdatesNeedingCorrectionCount', 'completedTasksCount'));
 
                 $pendingInspectionReviews = $pendingInspectionReviewsQuery
                     ? $pendingInspectionReviewsQuery->latest('submitted_at')->limit(10)->get()

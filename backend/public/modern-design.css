@@ -1547,28 +1547,28 @@ body.installation-lightbox-open {
   }
 
   .hero {
-    margin-top: 80px;
-    min-height: auto;
+    margin-top: 72px;
+    min-height: calc(100svh - 72px);
     padding: 0;
   }
 
   .hero-inner {
-    padding: 24px 16px;
+    min-height: calc(100svh - 72px);
+    padding: 44px 16px;
   }
 
   .hero-slide-bg {
     background-attachment: scroll;
-    background-size: contain;
     background-position: center;
-    object-fit: contain;
-    background-color: transparent;
+    object-fit: cover;
+    background-color: #0a1428;
   }
 
   .hero-media {
-    position: relative;
-    aspect-ratio: 16 / 9;
-    height: auto;
-    background: none;
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    background: #0a1428;
   }
 
   .hero-content {
@@ -1739,8 +1739,8 @@ body.installation-lightbox-open {
   }
 
   .logo-img {
-    width: 70px;
-    height: 70px;
+    width: 48px;
+    height: auto;
   }
 
   .brand-name {
@@ -1748,7 +1748,7 @@ body.installation-lightbox-open {
   }
 
   .nav-menu {
-    top: 52px !important;
+    top: 72px !important;
     padding: 16px 16px !important;
   }
 
@@ -1764,28 +1764,27 @@ body.installation-lightbox-open {
 
   .hero {
     padding: 0;
-    min-height: auto;
-    margin-top: 52px;
+    min-height: calc(100svh - 72px);
+    margin-top: 72px;
   }
 
   .hero-inner {
-    padding: 20px 12px;
-    min-height: auto;
-    justify-content: flex-start;
-    padding-top: 20px;
+    min-height: calc(100svh - 72px);
+    justify-content: center;
+    padding: 36px 12px;
   }
 
   .hero-media {
-    position: relative;
-    aspect-ratio: 16 / 9;
-    height: auto;
-    background: none;
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    background: #0a1428;
   }
 
   .hero-slide-bg {
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
-    background-color: transparent;
+    background-color: #0a1428;
     filter: brightness(1.15) contrast(1.1) saturate(1.05);
   }
 
@@ -1799,7 +1798,7 @@ body.installation-lightbox-open {
     font-size: clamp(24px, 6vw, 38px);
     margin-bottom: 8px;
     line-height: 1.1;
-    letter-spacing: -0.5px;
+    letter-spacing: 0;
   }
 
   .hero-subtitle {
@@ -2061,21 +2060,19 @@ body.installation-lightbox-open {
 
 @media (max-width: 360px) {
   .hero {
-    min-height: auto;
-    margin-top: 50px;
+    min-height: calc(100svh - 64px);
+    margin-top: 64px;
   }
 
   .hero-inner {
-    padding: 16px 10px;
-    min-height: auto;
-    padding-top: 16px;
+    min-height: calc(100svh - 64px);
+    padding: 28px 10px;
   }
 
   .hero-slide-bg {
-    object-fit: contain;
-    background-size: contain;
+    object-fit: cover;
     background-position: center;
-    background-color: transparent;
+    background-color: #0a1428;
     filter: brightness(1.35) contrast(1.25);
   }
 
@@ -2130,8 +2127,8 @@ body.installation-lightbox-open {
   }
 
   .logo-img {
-    width: 60px;
-    height: 60px;
+    width: 44px;
+    height: auto;
   }
 
   .brand-name {
