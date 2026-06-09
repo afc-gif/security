@@ -21,7 +21,6 @@ yarn-error.log
 .vscode
 *.log
 /backend/.env.local
-/backend/composer.lock
 /docker/mysql-data/
 /docker/postgres-data/
 /docker/redis-data/
