@@ -213,7 +213,7 @@ body {
   background: #0a0a0a;
   opacity: 0;
   transition: opacity 1.2s ease-in-out;
-  filter: brightness(1.1) contrast(1.05);
+  filter: brightness(1.18) contrast(1.04) saturate(1.03);
   display: block;
   z-index: 1;
 }
@@ -248,15 +248,9 @@ body {
 .hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 20, 40, 0.4) 0%,
-    rgba(10, 20, 40, 0.35) 50%,
-    rgba(10, 20, 40, 0.5) 100%
-  );
+  background: rgba(255, 255, 255, 0.02);
   z-index: 1;
-  backdrop-filter: blur(0.5px);
-  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 .hero-content {
@@ -1785,7 +1779,7 @@ body.installation-lightbox-open {
     object-fit: cover;
     object-position: center;
     background-color: #0a1428;
-    filter: brightness(1.15) contrast(1.1) saturate(1.05);
+    filter: brightness(1.22) contrast(1.04) saturate(1.04);
   }
 
   .hero-badge {
@@ -2073,7 +2067,7 @@ body.installation-lightbox-open {
     object-fit: cover;
     background-position: center;
     background-color: #0a1428;
-    filter: brightness(1.35) contrast(1.25);
+    filter: brightness(1.24) contrast(1.05) saturate(1.04);
   }
 
   .hero-title {
