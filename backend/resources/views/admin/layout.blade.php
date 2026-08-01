@@ -38,6 +38,10 @@
             line-height: 1.5;
         }
 
+        body.admin-sidebar-open {
+            overflow: hidden;
+        }
+
         a,
         button,
         input,
@@ -73,7 +77,7 @@
             padding: 0;
             box-shadow: var(--brand-shadow);
             cursor: pointer;
-            z-index: 30;
+            z-index: 70;
             font-size: 18px;
             line-height: 1;
         }
@@ -94,7 +98,7 @@
             align-content: stretch;
             gap: 12px;
             transition: width 0.3s ease, padding 0.3s ease;
-            z-index: 20;
+            z-index: 60;
             overflow: hidden;
         }
 
@@ -243,7 +247,7 @@
             position: fixed;
             inset: 0;
             background: rgba(15, 23, 42, 0.42);
-            z-index: 19;
+            z-index: 50;
         }
 
         .admin-user {
@@ -259,6 +263,10 @@
 
         .admin-content {
             padding: 22px;
+            min-width: 0;
+        }
+
+        .admin-content > * {
             min-width: 0;
         }
 
@@ -309,6 +317,13 @@
             width: 100%;
         }
 
+        .admin-content img,
+        .admin-content svg,
+        .admin-content video,
+        .admin-content canvas {
+            max-width: 100%;
+        }
+
         .admin-content .container,
         .admin-content .max-w-7xl {
             width: 100%;
@@ -323,18 +338,31 @@
 
         @media (max-width: 960px) {
             .admin-shell { grid-template-columns: 1fr; }
+
             .sidebar {
                 position: fixed;
                 left: 0;
                 top: 0;
                 height: 100vh;
                 height: 100dvh;
-                width: 260px;
-                transform: translateX(-110%);
-                transition: transform 0.3s ease;
+                width: min(86vw, 320px);
+                max-width: 320px;
+                padding: 16px;
+                transform: translate3d(-105%, 0, 0);
+                transition: transform 0.24s ease;
+                box-shadow: 18px 0 48px rgba(10, 20, 40, 0.22);
+                will-change: transform;
             }
-            .sidebar.open { transform: translateX(0); }
+
+            .sidebar.open { transform: translate3d(0, 0, 0); }
             .sidebar.open + .admin-sidebar-backdrop { display: block; }
+
+            .sidebar.collapsed {
+                width: min(86vw, 320px);
+                max-width: 320px;
+                padding: 16px;
+            }
+
             .sidebar.collapsed .admin-brand {
                 opacity: 1;
                 pointer-events: auto;
@@ -350,6 +378,14 @@
                 padding: 10px 12px;
             }
             .admin-content { padding: 72px 14px 18px; }
+
+            .admin-content .min-h-screen {
+                min-height: auto;
+            }
+
+            .admin-content .sticky {
+                top: 0;
+            }
         }
 
         @media (max-width: 640px) {
@@ -363,7 +399,7 @@
             }
 
             .sidebar {
-                width: min(86vw, 300px);
+                width: min(88vw, 320px);
                 padding: 14px;
             }
 
@@ -401,7 +437,61 @@
             }
 
             .admin-content table {
-                min-width: 640px;
+                display: block;
+                width: 100%;
+                min-width: 0;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .admin-content thead,
+            .admin-content tbody,
+            .admin-content tr {
+                width: 100%;
+            }
+
+            .admin-content th,
+            .admin-content td {
+                white-space: nowrap;
+            }
+
+            .admin-content form,
+            .admin-content .form-actions,
+            .admin-content .admin-header,
+            .admin-content .admin-header-left,
+            .admin-content [class*="justify-between"],
+            .admin-content [class*="items-center"] {
+                min-width: 0;
+            }
+
+            .admin-content .form-actions,
+            .admin-content .admin-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .admin-content [class*="grid-cols-"],
+            .admin-content .stats-grid,
+            .admin-content .order-details-container {
+                grid-template-columns: 1fr !important;
+            }
+
+            .admin-content .rounded-xl,
+            .admin-content .rounded-lg {
+                border-radius: 8px;
+            }
+
+            .admin-content [class*="px-6"],
+            .admin-content [class*="p-6"] {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            .admin-content [class*="py-6"],
+            .admin-content [class*="p-6"] {
+                padding-top: 12px !important;
+                padding-bottom: 12px !important;
             }
         }
     </style>
@@ -428,7 +518,9 @@
             toggleSidebar.dataset.bound = '1';
             const closeMobileSidebar = () => {
                 sidebar.classList.remove('open');
+                document.body.classList.remove('admin-sidebar-open');
                 toggleSidebar.setAttribute('aria-expanded', 'false');
+                toggleSidebar.textContent = '☰';
             };
 
             toggleSidebar.addEventListener('click', () => {
@@ -437,7 +529,9 @@
                     document.body.classList.remove('collapsed');
                     sidebar.classList.remove('collapsed');
                     const isOpen = sidebar.classList.toggle('open');
+                    document.body.classList.toggle('admin-sidebar-open', isOpen);
                     toggleSidebar.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    toggleSidebar.textContent = isOpen ? '×' : '☰';
                 } else {
                     document.body.classList.toggle('collapsed');
                     sidebar.classList.toggle('collapsed');
@@ -445,6 +539,17 @@
             });
 
             sidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+
+            sidebar.querySelectorAll('a, button[data-tab]').forEach((item) => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth <= 960) closeMobileSidebar();
+                });
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeMobileSidebar();
+            });
+
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 960) {
                     closeMobileSidebar();

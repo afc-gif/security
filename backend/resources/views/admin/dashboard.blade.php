@@ -238,9 +238,25 @@
         .alert-footer a { color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none; }
         @media (max-width: 960px) {
             .admin-shell { grid-template-columns: 1fr; }
-            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; height: 100dvh; width: 260px; transform: translateX(-110%); z-index: 20; }
-            .sidebar.open { transform: translateX(0); }
-            .sidebar.collapsed { width: 260px; padding: 18px; }
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                height: 100dvh;
+                width: min(86vw, 320px);
+                max-width: 320px;
+                padding: 16px;
+                transform: translate3d(-105%, 0, 0);
+                z-index: 60;
+                box-shadow: 18px 0 48px rgba(10, 20, 40, 0.22);
+            }
+            .sidebar.open { transform: translate3d(0, 0, 0); }
+            .sidebar.collapsed {
+                width: min(86vw, 320px);
+                max-width: 320px;
+                padding: 16px;
+            }
             .sidebar.collapsed .admin-brand {
                 opacity: 1;
                 pointer-events: auto;
@@ -307,6 +323,15 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
+            .preview-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .item {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
             .stat h3 {
                 font-size: 22px;
             }
@@ -318,7 +343,22 @@
             }
 
             table {
-                min-width: 640px;
+                display: block;
+                width: 100%;
+                min-width: 0;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            th,
+            td {
+                white-space: nowrap;
+            }
+
+            iframe {
+                height: 72vh;
+                min-height: 520px;
             }
         }
     </style>
