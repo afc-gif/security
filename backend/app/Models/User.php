@@ -46,6 +46,11 @@ class User extends Model implements AuthenticatableContract
         return $this->hasMany(Order::class);
     }
 
+    public function adminNotifications()
+    {
+        return $this->hasMany(AdminNotification::class);
+    }
+
     public function isAdmin()
     {
         return $this->role === 'admin';

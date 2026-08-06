@@ -150,6 +150,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         return view('admin.stock-alerts');
     })->name('admin.stock-alerts');
 
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Admin\NotificationController::class, 'markRead'])
+        ->name('admin.notifications.read');
+
     // Products & Barcodes
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products.index');
     Route::get('/products/create', [AdminController::class, 'createProduct'])->name('admin.products.create');

@@ -20,6 +20,17 @@
             <div class="notice success">{{ session('success') }}</div>
         @endif
 
+        @if (session('whatsapp_url'))
+            <div class="notice locked" data-whatsapp-redirect="{{ session('whatsapp_url') }}">
+                Opening WhatsApp with the admin transport fare message.
+                <div style="margin-top:10px;">
+                    <a class="button full" href="{{ session('whatsapp_url') }}" target="_blank" rel="noopener">
+                        Open WhatsApp Manually
+                    </a>
+                </div>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="notice error">
                 @foreach($errors->all() as $error)
@@ -170,5 +181,21 @@
     </main>
 
     @include('field.partials.bottom-nav')
+    @if (session('whatsapp_url'))
+        <script>
+            window.addEventListener('load', () => {
+                const whatsappNotice = document.querySelector('[data-whatsapp-redirect]');
+                const whatsappUrl = whatsappNotice?.dataset.whatsappRedirect;
+
+                if (!whatsappUrl) {
+                    return;
+                }
+
+                setTimeout(() => {
+                    window.location.href = whatsappUrl;
+                }, 500);
+            });
+        </script>
+    @endif
 </body>
 </html>

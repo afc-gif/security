@@ -504,6 +504,26 @@
         <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop" aria-hidden="true"></div>
 
         <main class="admin-content">
+            @if(($adminUnreadNotifications ?? collect())->count())
+                <div class="mb-4 grid gap-3">
+                    @foreach($adminUnreadNotifications as $notification)
+                        <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-950 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div>
+                                    <div class="font-bold">{{ $notification->title }}</div>
+                                    <div class="mt-1 whitespace-pre-line text-sm">{{ $notification->message }}</div>
+                                </div>
+                                <form method="POST" action="{{ route('admin.notifications.read', $notification) }}">
+                                    @csrf
+                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm font-semibold">
+                                        Mark Read
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
             @yield('content')
         </main>
     </div>

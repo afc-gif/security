@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\User;
+use App\Services\TransportFareNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -43,7 +44,7 @@ class JobAssignmentController extends Controller
         return view('coordinator.jobs.index', compact('pendingJobs', 'fieldStaff', 'submittedJobs'));
     }
 
-    public function assign(Request $request, JobRequestItem $jobItem)
+    public function assign(Request $request, JobRequestItem $jobItem, TransportFareNotificationService $fareNotifications)
     {
         $validated = $request->validate([
             'assigned_to' => [
@@ -54,7 +55,7 @@ class JobAssignmentController extends Controller
             ],
         ]);
 
-        DB::transaction(function () use ($jobItem, $validated) {
+        $assignedJob = DB::transaction(function () use ($jobItem, $validated) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('status', JobRequestItem::STATUS_PENDING_ASSIGNMENT)
@@ -71,16 +72,22 @@ class JobAssignmentController extends Controller
                 'claimed_at' => now(),
                 'status' => JobRequestItem::STATUS_CLAIMED,
             ]);
+
+            return $lockedItem->fresh(['jobRequest.client', 'serviceCategory']);
         });
+
+        $assignedStaff = User::findOrFail($validated['assigned_to']);
+        $whatsappUrl = $fareNotifications->notifyAssignedJob($assignedJob, $assignedStaff);
 
         return redirect()
             ->route('coordinator.jobs.index')
-            ->with('success', 'Job assigned successfully.');
+            ->with('success', 'Job assigned successfully.')
+            ->with('whatsapp_url', $whatsappUrl);
     }
 
-    public function claim(JobRequestItem $jobItem)
+    public function claim(JobRequestItem $jobItem, TransportFareNotificationService $fareNotifications)
     {
-        DB::transaction(function () use ($jobItem) {
+        $assignedJob = DB::transaction(function () use ($jobItem) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('status', JobRequestItem::STATUS_PENDING_ASSIGNMENT)
@@ -97,11 +104,16 @@ class JobAssignmentController extends Controller
                 'claimed_at' => now(),
                 'status' => JobRequestItem::STATUS_CLAIMED,
             ]);
+
+            return $lockedItem->fresh(['jobRequest.client', 'serviceCategory']);
         });
+
+        $whatsappUrl = $fareNotifications->notifyAssignedJob($assignedJob, auth()->user());
 
         return redirect()
             ->route('coordinator.jobs.index')
-            ->with('success', 'Job assigned to you.');
+            ->with('success', 'Job assigned to you.')
+            ->with('whatsapp_url', $whatsappUrl);
     }
 
     public function release(JobRequestItem $jobItem)

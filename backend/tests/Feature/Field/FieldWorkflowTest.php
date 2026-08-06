@@ -90,14 +90,24 @@ class FieldWorkflowTest extends TestCase
             ->assertOk()
             ->assertDontSee('Dispatch inspection');
 
-        $this->actingAs($coordinator)->post("/coordinator/jobs/{$jobItem->id}/assign", [
+        $response = $this->actingAs($coordinator)->post("/coordinator/jobs/{$jobItem->id}/assign", [
             'assigned_to' => $fieldStaff->id,
-        ])->assertRedirect('/coordinator/jobs');
+        ]);
+
+        $response->assertRedirect('/coordinator/jobs')
+            ->assertSessionHas('whatsapp_url');
+
+        $this->assertStringContainsString('https://wa.me/2349160450776', session('whatsapp_url'));
 
         $this->assertDatabaseHas('job_request_items', [
             'id' => $jobItem->id,
             'claimed_by' => $fieldStaff->id,
             'status' => JobRequestItem::STATUS_CLAIMED,
+        ]);
+        $this->assertDatabaseHas('admin_notifications', [
+            'user_id' => $admin->id,
+            'type' => 'transport_fare_required',
+            'title' => 'Transport fare required',
         ]);
     }
 
