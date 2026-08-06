@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Client;
+use App\Models\JobRequestItem;
+use App\Models\ServiceCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -102,6 +105,55 @@ class AdminUiTest extends TestCase
 
         $deleteResponse->assertRedirect('/admin/users');
         $this->assertDatabaseMissing('users', ['id' => $deleteUser->id]);
+    }
+
+    public function test_admin_can_assign_created_job_request_items_to_field_staff(): void
+    {
+        $admin = $this->createAdmin();
+        $fieldStaff = $this->createUser([
+            'name' => 'Field Staff One',
+            'role' => 'field_staff',
+            'status' => 'approved',
+        ]);
+        $client = Client::create(['client_name' => 'Acme Client']);
+        $category = ServiceCategory::create(['name' => 'CCTV Inspection', 'is_active' => true]);
+
+        $response = $this->actingAs($admin)->post('/admin/job-requests', [
+            'client_id' => $client->id,
+            'title' => 'Inspect Acme site',
+            'description' => 'Initial assessment',
+            'assigned_field_staff_id' => $fieldStaff->id,
+            'categories' => [$category->id],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('job_request_items', [
+            'service_category_id' => $category->id,
+            'claimed_by' => $fieldStaff->id,
+            'status' => JobRequestItem::STATUS_CLAIMED,
+        ]);
+        $this->assertNotNull(JobRequestItem::firstOrFail()->claimed_at);
+    }
+
+    public function test_admin_can_leave_created_job_request_items_open_for_claim(): void
+    {
+        $admin = $this->createAdmin();
+        $client = Client::create(['client_name' => 'Open Claim Client']);
+        $category = ServiceCategory::create(['name' => 'Access Control Survey', 'is_active' => true]);
+
+        $response = $this->actingAs($admin)->post('/admin/job-requests', [
+            'client_id' => $client->id,
+            'title' => 'Survey access points',
+            'categories' => [$category->id],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('job_request_items', [
+            'service_category_id' => $category->id,
+            'claimed_by' => null,
+            'status' => JobRequestItem::STATUS_OPEN,
+        ]);
+        $this->assertTrue(JobRequestItem::firstOrFail()->isClaimable());
     }
 
     public function test_admin_can_manage_solutions_and_items(): void

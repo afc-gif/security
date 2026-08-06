@@ -89,8 +89,8 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
                                 <div>
-                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Claimed By</div>
-                                    <div class="text-gray-900">{{ $item->claimer?->name ?? '—' }}</div>
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Assigned / Claimed By</div>
+                                    <div class="text-gray-900">{{ $item->claimer?->name ?? 'Open for claim' }}</div>
                                 </div>
                                 <div>
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Due Date</div>

@@ -7,8 +7,10 @@ use App\Models\Client;
 use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\ServiceCategory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class JobRequestController extends Controller
 {
@@ -57,7 +59,13 @@ class JobRequestController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.job-requests.create', compact('clients', 'serviceCategories'));
+        $fieldStaff = User::query()
+            ->where('role', 'field_staff')
+            ->where('status', 'approved')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.job-requests.create', compact('clients', 'serviceCategories', 'fieldStaff'));
     }
 
     public function store(Request $request)
@@ -68,6 +76,12 @@ class JobRequestController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'due_date' => 'nullable|date',
+                'assigned_field_staff_id' => [
+                    'nullable',
+                    Rule::exists('users', 'id')->where(fn ($query) => $query
+                        ->where('role', 'field_staff')
+                        ->where('status', 'approved')),
+                ],
                 'categories' => 'required|array|min:1',
                 'categories.*' => 'integer|exists:service_categories,id',
             ],
@@ -96,11 +110,17 @@ class JobRequestController extends Controller
                 ->get(['id', 'name']);
 
             foreach ($categories as $category) {
+                $assignedFieldStaffId = $validated['assigned_field_staff_id'] ?? null;
+
                 JobRequestItem::create([
                     'job_request_id' => $jobRequest->id,
                     'service_category_id' => $category->id,
                     'created_by' => $request->user()->id,
-                    'status' => 'open',
+                    'claimed_by' => $assignedFieldStaffId,
+                    'claimed_at' => $assignedFieldStaffId ? now() : null,
+                    'status' => $assignedFieldStaffId
+                        ? JobRequestItem::STATUS_CLAIMED
+                        : JobRequestItem::STATUS_OPEN,
                     'title' => $category->name,
                     'due_date' => $validated['due_date'] ?? null,
                 ]);

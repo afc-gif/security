@@ -60,6 +60,7 @@ class JobRequestItem extends Model
     {
         return $query
             ->whereIn('status', [self::STATUS_OPEN, self::STATUS_REOPENED])
+            ->whereNull('claimed_by')
             ->where(function (Builder $dateQuery) {
                 $dateQuery->whereNull('due_date')
                     ->orWhere('due_date', '>=', now());
@@ -89,6 +90,7 @@ class JobRequestItem extends Model
     public function isClaimable(): bool
     {
         return in_array($this->status, [self::STATUS_OPEN, self::STATUS_REOPENED], true)
+            && $this->claimed_by === null
             && !$this->isOverdue();
     }
 
@@ -209,6 +211,10 @@ class JobRequestItem extends Model
     {
         // Can only claim open or reopened items
         if (!in_array($this->status, [self::STATUS_OPEN, self::STATUS_REOPENED], true)) {
+            return false;
+        }
+
+        if ($this->claimed_by !== null) {
             return false;
         }
 

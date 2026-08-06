@@ -48,6 +48,17 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assign Field Staff</label>
+                    <select name="assigned_field_staff_id" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">Leave unassigned for field staff to claim</option>
+                        @foreach($fieldStaff as $staff)
+                            <option value="{{ $staff->id }}" @selected((string) old('assigned_field_staff_id') === (string) $staff->id)>{{ $staff->name }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Assigned jobs go directly to that staff member. Unassigned jobs stay open for any eligible field staff to claim.</p>
+                </div>
+
+                <div>
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Service Categories *</label>
