@@ -7,7 +7,7 @@
     $statusClass = fn (?string $status) => match ($status) {
         'pending_assignment' => 'bg-purple-100 text-purple-800',
         'open', 'reopened', 'claimed' => 'bg-blue-100 text-blue-800',
-        'submitted' => 'bg-yellow-100 text-yellow-800',
+        'submitted', 'pending_admin_review' => 'bg-yellow-100 text-yellow-800',
         'approved' => 'bg-green-100 text-green-800',
         'returned' => 'bg-orange-100 text-orange-800',
         'rejected', 'overdue' => 'bg-red-100 text-red-800',
@@ -16,7 +16,7 @@
     };
 
     $sectionMeta = [
-        'pendingReview' => ['title' => 'Pending Review', 'empty' => 'No pending review items.'],
+        'pendingReview' => ['title' => 'Pending Admin Review', 'empty' => 'No pending admin review items.'],
         'overdue' => ['title' => 'Overdue', 'empty' => 'No overdue items.'],
         'returnedReopened' => ['title' => 'Returned / Reopened', 'empty' => 'No returned or reopened items.'],
         'approved' => ['title' => 'Approved', 'empty' => 'No approved items.'],
@@ -84,7 +84,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                <div class="text-sm text-gray-600">Pending Review</div>
+                <div class="text-sm text-gray-600">Pending Admin Review</div>
                 <div class="text-3xl font-bold text-gray-900 mt-2">{{ $summary['pending_review'] }}</div>
             </div>
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">

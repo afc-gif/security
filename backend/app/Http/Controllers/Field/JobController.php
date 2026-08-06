@@ -41,6 +41,7 @@ class JobController extends Controller
                         ->whereIn('status', [
                             JobRequestItem::STATUS_CLAIMED,
                             JobRequestItem::STATUS_SUBMITTED,
+                            JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
                             JobRequestItem::STATUS_RETURNED,
                             JobRequestItem::STATUS_APPROVED,
                             JobRequestItem::STATUS_OVERDUE,

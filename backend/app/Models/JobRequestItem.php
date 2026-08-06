@@ -18,6 +18,7 @@ class JobRequestItem extends Model
     const STATUS_PENDING_ASSIGNMENT = 'pending_assignment';
     const STATUS_CLAIMED = 'claimed';
     const STATUS_SUBMITTED = 'submitted';
+    const STATUS_PENDING_ADMIN_REVIEW = 'pending_admin_review';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
     const STATUS_RETURNED = 'returned';

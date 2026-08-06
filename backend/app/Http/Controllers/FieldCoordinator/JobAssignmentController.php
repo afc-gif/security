@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\FieldCoordinator;
 
 use App\Http\Controllers\Controller;
+use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -25,7 +26,21 @@ class JobAssignmentController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
 
-        return view('coordinator.jobs.index', compact('pendingJobs', 'fieldStaff'));
+        $submittedJobs = JobRequestItem::query()
+            ->with([
+                'jobRequest.client',
+                'serviceCategory',
+                'claimer',
+                'attempts' => fn ($query) => $query
+                    ->with(['user', 'requirements', 'media.uploader'])
+                    ->latest('id'),
+            ])
+            ->where('status', JobRequestItem::STATUS_SUBMITTED)
+            ->latest('submitted_at')
+            ->latest('id')
+            ->paginate(15, ['*'], 'review_page');
+
+        return view('coordinator.jobs.index', compact('pendingJobs', 'fieldStaff', 'submittedJobs'));
     }
 
     public function assign(Request $request, JobRequestItem $jobItem)
@@ -111,5 +126,95 @@ class JobAssignmentController extends Controller
         return redirect()
             ->route('coordinator.jobs.index')
             ->with('success', 'Job released for field staff claim.');
+    }
+
+    public function review(Request $request, JobRequestItem $jobItem)
+    {
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['approve', 'return'])],
+            'coordinator_note' => [
+                Rule::requiredIf(fn () => $request->input('action') === 'return'),
+                'nullable',
+                'string',
+            ],
+        ], [
+            'coordinator_note.required' => 'Please add a note when returning a report for correction.',
+        ]);
+
+        $action = $validated['action'];
+        $coordinatorNote = trim((string) ($validated['coordinator_note'] ?? ''));
+
+        if ($action === 'return' && $coordinatorNote === '') {
+            return back()
+                ->withErrors(['coordinator_note' => 'Please add a note when returning a report for correction.'])
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($jobItem, $action, $coordinatorNote) {
+            $lockedItem = JobRequestItem::query()
+                ->where('id', $jobItem->id)
+                ->where('status', JobRequestItem::STATUS_SUBMITTED)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedItem) {
+                abort(409, 'This job report is no longer waiting for coordinator review.');
+            }
+
+            $latestAttempt = JobItemAttempt::query()
+                ->where('job_request_item_id', $lockedItem->id)
+                ->where('status', JobItemAttempt::STATUS_SUBMITTED)
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$latestAttempt) {
+                abort(409, 'No submitted report is available for review.');
+            }
+
+            if ($action === 'approve') {
+                $lockedItem->update([
+                    'status' => JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
+                ]);
+
+                $latestAttempt->update([
+                    'status' => JobItemAttempt::STATUS_COORDINATOR_APPROVED,
+                    'notes' => $this->withCoordinatorNote($latestAttempt->notes, $coordinatorNote),
+                ]);
+
+                return;
+            }
+
+            $lockedItem->update([
+                'status' => JobRequestItem::STATUS_RETURNED,
+                'submitted_at' => null,
+            ]);
+
+            $latestAttempt->update([
+                'status' => JobItemAttempt::STATUS_RETURNED,
+                'notes' => $this->withCoordinatorNote($latestAttempt->notes, $coordinatorNote),
+            ]);
+        });
+
+        return redirect()
+            ->route('coordinator.jobs.index')
+            ->with('success', $action === 'approve'
+                ? 'Report approved and sent to admin.'
+                : 'Report returned to field staff for correction.');
+    }
+
+    private function withCoordinatorNote(?string $notes, string $coordinatorNote): ?string
+    {
+        if ($coordinatorNote === '') {
+            return $notes;
+        }
+
+        $existingNotes = trim((string) $notes);
+
+        if ($existingNotes === '') {
+            return "Coordinator note: {$coordinatorNote}";
+        }
+
+        return "{$existingNotes}\n\nCoordinator note: {$coordinatorNote}";
     }
 }

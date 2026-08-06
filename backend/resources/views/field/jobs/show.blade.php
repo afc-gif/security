@@ -4,13 +4,15 @@
     $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
         ? \App\Models\JobItemAttempt::STATUS_REJECTED
         : ($isOverdue ? \App\Models\JobRequestItem::STATUS_OVERDUE : $jobItem->status);
-    $adminNote = null;
+    $reviewNote = null;
 
     if (in_array($latestOwnAttempt?->status, [\App\Models\JobItemAttempt::STATUS_RETURNED, \App\Models\JobItemAttempt::STATUS_REJECTED], true)) {
         $notes = (string) $latestOwnAttempt->notes;
-        $adminNote = str_contains($notes, 'Admin note:')
+        $reviewNote = str_contains($notes, 'Admin note:')
             ? trim(\Illuminate\Support\Str::afterLast($notes, 'Admin note:'))
-            : trim($notes);
+            : (str_contains($notes, 'Coordinator note:')
+                ? trim(\Illuminate\Support\Str::afterLast($notes, 'Coordinator note:'))
+                : trim($notes));
     }
 
     $submittedRequirements = $latestOwnAttempt?->requirements ?? collect();
@@ -95,8 +97,8 @@
                 @if($jobItem->status === \App\Models\JobRequestItem::STATUS_RETURNED)
                     <div class="notice locked">
                         This job was returned for updates. Submit the corrected report when ready.
-                        @if($adminNote)
-                            <div class="admin-note"><strong>Admin note:</strong><br>{{ $adminNote }}</div>
+                        @if($reviewNote)
+                            <div class="admin-note"><strong>Review note:</strong><br>{{ $reviewNote }}</div>
                         @endif
                     </div>
                 @endif
@@ -145,14 +147,16 @@
                     <button class="button full" type="submit">Submit Job Report</button>
                 </form>
             @elseif($jobItem->status === \App\Models\JobRequestItem::STATUS_SUBMITTED)
-                <div class="notice locked">Submitted. Awaiting review.</div>
+                <div class="notice locked">Submitted. Awaiting coordinator review.</div>
+            @elseif($jobItem->status === \App\Models\JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)
+                <div class="notice locked">Coordinator approved. Awaiting admin final review.</div>
             @elseif($jobItem->status === \App\Models\JobRequestItem::STATUS_APPROVED)
                 <div class="notice success">Approved</div>
             @elseif($displayStatus === \App\Models\JobItemAttempt::STATUS_REJECTED)
                 <div class="notice error">
                     Rejected
-                    @if($adminNote)
-                        <div class="admin-note"><strong>Admin note:</strong><br>{{ $adminNote }}</div>
+                    @if($reviewNote)
+                        <div class="admin-note"><strong>Review note:</strong><br>{{ $reviewNote }}</div>
                     @endif
                 </div>
             @else

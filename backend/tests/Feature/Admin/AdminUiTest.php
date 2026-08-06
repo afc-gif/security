@@ -170,14 +170,14 @@ class AdminUiTest extends TestCase
             'created_by' => $admin->id,
             'claimed_by' => $fieldStaff->id,
             'claimed_at' => now(),
-            'status' => JobRequestItem::STATUS_SUBMITTED,
+            'status' => JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
             'title' => $category->name,
             'submitted_at' => now(),
         ]);
         $attempt = JobItemAttempt::create([
             'job_request_item_id' => $jobItem->id,
             'user_id' => $fieldStaff->id,
-            'status' => JobItemAttempt::STATUS_SUBMITTED,
+            'status' => JobItemAttempt::STATUS_COORDINATOR_APPROVED,
             'notes' => 'Inspection completed.',
         ]);
         $attempt->requirements()->createMany([

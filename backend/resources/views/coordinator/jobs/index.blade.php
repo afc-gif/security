@@ -28,7 +28,8 @@
             </div>
         @endif
 
-        <section class="section">
+        <section class="section" aria-labelledby="pending-assignment-title">
+            <h2 id="pending-assignment-title">Pending Assignment</h2>
             @if($pendingJobs->count() === 0)
                 <div class="empty-state">No jobs are waiting for assignment.</div>
             @else
@@ -78,6 +79,91 @@
 
                 <div class="pagination">
                     {{ $pendingJobs->links() }}
+                </div>
+            @endif
+        </section>
+
+        <section class="section" aria-labelledby="submitted-reports-title">
+            <h2 id="submitted-reports-title">Submitted Reports</h2>
+            @if($submittedJobs->count() === 0)
+                <div class="empty-state">No reports are waiting for coordinator review.</div>
+            @else
+                <div class="job-grid">
+                    @foreach($submittedJobs as $job)
+                        @php($latestAttempt = $job->attempts->first())
+                        <article class="job-card">
+                            <div class="job-top">
+                                <div>
+                                    <h3 class="client-name">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</h3>
+                                    <p class="job-title">{{ $job->jobRequest?->title ?? 'Job request unavailable' }}</p>
+                                </div>
+                                <span class="badge {{ $job->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($job->status)) }}</span>
+                            </div>
+
+                            <span class="category-pill">{{ $job->serviceCategory?->name ?? $job->title ?? 'Service category' }}</span>
+
+                            <div class="meta">
+                                <div>Field staff: {{ $job->claimer?->name ?? '-' }}</div>
+                                <div>Submitted: {{ $job->submitted_at?->format('d M Y H:i') ?? '-' }}</div>
+                            </div>
+
+                            @if($latestAttempt)
+                                <div class="form-row" style="margin-top:10px;">
+                                    <strong>Notes</strong>
+                                    <div>{{ $latestAttempt->notes ?: '-' }}</div>
+                                </div>
+
+                                @if($latestAttempt->requirements->count())
+                                    <div class="timeline" style="margin-top:10px;">
+                                        @foreach($latestAttempt->requirements as $requirement)
+                                            <article class="update">
+                                                <div class="label">{{ ucfirst($requirement->type) }}</div>
+                                                <div class="value">{{ $requirement->name }}</div>
+                                                @if($requirement->quantity)
+                                                    <div class="muted">Qty: {{ $requirement->quantity }}</div>
+                                                @endif
+                                                @if($requirement->notes)
+                                                    <div class="muted">{{ $requirement->notes }}</div>
+                                                @endif
+                                            </article>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if($latestAttempt->media->count())
+                                    <div class="files" style="margin-top:10px;">
+                                        @foreach($latestAttempt->media as $media)
+                                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                            <div class="file">
+                                                @if($mediaUrl)
+                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">{{ $media->file_name ?? 'Inspection photo' }}</a>
+                                                @else
+                                                    <strong>{{ $media->file_name ?? 'Inspection photo' }}</strong>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endif
+
+                            <form method="POST" action="{{ route('coordinator.jobs.review', $job) }}" style="margin-top:12px;">
+                                @csrf
+                                <div class="form-row">
+                                    <label for="coordinator_note_{{ $job->id }}">Coordinator Note</label>
+                                    <textarea id="coordinator_note_{{ $job->id }}" name="coordinator_note" rows="3">{{ old('coordinator_note') }}</textarea>
+                                    <div class="muted">Required when returning for correction.</div>
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                    <button class="card-button" type="submit" name="action" value="approve">Send to Admin</button>
+                                    <button class="card-button secondary" type="submit" name="action" value="return">Return</button>
+                                </div>
+                            </form>
+                        </article>
+                    @endforeach
+                </div>
+
+                <div class="pagination">
+                    {{ $submittedJobs->links() }}
                 </div>
             @endif
         </section>

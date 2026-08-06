@@ -277,6 +277,7 @@ Route::middleware(['auth', 'role:field_coordinator'])->prefix('coordinator')->gr
     Route::post('/jobs/{jobItem}/assign', [CoordinatorJobAssignmentController::class, 'assign'])->name('coordinator.jobs.assign');
     Route::post('/jobs/{jobItem}/claim', [CoordinatorJobAssignmentController::class, 'claim'])->name('coordinator.jobs.claim');
     Route::post('/jobs/{jobItem}/release', [CoordinatorJobAssignmentController::class, 'release'])->name('coordinator.jobs.release');
+    Route::post('/jobs/{jobItem}/review', [CoordinatorJobAssignmentController::class, 'review'])->name('coordinator.jobs.review');
 });
 
 // POS API routes (for barcode scanning and product lookup)

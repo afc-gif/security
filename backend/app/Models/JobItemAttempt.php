@@ -13,6 +13,7 @@ class JobItemAttempt extends Model
 
     // Status constants
     const STATUS_SUBMITTED = 'submitted';
+    const STATUS_COORDINATOR_APPROVED = 'coordinator_approved';
     const STATUS_REJECTED = 'rejected';
     const STATUS_APPROVED = 'approved';
     const STATUS_RETURNED = 'returned';

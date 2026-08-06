@@ -57,7 +57,7 @@
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Status</div>
-                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($jobItem->status) { 'open', 'reopened' => 'bg-blue-100 text-blue-800', 'claimed' => 'bg-blue-100 text-blue-800', 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'overdue', 'rejected' => 'bg-red-100 text-red-800', 'closed' => 'bg-gray-300 text-gray-800', default => 'bg-gray-200 text-gray-700' } }}">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($jobItem->status) { 'open', 'reopened' => 'bg-blue-100 text-blue-800', 'claimed' => 'bg-blue-100 text-blue-800', 'submitted', 'pending_admin_review' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'overdue', 'rejected' => 'bg-red-100 text-red-800', 'closed' => 'bg-gray-300 text-gray-800', default => 'bg-gray-200 text-gray-700' } }}">
                         {{ str_replace('_', ' ', \Illuminate\Support\Str::title($jobItem->status)) }}
                     </span>
                 </div>
@@ -156,9 +156,9 @@
             @endif
         </div>
 
-        @if($jobItem->status === \App\Models\JobRequestItem::STATUS_SUBMITTED && $latestAttempt)
+        @if($jobItem->status === \App\Models\JobRequestItem::STATUS_PENDING_ADMIN_REVIEW && $latestAttempt)
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Admin Review</h2>
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Admin Final Review</h2>
                 <form method="POST" action="{{ route('admin.job-items.review', $jobItem) }}" class="space-y-4">
                     @csrf
                     <div>
@@ -230,6 +230,7 @@
                             $attemptStatus = $attempt?->status ?? 'unknown';
                             $attemptLabel = match ($attemptStatus) {
                                 \App\Models\JobItemAttempt::STATUS_SUBMITTED => 'Submitted by ' . ($attempt?->user?->name ?? 'field staff'),
+                                \App\Models\JobItemAttempt::STATUS_COORDINATOR_APPROVED => 'Approved by Coordinator',
                                 \App\Models\JobItemAttempt::STATUS_APPROVED => 'Approved by Admin',
                                 \App\Models\JobItemAttempt::STATUS_RETURNED => 'Returned by Admin',
                                 \App\Models\JobItemAttempt::STATUS_REJECTED => 'Rejected by Admin',
@@ -242,7 +243,7 @@
                                     <div class="font-semibold text-gray-900">{{ $attemptLabel }}</div>
                                     <div class="text-sm text-gray-600">{{ $attempt?->created_at?->format('d M Y H:i') ?? '—' }}</div>
                                 </div>
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($attemptStatus) { 'submitted' => 'bg-yellow-100 text-yellow-800', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'rejected' => 'bg-red-100 text-red-800', default => 'bg-gray-200 text-gray-700' } }}">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ match ($attemptStatus) { 'submitted' => 'bg-yellow-100 text-yellow-800', 'coordinator_approved', 'approved' => 'bg-green-100 text-green-800', 'returned' => 'bg-orange-100 text-orange-800', 'rejected' => 'bg-red-100 text-red-800', default => 'bg-gray-200 text-gray-700' } }}">
                                     {{ str_replace('_', ' ', \Illuminate\Support\Str::title($attemptStatus)) }}
                                 </span>
                             </div>

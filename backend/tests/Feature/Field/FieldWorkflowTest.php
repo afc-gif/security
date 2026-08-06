@@ -138,6 +138,98 @@ class FieldWorkflowTest extends TestCase
             ->assertSee('Release inspection');
     }
 
+    public function test_field_coordinator_approves_submitted_report_for_admin_review(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Coordinator Review Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Review inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'claimed_by' => $fieldStaff->id,
+            'claimed_at' => now(),
+            'status' => JobRequestItem::STATUS_SUBMITTED,
+            'title' => $category->name,
+            'submitted_at' => now(),
+        ]);
+        $attempt = JobItemAttempt::create([
+            'job_request_item_id' => $jobItem->id,
+            'user_id' => $fieldStaff->id,
+            'status' => JobItemAttempt::STATUS_SUBMITTED,
+            'notes' => 'Ready for coordinator review.',
+        ]);
+
+        $this->actingAs($coordinator)->post("/coordinator/jobs/{$jobItem->id}/review", [
+            'action' => 'approve',
+            'coordinator_note' => 'Looks good.',
+        ])->assertRedirect('/coordinator/jobs');
+
+        $this->assertDatabaseHas('job_request_items', [
+            'id' => $jobItem->id,
+            'status' => JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
+        ]);
+        $this->assertDatabaseHas('job_item_attempts', [
+            'id' => $attempt->id,
+            'status' => JobItemAttempt::STATUS_COORDINATOR_APPROVED,
+        ]);
+    }
+
+    public function test_field_coordinator_returns_submitted_report_for_correction(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Correction Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Correction inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'claimed_by' => $fieldStaff->id,
+            'claimed_at' => now(),
+            'status' => JobRequestItem::STATUS_SUBMITTED,
+            'title' => $category->name,
+            'submitted_at' => now(),
+        ]);
+        $attempt = JobItemAttempt::create([
+            'job_request_item_id' => $jobItem->id,
+            'user_id' => $fieldStaff->id,
+            'status' => JobItemAttempt::STATUS_SUBMITTED,
+            'notes' => 'Needs review.',
+        ]);
+
+        $this->actingAs($coordinator)->post("/coordinator/jobs/{$jobItem->id}/review", [
+            'action' => 'return',
+            'coordinator_note' => 'Add clearer pictures.',
+        ])->assertRedirect('/coordinator/jobs');
+
+        $this->assertDatabaseHas('job_request_items', [
+            'id' => $jobItem->id,
+            'status' => JobRequestItem::STATUS_RETURNED,
+            'claimed_by' => $fieldStaff->id,
+            'submitted_at' => null,
+        ]);
+        $this->assertDatabaseHas('job_item_attempts', [
+            'id' => $attempt->id,
+            'status' => JobItemAttempt::STATUS_RETURNED,
+        ]);
+    }
+
     public function test_field_staff_can_tick_project_requirement_done_and_progress_updates(): void
     {
         $admin = $this->createAdmin();

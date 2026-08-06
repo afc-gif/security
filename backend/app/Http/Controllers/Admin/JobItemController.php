@@ -85,7 +85,7 @@ class JobItemController extends Controller
         DB::transaction(function () use ($jobItem, $action, $adminNote, $requirements) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
-                ->where('status', JobRequestItem::STATUS_SUBMITTED)
+                ->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)
                 ->lockForUpdate()
                 ->first();
 
@@ -99,8 +99,8 @@ class JobItemController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$latestAttempt || $latestAttempt->status !== JobItemAttempt::STATUS_SUBMITTED) {
-                abort(409, 'No submitted attempt is available for review.');
+            if (!$latestAttempt || $latestAttempt->status !== JobItemAttempt::STATUS_COORDINATOR_APPROVED) {
+                abort(409, 'No coordinator-approved attempt is available for review.');
             }
 
             match ($action) {

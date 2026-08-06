@@ -56,13 +56,13 @@ class AdminController extends Controller
             ->limit(3)
             ->get(), collect());
         $pendingReviewCount = $this->dashboardPreviewValue(fn () => JobRequestItem::query()
-            ->where('status', JobRequestItem::STATUS_SUBMITTED)
+            ->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)
             ->count(), 0);
         $overdueItemsCount = $this->dashboardPreviewValue(fn () => $this->overdueJobItemsQuery()->count(), 0);
         $jobInboxPreview = $this->dashboardPreviewValue(fn () => JobRequestItem::query()
             ->with(['jobRequest.client', 'serviceCategory'])
             ->where(function ($query) {
-                $query->where('status', JobRequestItem::STATUS_SUBMITTED)
+                $query->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)
                     ->orWhere('status', JobRequestItem::STATUS_OVERDUE)
                     ->orWhere(function ($overdueQuery) {
                         $overdueQuery->whereNotNull('due_date')

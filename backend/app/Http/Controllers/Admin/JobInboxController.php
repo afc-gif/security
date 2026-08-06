@@ -17,6 +17,7 @@ class JobInboxController extends Controller
             JobRequestItem::STATUS_OPEN,
             JobRequestItem::STATUS_CLAIMED,
             JobRequestItem::STATUS_SUBMITTED,
+            JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
             JobRequestItem::STATUS_APPROVED,
             JobRequestItem::STATUS_RETURNED,
             JobRequestItem::STATUS_REJECTED,
@@ -59,14 +60,14 @@ class JobInboxController extends Controller
             });
 
         $summary = [
-            'pending_review' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_SUBMITTED)->count(),
+            'pending_review' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)->count(),
             'overdue' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_OVERDUE)->count(),
             'returned_reopened' => (clone $baseQuery)->whereIn('status', [JobRequestItem::STATUS_RETURNED, JobRequestItem::STATUS_REOPENED])->count(),
             'converted' => (clone $baseQuery)->whereHas('project')->count(),
         ];
 
         $sections = [
-            'pendingReview' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_SUBMITTED)->latest('submitted_at')->latest('id')->limit(10)->get(),
+            'pendingReview' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)->latest('submitted_at')->latest('id')->limit(10)->get(),
             'overdue' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_OVERDUE)->latest('updated_at')->latest('id')->limit(10)->get(),
             'returnedReopened' => (clone $baseQuery)->whereIn('status', [JobRequestItem::STATUS_RETURNED, JobRequestItem::STATUS_REOPENED])->latest('updated_at')->latest('id')->limit(10)->get(),
             'approved' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_APPROVED)->latest('updated_at')->latest('id')->limit(10)->get(),

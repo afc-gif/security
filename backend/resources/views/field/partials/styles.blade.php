@@ -470,6 +470,7 @@
 
     .badge.submitted,
     .status.submitted,
+    .status.pending_admin_review,
     .status.pending,
     .status.pending_review,
     .status.ready_for_review,
