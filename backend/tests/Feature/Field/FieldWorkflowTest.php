@@ -111,6 +111,72 @@ class FieldWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_field_coordinator_dashboard_shows_pending_assignment_notification(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $client = Client::create(['client_name' => 'Notification Client']);
+        $category = ServiceCategory::create(['name' => 'CCTV Survey', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Notify coordinator',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+
+        JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($coordinator)
+            ->get('/field/dashboard')
+            ->assertOk()
+            ->assertSee('1 job waiting for assignment')
+            ->assertSee('Notify coordinator')
+            ->assertSee('Assign Jobs');
+
+        $this->actingAs($coordinator)
+            ->getJson('/field/dashboard/pending-assignments')
+            ->assertOk()
+            ->assertJson(['count' => 1]);
+    }
+
+    public function test_field_staff_dashboard_does_not_show_coordinator_assignment_notification(): void
+    {
+        $admin = $this->createAdmin();
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Hidden Notification Client']);
+        $category = ServiceCategory::create(['name' => 'Access Control Survey', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Hidden coordinator job',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+
+        JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($fieldStaff)
+            ->get('/field/dashboard')
+            ->assertOk()
+            ->assertDontSee('job waiting for assignment')
+            ->assertDontSee('Hidden coordinator job');
+
+        $this->actingAs($fieldStaff)
+            ->getJson('/field/dashboard/pending-assignments')
+            ->assertForbidden();
+    }
+
     public function test_field_coordinator_can_release_pending_job_for_open_claim(): void
     {
         $admin = $this->createAdmin();

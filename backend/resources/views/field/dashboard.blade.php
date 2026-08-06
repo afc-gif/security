@@ -7,6 +7,9 @@
     $overdueJobsCount = $overdueJobsCount ?? 0;
     $recentJobs = collect($recentJobs ?? []);
     $recentProjects = collect($recentProjects ?? []);
+    $pendingAssignmentCount = $pendingAssignmentCount ?? 0;
+    $pendingAssignmentJobs = collect($pendingAssignmentJobs ?? []);
+    $isCoordinator = $fieldUser?->isFieldCoordinator() ?? false;
 
     $formatStatus = fn ($status) => str_replace('_', ' ', \Illuminate\Support\Str::title($status ?? 'Unknown'));
     $statusClass = fn ($status) => str_replace('_', '-', strtolower((string) ($status ?? 'unknown')));
@@ -208,6 +211,7 @@
         .action-card,
         .item-card,
         .empty-state,
+        .coordinator-alert,
         .priority-panel {
             border: 1px solid var(--line);
             border-radius: 8px;
@@ -240,6 +244,87 @@
         .summary-card.available .summary-value { color: var(--brand); }
         .summary-card.mine .summary-value { color: var(--green); }
         .summary-card.overdue .summary-value { color: var(--red); }
+
+        .coordinator-alert {
+            padding: 14px;
+            display: grid;
+            gap: 13px;
+            border-color: rgba(194, 65, 12, 0.3);
+            background: linear-gradient(180deg, #fff 0%, #fff7ed 100%);
+        }
+
+        .coordinator-alert.is-empty {
+            display: none;
+        }
+
+        .alert-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .alert-copy {
+            min-width: 0;
+        }
+
+        .alert-title {
+            color: var(--orange);
+            font-size: 16px;
+            line-height: 1.25;
+            font-weight: 950;
+        }
+
+        .alert-message {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.4;
+            font-weight: 750;
+        }
+
+        .alert-count {
+            min-width: 42px;
+            min-height: 38px;
+            padding: 8px 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--orange);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 950;
+        }
+
+        .assignment-preview {
+            display: grid;
+            gap: 8px;
+        }
+
+        .assignment-preview-item {
+            padding: 10px;
+            border: 1px solid rgba(217, 226, 236, 0.95);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.84);
+        }
+
+        .assignment-preview-item strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.35;
+            font-weight: 950;
+        }
+
+        .assignment-preview-item span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 750;
+        }
 
         .priority-panel {
             padding: 14px;
@@ -530,6 +615,41 @@
             <p class="subtext">Start with urgent jobs, then continue your assigned jobs or project updates.</p>
         </section>
 
+        @if($isCoordinator)
+            <section
+                class="section coordinator-alert {{ $pendingAssignmentCount > 0 ? '' : 'is-empty' }}"
+                data-pending-assignment-alert
+                data-pending-assignment-url="{{ route('field.dashboard.pending-assignments') }}"
+                data-initial-pending-count="{{ $pendingAssignmentCount }}"
+                aria-live="polite"
+            >
+                <div class="alert-top">
+                    <div class="alert-copy">
+                        <h2 class="alert-title" data-pending-assignment-title>
+                            {{ $pendingAssignmentCount }} {{ \Illuminate\Support\Str::plural('job', $pendingAssignmentCount) }} waiting for assignment
+                        </h2>
+                        <p class="alert-message" data-pending-assignment-message>
+                            New job requests are waiting for a field coordinator to assign them.
+                        </p>
+                    </div>
+                    <span class="alert-count" data-pending-assignment-count>{{ $pendingAssignmentCount }}</span>
+                </div>
+
+                @if($pendingAssignmentJobs->isNotEmpty())
+                    <div class="assignment-preview">
+                        @foreach($pendingAssignmentJobs as $job)
+                            <article class="assignment-preview-item">
+                                <strong>{{ $job->jobRequest?->title ?? $job->title ?? 'Job request unavailable' }}</strong>
+                                <span>{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }} · {{ $job->serviceCategory?->name ?? 'Service category' }}</span>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+
+                <a class="button" href="{{ route('coordinator.jobs.index') }}">Assign Jobs</a>
+            </section>
+        @endif
+
         <section class="section" aria-labelledby="summary-title">
             <div class="section-head">
                 <h2 id="summary-title">Today</h2>
@@ -662,7 +782,7 @@
                                 </div>
                                 <div class="meta">
                                     <div class="progress">
-                                        <div class="bar"><span style="width: {{ $progress }}%;"></span></div>
+                                        <div class="bar"><span data-progress="{{ $progress }}"></span></div>
                                         <strong>{{ $progress }}%</strong>
                                     </div>
                                     <div>
@@ -700,5 +820,62 @@
             <span>Projects</span>
         </a>
     </nav>
+    @if($isCoordinator)
+        <script>
+            (() => {
+                const alert = document.querySelector('[data-pending-assignment-alert]');
+
+                if (!alert) {
+                    return;
+                }
+
+                const countEl = alert.querySelector('[data-pending-assignment-count]');
+                const titleEl = alert.querySelector('[data-pending-assignment-title]');
+                const messageEl = alert.querySelector('[data-pending-assignment-message]');
+                const endpoint = alert.dataset.pendingAssignmentUrl;
+                let lastCount = Number(alert.dataset.initialPendingCount || 0);
+
+                const updateAlert = (count) => {
+                    const label = count === 1 ? 'job' : 'jobs';
+
+                    alert.classList.toggle('is-empty', count < 1);
+                    countEl.textContent = String(count);
+                    titleEl.textContent = `${count} ${label} waiting for assignment`;
+                    messageEl.textContent = count > lastCount
+                        ? 'New job request received. Please assign it to field staff.'
+                        : 'New job requests are waiting for a field coordinator to assign them.';
+                    lastCount = count;
+                };
+
+                const refreshPendingAssignments = async () => {
+                    try {
+                        const response = await fetch(endpoint, {
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+
+                        if (!response.ok) {
+                            return;
+                        }
+
+                        const data = await response.json();
+                        updateAlert(Number(data.count || 0));
+                    } catch (error) {
+                        return;
+                    }
+                };
+
+                setInterval(refreshPendingAssignments, 30000);
+            })();
+        </script>
+    @endif
+    <script>
+        document.querySelectorAll('[data-progress]').forEach((bar) => {
+            const progress = Math.min(100, Math.max(0, Number(bar.dataset.progress || 0)));
+            bar.style.width = `${progress}%`;
+        });
+    </script>
 </body>
 </html>

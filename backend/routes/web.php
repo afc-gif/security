@@ -257,6 +257,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field')->group(function () {
     Route::get('/dashboard', [FieldDashboardController::class, 'index'])->name('field.dashboard');
+    Route::get('/dashboard/pending-assignments', [FieldDashboardController::class, 'pendingAssignments'])->name('field.dashboard.pending-assignments');
     Route::get('/inspections', [FieldInspectionController::class, 'index'])->name('field.inspections.index');
     Route::get('/inspections/{inspection}', [FieldInspectionController::class, 'show'])->name('field.inspections.show');
     Route::post('/inspections/{inspection}/submit', [FieldInspectionController::class, 'submitReport'])->name('field.inspections.submit');

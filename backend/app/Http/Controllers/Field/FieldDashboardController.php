@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\Project;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 
 class FieldDashboardController extends Controller
 {
     public function index()
     {
         $userId = auth()->id();
+        $user = auth()->user();
 
         $availableJobsQuery = JobRequestItem::query()
             ->available()
@@ -73,12 +76,43 @@ class FieldDashboardController extends Controller
             ->limit(4)
             ->get();
 
+        $pendingAssignmentCount = 0;
+        $pendingAssignmentJobs = collect();
+
+        if ($user instanceof User && $user->isFieldCoordinator()) {
+            $pendingAssignmentCount = $this->pendingAssignmentQuery()->count();
+            $pendingAssignmentJobs = $this->pendingAssignmentQuery()
+                ->limit(3)
+                ->get();
+        }
+
         return view('field.dashboard', compact(
             'availableJobsCount',
             'myJobsCount',
             'overdueJobsCount',
             'recentJobs',
-            'recentProjects'
+            'recentProjects',
+            'pendingAssignmentCount',
+            'pendingAssignmentJobs'
         ));
+    }
+
+    public function pendingAssignments(): JsonResponse
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof User && $user->isFieldCoordinator(), 403);
+
+        return response()->json([
+            'count' => $this->pendingAssignmentQuery()->count(),
+        ]);
+    }
+
+    private function pendingAssignmentQuery()
+    {
+        return JobRequestItem::query()
+            ->with(['jobRequest.client', 'serviceCategory'])
+            ->where('status', JobRequestItem::STATUS_PENDING_ASSIGNMENT)
+            ->latest('id');
     }
 }
