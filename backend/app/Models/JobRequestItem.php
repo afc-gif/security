@@ -15,6 +15,7 @@ class JobRequestItem extends Model
 
     // Status Constants
     const STATUS_OPEN = 'open';
+    const STATUS_PENDING_ASSIGNMENT = 'pending_assignment';
     const STATUS_CLAIMED = 'claimed';
     const STATUS_SUBMITTED = 'submitted';
     const STATUS_APPROVED = 'approved';

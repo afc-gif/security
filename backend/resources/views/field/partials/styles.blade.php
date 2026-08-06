@@ -456,9 +456,11 @@
     .badge.open,
     .badge.reopened,
     .badge.claimed,
+    .badge.pending_assignment,
     .status.open,
     .status.reopened,
     .status.claimed,
+    .status.pending_assignment,
     .status.in_progress,
     .status.ongoing,
     .status.assigned {

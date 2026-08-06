@@ -65,6 +65,7 @@
                             $itemStatusClass = match ($displayStatus) {
                                 'overdue' => 'bg-red-100 text-red-800',
                                 'closed' => 'bg-gray-300 text-gray-800',
+                                'pending_assignment' => 'bg-purple-100 text-purple-800',
                                 'open', 'reopened' => 'bg-blue-100 text-blue-800',
                                 'claimed' => 'bg-blue-100 text-blue-800',
                                 'submitted' => 'bg-yellow-100 text-yellow-800',
@@ -90,7 +91,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
                                 <div>
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Assigned / Claimed By</div>
-                                    <div class="text-gray-900">{{ $item->claimer?->name ?? 'Open for claim' }}</div>
+                                    <div class="text-gray-900">{{ $item->claimer?->name ?? ($item->status === \App\Models\JobRequestItem::STATUS_PENDING_ASSIGNMENT ? 'Waiting for coordinator' : 'Open for claim') }}</div>
                                 </div>
                                 <div>
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Due Date</div>

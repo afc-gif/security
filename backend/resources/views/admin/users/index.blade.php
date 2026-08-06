@@ -50,6 +50,8 @@
                                     <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">Manager</span>
                                 @elseif ($user->isFieldStaff())
                                     <span class="inline-block bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-xs font-semibold">Field Staff</span>
+                                @elseif ($user->isFieldCoordinator())
+                                    <span class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-semibold">Field Coordinator</span>
                                 @elseif ($user->isPos())
                                     <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">🛒 POS</span>
                                 @else

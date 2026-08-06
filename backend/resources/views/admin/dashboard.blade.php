@@ -1037,7 +1037,7 @@
         const statOrders = document.getElementById('statOrders');
         const statRevenue = document.getElementById('statRevenue');
         const healthDetail = document.getElementById('healthDetail');
-        const roles = ['admin', 'manager', 'field_staff', 'pos', 'user'];
+        const roles = ['admin', 'manager', 'field_staff', 'field_coordinator', 'pos', 'user'];
         const posBarcodeInput = document.getElementById('posBarcodeInput');
         const posLookupResult = document.getElementById('posLookupResult');
         const posScanStatus = document.getElementById('posScanStatus');

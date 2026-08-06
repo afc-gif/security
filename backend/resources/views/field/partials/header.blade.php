@@ -18,10 +18,15 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button class="logout-button" type="submit">Logout</button>
-        </form>
+        <div style="display:flex; align-items:center; gap:10px;">
+            @if($fieldUser?->isFieldCoordinator())
+                <a class="logout-button" style="text-decoration:none;" href="{{ route('coordinator.jobs.index') }}">Assign Jobs</a>
+            @endif
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
     </div>
 
     <div class="status-strip" aria-label="Field status summary">

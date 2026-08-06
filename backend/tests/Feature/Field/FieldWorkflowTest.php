@@ -64,6 +64,80 @@ class FieldWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_field_coordinator_assigns_pending_job_to_field_staff(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Dispatch Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Dispatch inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($fieldStaff)
+            ->get('/field/jobs')
+            ->assertOk()
+            ->assertDontSee('Dispatch inspection');
+
+        $this->actingAs($coordinator)->post("/coordinator/jobs/{$jobItem->id}/assign", [
+            'assigned_to' => $fieldStaff->id,
+        ])->assertRedirect('/coordinator/jobs');
+
+        $this->assertDatabaseHas('job_request_items', [
+            'id' => $jobItem->id,
+            'claimed_by' => $fieldStaff->id,
+            'status' => JobRequestItem::STATUS_CLAIMED,
+        ]);
+    }
+
+    public function test_field_coordinator_can_release_pending_job_for_open_claim(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Open Claim Dispatch Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Release inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($coordinator)
+            ->post("/coordinator/jobs/{$jobItem->id}/release")
+            ->assertRedirect('/coordinator/jobs');
+
+        $this->assertDatabaseHas('job_request_items', [
+            'id' => $jobItem->id,
+            'claimed_by' => null,
+            'status' => JobRequestItem::STATUS_OPEN,
+        ]);
+
+        $this->actingAs($fieldStaff)
+            ->get('/field/jobs')
+            ->assertOk()
+            ->assertSee('Release inspection');
+    }
+
     public function test_field_staff_can_tick_project_requirement_done_and_progress_updates(): void
     {
         $admin = $this->createAdmin();

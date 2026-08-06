@@ -496,7 +496,7 @@ class AdminController extends Controller
     // Approve user and assign role
     public function approveUser(User $user, $role)
     {
-        if (!in_array($role, ['admin', 'manager', 'field_staff', 'pos', 'user'], true)) {
+        if (!in_array($role, ['admin', 'manager', 'field_staff', 'field_coordinator', 'pos', 'user'], true)) {
             return back()->withErrors('Invalid role specified.');
         }
 

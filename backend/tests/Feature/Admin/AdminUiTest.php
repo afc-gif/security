@@ -109,14 +109,9 @@ class AdminUiTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $deleteUser->id]);
     }
 
-    public function test_admin_can_assign_created_job_request_items_to_field_staff(): void
+    public function test_admin_created_job_request_items_wait_for_coordinator_assignment(): void
     {
         $admin = $this->createAdmin();
-        $fieldStaff = $this->createUser([
-            'name' => 'Field Staff One',
-            'role' => 'field_staff',
-            'status' => 'approved',
-        ]);
         $client = Client::create(['client_name' => 'Acme Client']);
         $category = ServiceCategory::create(['name' => 'CCTV Inspection', 'is_active' => true]);
 
@@ -124,20 +119,19 @@ class AdminUiTest extends TestCase
             'client_id' => $client->id,
             'title' => 'Inspect Acme site',
             'description' => 'Initial assessment',
-            'assigned_field_staff_id' => $fieldStaff->id,
             'categories' => [$category->id],
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('job_request_items', [
             'service_category_id' => $category->id,
-            'claimed_by' => $fieldStaff->id,
-            'status' => JobRequestItem::STATUS_CLAIMED,
+            'claimed_by' => null,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
         ]);
-        $this->assertNotNull(JobRequestItem::firstOrFail()->claimed_at);
+        $this->assertNull(JobRequestItem::firstOrFail()->claimed_at);
     }
 
-    public function test_admin_can_leave_created_job_request_items_open_for_claim(): void
+    public function test_admin_created_job_request_items_are_not_open_for_claim(): void
     {
         $admin = $this->createAdmin();
         $client = Client::create(['client_name' => 'Open Claim Client']);
@@ -153,9 +147,9 @@ class AdminUiTest extends TestCase
         $this->assertDatabaseHas('job_request_items', [
             'service_category_id' => $category->id,
             'claimed_by' => null,
-            'status' => JobRequestItem::STATUS_OPEN,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
         ]);
-        $this->assertTrue(JobRequestItem::firstOrFail()->isClaimable());
+        $this->assertFalse(JobRequestItem::firstOrFail()->isClaimable());
     }
 
     public function test_admin_edits_requirements_before_project_conversion(): void
@@ -223,6 +217,32 @@ class AdminUiTest extends TestCase
         $this->assertDatabaseMissing('project_requirements', [
             'name' => 'Customer rejected item',
         ]);
+    }
+
+    public function test_admin_can_open_overdue_job_item_review_page_without_submission(): void
+    {
+        $admin = $this->createAdmin();
+        $client = Client::create(['client_name' => 'Overdue Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Overdue inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_OVERDUE,
+            'title' => $category->name,
+            'due_date' => now()->subDay(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/admin/job-items/{$jobItem->id}")
+            ->assertOk()
+            ->assertSee('Reopen Job');
     }
 
     public function test_admin_can_manage_solutions_and_items(): void

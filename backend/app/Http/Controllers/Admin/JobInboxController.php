@@ -13,6 +13,7 @@ class JobInboxController extends Controller
     public function index(Request $request)
     {
         $statuses = [
+            JobRequestItem::STATUS_PENDING_ASSIGNMENT,
             JobRequestItem::STATUS_OPEN,
             JobRequestItem::STATUS_CLAIMED,
             JobRequestItem::STATUS_SUBMITTED,

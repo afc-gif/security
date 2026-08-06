@@ -59,6 +59,14 @@
                                     </button>
                                 </form>
 
+                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'field_coordinator']) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+                                        Approve as Coordinator
+                                    </button>
+                                </form>
+
                                 <!-- Approve as Manager -->
                                 <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'manager']) }}" method="POST" class="inline">
                                     @csrf

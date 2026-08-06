@@ -71,6 +71,11 @@ class User extends Model implements AuthenticatableContract
         return $this->role === 'field_staff';
     }
 
+    public function isFieldCoordinator()
+    {
+        return $this->role === 'field_coordinator';
+    }
+
     public function hasRole($roles)
     {
         $roles = is_array($roles) ? $roles : func_get_args();
