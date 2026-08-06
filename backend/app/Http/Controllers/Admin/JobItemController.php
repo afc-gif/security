@@ -25,7 +25,7 @@ class JobItemController extends Controller
             'claimer',
             'project',
             'attempts' => fn ($query) => $query
-                ->with('user')
+                ->with(['user', 'requirements', 'media.uploader'])
                 ->latest('created_at')
                 ->latest('id'),
         ]);
@@ -45,9 +45,21 @@ class JobItemController extends Controller
                     'nullable',
                     'string',
                 ],
+                'requirements' => [
+                    Rule::requiredIf(fn () => $request->input('action') === 'approve'),
+                    'nullable',
+                    'array',
+                    'min:1',
+                ],
+                'requirements.*.type' => 'required_with:requirements|in:material,task',
+                'requirements.*.include' => 'nullable|boolean',
+                'requirements.*.name' => 'nullable|string|max:255',
+                'requirements.*.quantity' => 'nullable|string|max:100',
+                'requirements.*.notes' => 'nullable|string',
             ],
             [
                 'admin_note.required' => 'Please add an admin note for returned or rejected jobs.',
+                'requirements.required' => 'Please keep at least one approved requirement before approving this job.',
             ]
         );
 
@@ -60,7 +72,17 @@ class JobItemController extends Controller
                 ->withInput();
         }
 
-        DB::transaction(function () use ($jobItem, $action, $adminNote) {
+        $requirements = $action === 'approve'
+            ? $this->normalizedRequirements($validated['requirements'] ?? [])
+            : collect();
+
+        if ($action === 'approve' && $requirements->isEmpty()) {
+            return back()
+                ->withErrors(['requirements' => 'Please keep at least one approved requirement before approving this job.'])
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($jobItem, $action, $adminNote, $requirements) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('status', JobRequestItem::STATUS_SUBMITTED)
@@ -82,7 +104,7 @@ class JobItemController extends Controller
             }
 
             match ($action) {
-                'approve' => $this->approve($lockedItem, $latestAttempt, $adminNote),
+                'approve' => $this->approve($lockedItem, $latestAttempt, $adminNote, $requirements),
                 'return' => $this->returnForFix($lockedItem, $latestAttempt, $adminNote),
                 'reject' => $this->rejectAndReopen($lockedItem, $latestAttempt, $adminNote),
             };
@@ -164,7 +186,15 @@ class JobItemController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $lockedItem->load(['jobRequest.client', 'serviceCategory', 'project']);
+            $lockedItem->load([
+                'jobRequest.client',
+                'serviceCategory',
+                'project',
+                'attempts' => fn ($query) => $query
+                    ->where('status', JobItemAttempt::STATUS_APPROVED)
+                    ->with('requirements')
+                    ->latest('id'),
+            ]);
 
             if ($lockedItem->project) {
                 return $lockedItem->project;
@@ -186,7 +216,20 @@ class JobItemController extends Controller
                 $projectPayload['assigned_field_staff_id'] = $lockedItem->claimed_by;
             }
 
-            return Project::create($projectPayload);
+            $project = Project::create($projectPayload);
+
+            $approvedAttempt = $lockedItem->attempts->first();
+            foreach (($approvedAttempt?->requirements ?? collect()) as $requirement) {
+                $project->requirements()->create([
+                    'type' => $requirement->type,
+                    'name' => $requirement->name,
+                    'quantity' => $requirement->quantity,
+                    'notes' => $requirement->notes,
+                    'sort_order' => $requirement->sort_order,
+                ]);
+            }
+
+            return $project;
         });
 
         return redirect()
@@ -194,11 +237,22 @@ class JobItemController extends Controller
             ->with('success', 'Category item converted to project successfully.');
     }
 
-    private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote): void
+    private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote, $requirements): void
     {
         $jobItem->update([
             'status' => JobRequestItem::STATUS_APPROVED,
         ]);
+
+        $attempt->requirements()->delete();
+        foreach ($requirements as $index => $requirement) {
+            $attempt->requirements()->create([
+                'type' => $requirement['type'],
+                'name' => $requirement['name'],
+                'quantity' => $requirement['quantity'],
+                'notes' => $requirement['notes'],
+                'sort_order' => $index,
+            ]);
+        }
 
         $attempt->update([
             'status' => JobItemAttempt::STATUS_APPROVED,
@@ -248,6 +302,24 @@ class JobItemController extends Controller
         }
 
         return "{$existingNotes}\n\nAdmin note: {$adminNote}";
+    }
+
+    private function normalizedRequirements(array $requirements)
+    {
+        return collect($requirements)
+            ->map(fn ($requirement) => [
+                'include' => (bool) ($requirement['include'] ?? false),
+                'type' => $requirement['type'],
+                'name' => trim((string) $requirement['name']),
+                'quantity' => isset($requirement['quantity']) && trim((string) $requirement['quantity']) !== ''
+                    ? trim((string) $requirement['quantity'])
+                    : null,
+                'notes' => isset($requirement['notes']) && trim((string) $requirement['notes']) !== ''
+                    ? trim((string) $requirement['notes'])
+                    : null,
+            ])
+            ->filter(fn ($requirement) => $requirement['include'] && $requirement['name'] !== '')
+            ->values();
     }
 
     private function generateProjectCode(): string

@@ -29,6 +29,39 @@
             </div>
         @endif
 
+        @if(in_array($project->status, ['ready_for_review', 'completed'], true))
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Project Closure</h2>
+                        <p class="text-sm text-gray-600 mt-1">
+                            @if($project->status === 'ready_for_review')
+                                Field staff marked this project ready. Review the checklist and updates before closing it.
+                            @else
+                                This project is completed and field updates are closed.
+                            @endif
+                        </p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        @if($project->status === 'ready_for_review')
+                            <form method="POST" action="{{ route('admin.projects.complete', $project) }}">
+                                @csrf
+                                <button type="submit" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                                    Mark Completed
+                                </button>
+                            </form>
+                        @endif
+                        <form method="POST" action="{{ route('admin.projects.reopen-work', $project) }}">
+                            @csrf
+                            <button type="submit" class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg font-semibold">
+                                Reopen Work
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -37,7 +70,7 @@
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Status</div>
-                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $project->status === 'completed' ? 'bg-green-100 text-green-800' : ($project->status === 'ongoing' ? 'bg-blue-100 text-blue-800' : ($project->status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700')) }}">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $project->status === 'completed' ? 'bg-green-100 text-green-800' : ($project->status === 'ready_for_review' ? 'bg-purple-100 text-purple-800' : ($project->status === 'ongoing' ? 'bg-blue-100 text-blue-800' : ($project->status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700'))) }}">
                         {{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}
                     </span>
                 </div>
@@ -125,6 +158,48 @@
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Project Description</h2>
             <div class="text-gray-900 whitespace-pre-line">{{ $project->description ?: '—' }}</div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Project Checklist</h2>
+            @if($project->requirements->count() === 0)
+                <div class="text-gray-600">No approved requirements are attached to this project.</div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Type</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Requirement</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Quantity</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($project->requirements as $requirement)
+                                <tr>
+                                    <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ ucfirst($requirement->type) }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-semibold text-gray-900">{{ $requirement->name }}</div>
+                                        @if($requirement->notes)
+                                            <div class="text-xs text-gray-500">{{ $requirement->notes }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ $requirement->quantity ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-700">
+                                        @if($requirement->is_done)
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Done</span>
+                                            <div class="text-xs text-gray-500 mt-1">{{ $requirement->completedBy?->name ?? 'Field staff' }} · {{ $requirement->completed_at?->format('d M Y H:i') ?? '—' }}</div>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-200 text-gray-700">Pending</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Field;
 use App\Http\Controllers\Controller;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
+use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class JobController extends Controller
 {
@@ -89,28 +91,68 @@ class JobController extends Controller
         $this->authorizeClaimedJob($jobItem);
 
         $jobItem->load([
-            'jobRequest.client',
-            'serviceCategory',
-            'attempts' => fn ($query) => $query->where('user_id', auth()->id())->latest('id'),
+                'jobRequest.client',
+                'serviceCategory',
+                'attempts' => fn ($query) => $query
+                    ->with(['requirements', 'media'])
+                    ->where('user_id', auth()->id())
+                    ->latest('id'),
         ]);
 
         $jobItem->markOverdueIfPast();
         $jobItem->refresh()->load([
             'jobRequest.client',
             'serviceCategory',
-            'attempts' => fn ($query) => $query->where('user_id', auth()->id())->latest('id'),
+            'attempts' => fn ($query) => $query
+                ->with(['requirements', 'media'])
+                ->where('user_id', auth()->id())
+                ->latest('id'),
         ]);
 
         return view('field.jobs.show', compact('jobItem'));
     }
 
-    public function submit(Request $request, JobRequestItem $jobItem)
+    public function submit(Request $request, JobRequestItem $jobItem, CloudinaryImageService $cloudinary)
     {
         $validated = $request->validate([
             'notes' => 'required|string|min:5',
+            'requirements' => 'required|array|min:1',
+            'requirements.*.type' => 'required|in:material,task',
+            'requirements.*.name' => 'required|string|max:255',
+            'requirements.*.quantity' => 'nullable|string|max:100',
+            'requirements.*.notes' => 'nullable|string',
+            'media' => 'nullable|array',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        DB::transaction(function () use ($jobItem, $request, $validated) {
+        $requirements = collect($validated['requirements'])
+            ->map(fn ($requirement) => [
+                'type' => $requirement['type'],
+                'name' => trim($requirement['name']),
+                'quantity' => isset($requirement['quantity']) && trim((string) $requirement['quantity']) !== ''
+                    ? trim((string) $requirement['quantity'])
+                    : null,
+                'notes' => isset($requirement['notes']) && trim((string) $requirement['notes']) !== ''
+                    ? trim((string) $requirement['notes'])
+                    : null,
+            ])
+            ->values();
+
+        $uploads = [];
+        try {
+            foreach ($request->file('media', []) as $file) {
+                $uploads[] = [
+                    'file' => $file,
+                    'upload' => $cloudinary->uploadMedia($file, 'jobs/' . $jobItem->id . '/inspection'),
+                ];
+            }
+        } catch (RuntimeException $e) {
+            return back()
+                ->withErrors(['media' => 'Photo upload failed. Please confirm Cloudinary is configured and try again.'])
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($jobItem, $request, $validated, $requirements, $uploads) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('claimed_by', $request->user()->id)
@@ -133,12 +175,37 @@ class JobController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            JobItemAttempt::create([
+            $attempt = JobItemAttempt::create([
                 'job_request_item_id' => $lockedItem->id,
                 'user_id' => $request->user()->id,
                 'status' => JobItemAttempt::STATUS_SUBMITTED,
                 'notes' => $validated['notes'],
             ]);
+
+            foreach ($requirements as $index => $requirement) {
+                $attempt->requirements()->create([
+                    'type' => $requirement['type'],
+                    'name' => $requirement['name'],
+                    'quantity' => $requirement['quantity'],
+                    'notes' => $requirement['notes'],
+                    'sort_order' => $index,
+                ]);
+            }
+
+            foreach ($uploads as $stored) {
+                $file = $stored['file'];
+                $upload = $stored['upload'];
+
+                $attempt->media()->create([
+                    'uploaded_by' => $request->user()->id,
+                    'file_path' => $upload['url'],
+                    'cloudinary_public_id' => $upload['public_id'],
+                    'cloudinary_resource_type' => $upload['resource_type'] ?? null,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
+            }
         });
 
         $jobItem->refresh();

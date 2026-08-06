@@ -203,6 +203,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('projects', \App\Http\Controllers\Admin\ProjectController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.projects');
+    Route::post('/projects/{project}/complete', [\App\Http\Controllers\Admin\ProjectController::class, 'complete'])
+        ->name('admin.projects.complete');
+    Route::post('/projects/{project}/reopen-work', [\App\Http\Controllers\Admin\ProjectController::class, 'reopenWork'])
+        ->name('admin.projects.reopen-work');
     Route::post('/project-updates/{update}/review', [\App\Http\Controllers\Admin\ProjectController::class, 'reviewUpdate'])
         ->name('admin.project-updates.review');
 
@@ -261,6 +265,7 @@ Route::middleware(['auth', 'role:field_staff'])->prefix('field')->group(function
     Route::post('/projects/{project}/start-update', [FieldProjectController::class, 'startUpdate'])->name('field.projects.start-update');
     Route::post('/projects/{project}/updates', [FieldProjectController::class, 'submitUpdate'])->name('field.projects.submit-update');
     Route::post('/projects/{project}/release-update', [FieldProjectController::class, 'releaseUpdate'])->name('field.projects.release-update');
+    Route::patch('/projects/{project}/requirements/{requirement}', [FieldProjectController::class, 'updateRequirement'])->name('field.projects.requirements.update');
     Route::get('/tasks', [FieldTaskController::class, 'index'])->name('field.tasks.index');
     Route::get('/tasks/{task}', [FieldTaskController::class, 'show'])->name('field.tasks.show');
     Route::patch('/tasks/{task}/status', [FieldTaskController::class, 'updateStatus'])->name('field.tasks.update-status');

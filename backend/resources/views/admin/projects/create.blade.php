@@ -45,6 +45,7 @@
                             <option value="not_started" @selected(old('status', 'not_started') === 'not_started')>Not Started</option>
                             <option value="ongoing" @selected(old('status') === 'ongoing')>Ongoing</option>
                             <option value="on_hold" @selected(old('status') === 'on_hold')>On Hold</option>
+                            <option value="ready_for_review" @selected(old('status') === 'ready_for_review')>Ready For Review</option>
                             <option value="completed" @selected(old('status') === 'completed')>Completed</option>
                         </select>
                     </div>

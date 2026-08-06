@@ -3,6 +3,18 @@
 @section('title', 'Job Item Review | ARTSCI Admin Console')
 
 @section('content')
+@php
+    $reviewRequirementRows = old('requirements', $latestAttempt?->requirements?->count()
+        ? $latestAttempt->requirements->map(fn ($requirement) => [
+            'include' => '1',
+            'type' => $requirement->type,
+            'name' => $requirement->name,
+            'quantity' => $requirement->quantity,
+            'notes' => $requirement->notes,
+        ])->values()->all()
+        : [['include' => '1', 'type' => 'material', 'name' => '', 'quantity' => '', 'notes' => '']]
+    );
+@endphp
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -119,11 +131,79 @@
             @endif
         </div>
 
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Inspection Photos</h2>
+            @if($latestAttempt?->media?->count())
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($latestAttempt->media as $media)
+                        @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            @if($mediaUrl)
+                                <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                    {{ $media->file_name ?? 'Inspection photo' }}
+                                </a>
+                            @else
+                                <div class="font-semibold text-gray-900">{{ $media->file_name ?? 'Inspection photo' }}</div>
+                            @endif
+                            <div class="text-xs text-gray-600 mt-1">
+                                {{ $media->file_type ?: 'Photo' }} @if($media->file_size) &middot; {{ number_format($media->file_size / 1024, 1) }} KB @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-gray-600">No photos uploaded.</div>
+            @endif
+        </div>
+
         @if($jobItem->status === \App\Models\JobRequestItem::STATUS_SUBMITTED && $latestAttempt)
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Admin Review</h2>
                 <form method="POST" action="{{ route('admin.job-items.review', $jobItem) }}" class="space-y-4">
                     @csrf
+                    <div>
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Approved Requirements</label>
+                                <p class="text-xs text-gray-500 mt-1">Edit this list before approving. These rows become the project checklist.</p>
+                            </div>
+                            <button type="button" id="add-review-requirement" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold text-sm">
+                                Add Requirement
+                            </button>
+                        </div>
+                        <div id="review-requirements-list" class="space-y-3">
+                            @foreach($reviewRequirementRows as $index => $requirement)
+                                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_{{ $index }}_include">Include</label>
+                                            <input type="hidden" name="requirements[{{ $index }}][include]" value="0">
+                                            <input id="review_requirements_{{ $index }}_include" type="checkbox" name="requirements[{{ $index }}][include]" value="1" @checked(($requirement['include'] ?? '1') === '1') class="h-5 w-5 rounded border-gray-300 text-blue-600">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_{{ $index }}_type">Type</label>
+                                            <select id="review_requirements_{{ $index }}_type" name="requirements[{{ $index }}][type]" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                                <option value="material" @selected(($requirement['type'] ?? 'material') === 'material')>Material</option>
+                                                <option value="task" @selected(($requirement['type'] ?? '') === 'task')>Task</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_{{ $index }}_name">Name</label>
+                                            <input id="review_requirements_{{ $index }}_name" type="text" name="requirements[{{ $index }}][name]" value="{{ $requirement['name'] ?? '' }}" class="w-full border border-gray-300 rounded-lg px-3 py-2" maxlength="255">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_{{ $index }}_quantity">Quantity</label>
+                                            <input id="review_requirements_{{ $index }}_quantity" type="text" name="requirements[{{ $index }}][quantity]" value="{{ $requirement['quantity'] ?? '' }}" class="w-full border border-gray-300 rounded-lg px-3 py-2" maxlength="100">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_{{ $index }}_notes">Notes</label>
+                                            <input id="review_requirements_{{ $index }}_notes" type="text" name="requirements[{{ $index }}][notes]" value="{{ $requirement['notes'] ?? '' }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Admin Note</label>
                         <p class="text-xs text-gray-500 mb-2">Required when returning or rejecting a job.</p>
@@ -174,4 +254,45 @@
         </div>
     </div>
 </div>
+<script>
+    const addReviewRequirementButton = document.getElementById('add-review-requirement');
+    const reviewRequirementsList = document.getElementById('review-requirements-list');
+
+    if (addReviewRequirementButton && reviewRequirementsList) {
+        addReviewRequirementButton.addEventListener('click', () => {
+            const index = reviewRequirementsList.children.length;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'rounded-lg border border-gray-200 bg-gray-50 p-4';
+            wrapper.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_${index}_include">Include</label>
+                        <input type="hidden" name="requirements[${index}][include]" value="0">
+                        <input id="review_requirements_${index}_include" type="checkbox" name="requirements[${index}][include]" value="1" checked class="h-5 w-5 rounded border-gray-300 text-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_${index}_type">Type</label>
+                        <select id="review_requirements_${index}_type" name="requirements[${index}][type]" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            <option value="material">Material</option>
+                            <option value="task">Task</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_${index}_name">Name</label>
+                        <input id="review_requirements_${index}_name" type="text" name="requirements[${index}][name]" class="w-full border border-gray-300 rounded-lg px-3 py-2" maxlength="255">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_${index}_quantity">Quantity</label>
+                        <input id="review_requirements_${index}_quantity" type="text" name="requirements[${index}][quantity]" class="w-full border border-gray-300 rounded-lg px-3 py-2" maxlength="100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1" for="review_requirements_${index}_notes">Notes</label>
+                        <input id="review_requirements_${index}_notes" type="text" name="requirements[${index}][notes]" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    </div>
+                </div>
+            `;
+            reviewRequirementsList.appendChild(wrapper);
+        });
+    }
+</script>
 @endsection

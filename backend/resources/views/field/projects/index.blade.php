@@ -31,6 +31,7 @@
                             $lockExpired = $project->editingLockExpired();
                             $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
                             $isCompleted = $project->status === 'completed';
+                            $isReadyForReview = $project->status === 'ready_for_review';
                         @endphp
                         <article class="job-card">
                             <div class="card-head">
@@ -47,6 +48,8 @@
                                 <div>
                                     @if($isCompleted)
                                         Project completed
+                                    @elseif($isReadyForReview)
+                                        Waiting for admin review
                                     @elseif($lockExpired)
                                         Previous update session expired. You can continue this project.
                                     @elseif($lockedByMe)

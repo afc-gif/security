@@ -49,7 +49,7 @@ class ProjectController extends Controller
             'title' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:5000',
-            'status' => ['nullable', 'string', Rule::in(['not_started', 'ongoing', 'on_hold', 'completed'])],
+            'status' => ['nullable', 'string', Rule::in(['not_started', 'ongoing', 'on_hold', 'ready_for_review', 'completed'])],
             'priority' => ['nullable', 'string', Rule::in(['low', 'medium', 'high'])],
             'start_date' => 'nullable|date',
             'deadline' => 'nullable|date',
@@ -85,6 +85,7 @@ class ProjectController extends Controller
             'fieldStaff',
             'activeEditor',
             'creator',
+            'requirements.completedBy',
             'updates' => fn ($query) => $query->with(['user', 'reviewedBy', 'media.uploader'])->latest('work_date')->latest('id'),
         ]);
 
@@ -114,6 +115,45 @@ class ProjectController extends Controller
         return redirect()
             ->route('admin.projects.show', $update->project_id)
             ->with('success', 'Project update review saved successfully.');
+    }
+
+    public function complete(Project $project)
+    {
+        if ($project->status === 'completed') {
+            return redirect()
+                ->route('admin.projects.show', $project)
+                ->with('success', 'Project is already completed.');
+        }
+
+        $project->update([
+            'status' => 'completed',
+            'progress_percentage' => 100,
+            'active_editor_id' => null,
+            'editing_started_at' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.projects.show', $project)
+            ->with('success', 'Project marked completed. Field updates are now closed.');
+    }
+
+    public function reopenWork(Project $project)
+    {
+        if (!in_array($project->status, ['ready_for_review', 'completed'], true)) {
+            return redirect()
+                ->route('admin.projects.show', $project)
+                ->withErrors(['project' => 'Only completed or review-ready projects can be reopened for field work.']);
+        }
+
+        $project->update([
+            'status' => 'ongoing',
+            'active_editor_id' => null,
+            'editing_started_at' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.projects.show', $project)
+            ->with('success', 'Project reopened for field work.');
     }
 
     public function convertFromInspection(Request $request, Inspection $inspection)

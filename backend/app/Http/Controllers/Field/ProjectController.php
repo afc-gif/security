@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectRequirement;
 use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class ProjectController extends Controller
             'client',
             'inspection',
             'activeEditor',
+            'requirements.completedBy',
             'updates' => fn ($query) => $query->with(['user', 'reviewedBy', 'media.uploader'])->latest('work_date')->latest('id'),
         ]);
 
@@ -43,9 +45,11 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedProject->status === 'completed') {
+            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => 'Project completed.',
+                    'project' => $lockedProject->status === 'completed'
+                        ? 'Project completed.'
+                        : 'Project is awaiting admin review.',
                 ]);
             }
 
@@ -70,9 +74,11 @@ class ProjectController extends Controller
 
     public function submitUpdate(Request $request, Project $project, CloudinaryImageService $cloudinary)
     {
-        if ($project->status === 'completed') {
+        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
             return back()
-                ->withErrors(['project' => 'Project completed.'])
+                ->withErrors(['project' => $project->status === 'completed'
+                    ? 'Project completed.'
+                    : 'Project is awaiting admin review.'])
                 ->withInput();
         }
 
@@ -138,9 +144,11 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedProject->status === 'completed') {
+            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => 'Project completed.',
+                    'project' => $lockedProject->status === 'completed'
+                        ? 'Project completed.'
+                        : 'Project is awaiting admin review.',
                 ]);
             }
 
@@ -226,10 +234,50 @@ class ProjectController extends Controller
             ->with('success', 'Project update session released.');
     }
 
+    public function updateRequirement(Request $request, Project $project, ProjectRequirement $requirement)
+    {
+        if ((int) $requirement->project_id !== (int) $project->id) {
+            abort(404);
+        }
+
+        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
+            return back()->withErrors(['project' => $project->status === 'completed'
+                ? 'Project completed.'
+                : 'Project is awaiting admin review.']);
+        }
+
+        $validated = $request->validate([
+            'is_done' => 'nullable|boolean',
+        ]);
+
+        $isDone = (bool) ($validated['is_done'] ?? false);
+
+        $requirement->update([
+            'is_done' => $isDone,
+            'completed_by' => $isDone ? $request->user()->id : null,
+            'completed_at' => $isDone ? now() : null,
+        ]);
+
+        $total = $project->requirements()->count();
+        if ($total > 0) {
+            $done = $project->requirements()->where('is_done', true)->count();
+            $progress = (int) round(($done / $total) * 100);
+
+            $project->update([
+                'progress_percentage' => $progress,
+                'status' => $this->statusForProgress($progress),
+            ]);
+        }
+
+        return redirect()
+            ->route('field.projects.show', $project)
+            ->with('success', 'Checklist updated.');
+    }
+
     private function statusForProgress(int $progress): string
     {
         if ($progress === 100) {
-            return 'completed';
+            return 'ready_for_review';
         }
 
         if ($progress > 0) {

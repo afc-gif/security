@@ -470,6 +470,7 @@
     .status.submitted,
     .status.pending,
     .status.pending_review,
+    .status.ready_for_review,
     .status.on_hold {
         background: var(--yellow-soft);
         color: var(--yellow);

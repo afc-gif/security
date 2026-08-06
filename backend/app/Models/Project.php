@@ -88,6 +88,11 @@ class Project extends Model
         return $this->morphMany(Task::class, 'assignable');
     }
 
+    public function requirements()
+    {
+        return $this->hasMany(ProjectRequirement::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function isBeingEdited(): bool
     {
         return $this->active_editor_id !== null && !$this->editingLockExpired();

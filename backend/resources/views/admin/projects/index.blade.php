@@ -56,7 +56,7 @@
                                     <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $project->client?->client_name ?? '—' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $project->inspection?->inspection_code ?? '—' }}</td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $project->status === 'completed' ? 'bg-green-100 text-green-800' : ($project->status === 'ongoing' ? 'bg-blue-100 text-blue-800' : ($project->status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700')) }}">
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $project->status === 'completed' ? 'bg-green-100 text-green-800' : ($project->status === 'ready_for_review' ? 'bg-purple-100 text-purple-800' : ($project->status === 'ongoing' ? 'bg-blue-100 text-blue-800' : ($project->status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700'))) }}">
                                             {{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}
                                         </span>
                                     </td>

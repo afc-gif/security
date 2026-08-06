@@ -3,6 +3,8 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Client;
+use App\Models\JobItemAttempt;
+use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\ServiceCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -154,6 +156,73 @@ class AdminUiTest extends TestCase
             'status' => JobRequestItem::STATUS_OPEN,
         ]);
         $this->assertTrue(JobRequestItem::firstOrFail()->isClaimable());
+    }
+
+    public function test_admin_edits_requirements_before_project_conversion(): void
+    {
+        $admin = $this->createAdmin();
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Checklist Client']);
+        $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Site inspection',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'claimed_by' => $fieldStaff->id,
+            'claimed_at' => now(),
+            'status' => JobRequestItem::STATUS_SUBMITTED,
+            'title' => $category->name,
+            'submitted_at' => now(),
+        ]);
+        $attempt = JobItemAttempt::create([
+            'job_request_item_id' => $jobItem->id,
+            'user_id' => $fieldStaff->id,
+            'status' => JobItemAttempt::STATUS_SUBMITTED,
+            'notes' => 'Inspection completed.',
+        ]);
+        $attempt->requirements()->createMany([
+            ['type' => 'material', 'name' => 'Camera', 'quantity' => '4', 'sort_order' => 0],
+            ['type' => 'material', 'name' => 'Customer rejected item', 'quantity' => '1', 'sort_order' => 1],
+        ]);
+
+        $approveResponse = $this->actingAs($admin)->post("/admin/job-items/{$jobItem->id}/review", [
+            'action' => 'approve',
+            'admin_note' => '',
+            'requirements' => [
+                ['include' => '1', 'type' => 'material', 'name' => 'Camera', 'quantity' => '2', 'notes' => 'Approved by customer'],
+                ['include' => '0', 'type' => 'material', 'name' => 'Customer rejected item', 'quantity' => '1', 'notes' => ''],
+            ],
+        ]);
+
+        $approveResponse->assertRedirect();
+        $this->assertDatabaseHas('job_item_requirements', [
+            'job_item_attempt_id' => $attempt->id,
+            'name' => 'Camera',
+            'quantity' => '2',
+            'notes' => 'Approved by customer',
+        ]);
+        $this->assertDatabaseMissing('job_item_requirements', [
+            'job_item_attempt_id' => $attempt->id,
+            'name' => 'Customer rejected item',
+        ]);
+
+        $convertResponse = $this->actingAs($admin)->post("/admin/job-items/{$jobItem->id}/convert-to-project");
+
+        $convertResponse->assertRedirect();
+        $this->assertDatabaseHas('project_requirements', [
+            'name' => 'Camera',
+            'quantity' => '2',
+            'is_done' => false,
+        ]);
+        $this->assertDatabaseMissing('project_requirements', [
+            'name' => 'Customer rejected item',
+        ]);
     }
 
     public function test_admin_can_manage_solutions_and_items(): void

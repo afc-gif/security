@@ -12,6 +12,18 @@
             ? trim(\Illuminate\Support\Str::afterLast($notes, 'Admin note:'))
             : trim($notes);
     }
+
+    $submittedRequirements = $latestOwnAttempt?->requirements ?? collect();
+    $submittedMedia = $latestOwnAttempt?->media ?? collect();
+    $requirementRows = old('requirements', $submittedRequirements->count()
+        ? $submittedRequirements->map(fn ($requirement) => [
+            'type' => $requirement->type,
+            'name' => $requirement->name,
+            'quantity' => $requirement->quantity,
+            'notes' => $requirement->notes,
+        ])->values()->all()
+        : [['type' => 'material', 'name' => '', 'quantity' => '', 'notes' => '']]
+    );
 @endphp
 
 <!DOCTYPE html>
@@ -88,11 +100,47 @@
                         @endif
                     </div>
                 @endif
-                <form method="POST" action="{{ route('field.jobs.submit', $jobItem) }}">
+                <form method="POST" action="{{ route('field.jobs.submit', $jobItem) }}" enctype="multipart/form-data">
                     @csrf
                     <div class="form-row">
-                        <label for="notes">Report Notes</label>
+                        <label for="notes">Inspection Notes</label>
                         <textarea id="notes" name="notes" required minlength="5">{{ old('notes') }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>Requirements</label>
+                        <div id="requirements-list">
+                            @foreach($requirementRows as $index => $requirement)
+                                <div style="border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; background:#fff;">
+                                    <div class="grid">
+                                        <div class="form-row">
+                                            <label for="requirements_{{ $index }}_type">Type</label>
+                                            <select id="requirements_{{ $index }}_type" name="requirements[{{ $index }}][type]" required>
+                                                <option value="material" @selected(($requirement['type'] ?? 'material') === 'material')>Material</option>
+                                                <option value="task" @selected(($requirement['type'] ?? '') === 'task')>Task</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-row">
+                                            <label for="requirements_{{ $index }}_name">Name</label>
+                                            <input id="requirements_{{ $index }}_name" type="text" name="requirements[{{ $index }}][name]" value="{{ $requirement['name'] ?? '' }}" required maxlength="255">
+                                        </div>
+                                        <div class="form-row">
+                                            <label for="requirements_{{ $index }}_quantity">Quantity</label>
+                                            <input id="requirements_{{ $index }}_quantity" type="text" name="requirements[{{ $index }}][quantity]" value="{{ $requirement['quantity'] ?? '' }}" maxlength="100">
+                                        </div>
+                                        <div class="form-row">
+                                            <label for="requirements_{{ $index }}_notes">Notes</label>
+                                            <input id="requirements_{{ $index }}_notes" type="text" name="requirements[{{ $index }}][notes]" value="{{ $requirement['notes'] ?? '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="button secondary full" type="button" id="add-requirement">Add Requirement</button>
+                    </div>
+                    <div class="form-row">
+                        <label for="media">Inspection Photos</label>
+                        <input id="media" type="file" name="media[]" multiple accept=".jpg,.jpeg,.png">
+                        <div class="muted">JPG or PNG. Maximum 5 MB per photo.</div>
                     </div>
                     <button class="button full" type="submit">Submit Job Report</button>
                 </form>
@@ -111,8 +159,81 @@
                 <div class="notice">This job is not available for submission.</div>
             @endif
         </section>
+
+        @if($submittedRequirements->count() || $submittedMedia->count())
+            <section class="panel">
+                <h2>Latest Submission</h2>
+                @if($submittedRequirements->count())
+                    <div class="timeline">
+                        @foreach($submittedRequirements as $requirement)
+                            <article class="update">
+                                <div class="label">{{ ucfirst($requirement->type) }}</div>
+                                <div class="value">{{ $requirement->name }}</div>
+                                @if($requirement->quantity)
+                                    <div class="muted">Qty: {{ $requirement->quantity }}</div>
+                                @endif
+                                @if($requirement->notes)
+                                    <div class="muted">{{ $requirement->notes }}</div>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+                @if($submittedMedia->count())
+                    <div class="files">
+                        @foreach($submittedMedia as $media)
+                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                            <div class="file">
+                                @if($mediaUrl)
+                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">{{ $media->file_name ?? 'Inspection photo' }}</a>
+                                @else
+                                    <strong>{{ $media->file_name ?? 'Inspection photo' }}</strong>
+                                @endif
+                                <div class="muted">{{ $media->file_type ?: 'Photo' }} @if($media->file_size) &middot; {{ number_format($media->file_size / 1024, 1) }} KB @endif</div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        @endif
     </main>
 
     @include('field.partials.bottom-nav')
+    <script>
+        const addRequirementButton = document.getElementById('add-requirement');
+        const requirementsList = document.getElementById('requirements-list');
+
+        if (addRequirementButton && requirementsList) {
+            addRequirementButton.addEventListener('click', () => {
+                const index = requirementsList.children.length;
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; background:#fff;';
+                wrapper.innerHTML = `
+                    <div class="grid">
+                        <div class="form-row">
+                            <label for="requirements_${index}_type">Type</label>
+                            <select id="requirements_${index}_type" name="requirements[${index}][type]" required>
+                                <option value="material">Material</option>
+                                <option value="task">Task</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label for="requirements_${index}_name">Name</label>
+                            <input id="requirements_${index}_name" type="text" name="requirements[${index}][name]" required maxlength="255">
+                        </div>
+                        <div class="form-row">
+                            <label for="requirements_${index}_quantity">Quantity</label>
+                            <input id="requirements_${index}_quantity" type="text" name="requirements[${index}][quantity]" maxlength="100">
+                        </div>
+                        <div class="form-row">
+                            <label for="requirements_${index}_notes">Notes</label>
+                            <input id="requirements_${index}_notes" type="text" name="requirements[${index}][notes]">
+                        </div>
+                    </div>
+                `;
+                requirementsList.appendChild(wrapper);
+            });
+        }
+    </script>
 </body>
 </html>

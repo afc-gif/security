@@ -15,6 +15,7 @@
             $lockExpired = $project->editingLockExpired();
             $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
             $isCompleted = $project->status === 'completed';
+            $isReadyForReview = $project->status === 'ready_for_review';
             $latestProjectUpdate = $project->updates->first();
         @endphp
 
@@ -70,6 +71,8 @@
                     <div class="value">
                         @if($isCompleted)
                             Project completed.
+                        @elseif($isReadyForReview)
+                            Waiting for admin review.
                         @elseif($lockExpired)
                             Previous update session expired. You can continue this project.
                         @elseif($lockedByMe)
@@ -103,11 +106,50 @@
         </section>
 
         <section class="panel">
+            <h2>Project Checklist</h2>
+            @if($project->requirements->count() === 0)
+                <div class="muted">No approved requirements are attached to this project.</div>
+            @else
+                <div class="timeline">
+                    @foreach($project->requirements as $requirement)
+                        <article class="update">
+                            <form method="POST" action="{{ route('field.projects.requirements.update', [$project, $requirement]) }}">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="is_done" value="0">
+                                <label style="display:flex; gap:12px; align-items:flex-start;">
+                                    <input type="checkbox" name="is_done" value="1" @checked($requirement->is_done) onchange="this.form.submit()" @disabled($isCompleted || $isReadyForReview) style="margin-top:4px;">
+                                    <span>
+                                        <span class="label">{{ ucfirst($requirement->type) }}</span>
+                                        <span class="value" style="display:block;">{{ $requirement->name }}</span>
+                                        @if($requirement->quantity)
+                                            <span class="muted" style="display:block;">Qty: {{ $requirement->quantity }}</span>
+                                        @endif
+                                        @if($requirement->notes)
+                                            <span class="muted" style="display:block;">{{ $requirement->notes }}</span>
+                                        @endif
+                                        @if($requirement->is_done)
+                                            <span class="muted" style="display:block;">Done by {{ $requirement->completedBy?->name ?? 'field staff' }} on {{ $requirement->completed_at?->format('d M Y H:i') ?? '-' }}</span>
+                                        @endif
+                                    </span>
+                                </label>
+                            </form>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
+        <section class="panel">
             <h2>Project Update</h2>
 
             @if($isCompleted)
                 <div class="notice success" style="margin-bottom:0;">
                     Project completed.
+                </div>
+            @elseif($isReadyForReview)
+                <div class="notice locked" style="margin-bottom:0;">
+                    Project is waiting for admin review.
                 </div>
             @elseif($lockedByMe)
                 <div class="notice locked">
