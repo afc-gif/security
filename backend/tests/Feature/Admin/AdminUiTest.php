@@ -38,6 +38,17 @@ class AdminUiTest extends TestCase
             ->assertOk();
     }
 
+    public function test_logout_redirects_to_login_page(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin)
+            ->post('/logout')
+            ->assertRedirect('/login');
+
+        $this->assertGuest();
+    }
+
     public function test_admin_can_create_update_and_delete_product(): void
     {
         $admin = $this->createAdmin();
