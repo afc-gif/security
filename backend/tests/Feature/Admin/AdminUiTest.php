@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\CategoryChecklistTemplate;
 use App\Models\Client;
+use App\Models\JobChecklistItem;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequest;
 use App\Models\JobRequestItem;
@@ -150,6 +152,90 @@ class AdminUiTest extends TestCase
             'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
         ]);
         $this->assertFalse(JobRequestItem::firstOrFail()->isClaimable());
+    }
+
+    public function test_admin_can_manage_field_service_category_checklist_templates(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin)
+            ->post('/admin/service-categories', [
+                'name' => 'CCTV Maintenance',
+                'description' => 'Maintenance visits for existing CCTV systems',
+                'is_active' => '1',
+            ])
+            ->assertRedirect('/admin/service-categories');
+
+        $category = ServiceCategory::where('name', 'CCTV Maintenance')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post("/admin/service-categories/{$category->id}/checklist-templates", [
+                'title' => 'Confirm existing camera status',
+                'description' => 'Check each installed camera',
+                'is_required' => '1',
+            ])
+            ->assertRedirect('/admin/service-categories');
+
+        $template = CategoryChecklistTemplate::firstOrFail();
+
+        $this->assertDatabaseHas('category_checklist_templates', [
+            'id' => $template->id,
+            'service_category_id' => $category->id,
+            'title' => 'Confirm existing camera status',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->put("/admin/checklist-templates/{$template->id}", [
+                'title' => 'Confirm camera health',
+                'description' => 'Check each installed camera',
+                'is_required' => '1',
+                'is_active' => '1',
+                'sort_order' => 2,
+            ])
+            ->assertRedirect('/admin/service-categories');
+
+        $this->assertDatabaseHas('category_checklist_templates', [
+            'id' => $template->id,
+            'title' => 'Confirm camera health',
+            'sort_order' => 2,
+        ]);
+    }
+
+    public function test_admin_can_add_and_remove_job_specific_checklist_items(): void
+    {
+        $admin = $this->createAdmin();
+        $client = Client::create(['client_name' => 'Checklist Admin Client']);
+        $category = ServiceCategory::create(['name' => 'Admin Checklist Category', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Admin checklist job',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($admin)
+            ->post("/admin/job-items/{$jobItem->id}/checklist", [
+                'title' => 'Admin added checklist item',
+            ])
+            ->assertRedirect("/admin/job-requests/{$jobRequest->id}");
+
+        $checklistItem = JobChecklistItem::firstOrFail();
+
+        $this->actingAs($admin)
+            ->delete("/admin/job-items/{$jobItem->id}/checklist/{$checklistItem->id}")
+            ->assertRedirect("/admin/job-requests/{$jobRequest->id}");
+
+        $this->assertDatabaseMissing('job_checklist_items', [
+            'id' => $checklistItem->id,
+        ]);
     }
 
     public function test_admin_edits_requirements_before_project_conversion(): void

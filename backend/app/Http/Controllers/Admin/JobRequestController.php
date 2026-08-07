@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\JobChecklistItem;
 use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\ServiceCategory;
@@ -70,6 +71,7 @@ class JobRequestController extends Controller
                 'due_date' => 'nullable|date',
                 'categories' => 'required|array|min:1',
                 'categories.*' => 'integer|exists:service_categories,id',
+                'additional_checklist' => 'nullable|string',
             ],
             [
                 'categories.required' => 'Please select at least one service category.',
@@ -81,8 +83,12 @@ class JobRequestController extends Controller
             ->map(fn ($categoryId) => (int) $categoryId)
             ->unique()
             ->values();
+        $additionalChecklistItems = collect(preg_split('/\r\n|\r|\n/', (string) ($validated['additional_checklist'] ?? '')))
+            ->map(fn ($item) => trim($item))
+            ->filter()
+            ->values();
 
-        $jobRequest = DB::transaction(function () use ($validated, $categoryIds, $request) {
+        $jobRequest = DB::transaction(function () use ($validated, $categoryIds, $additionalChecklistItems, $request) {
             $jobRequest = JobRequest::create([
                 'client_id' => $validated['client_id'],
                 'title' => $validated['title'],
@@ -96,7 +102,7 @@ class JobRequestController extends Controller
                 ->get(['id', 'name']);
 
             foreach ($categories as $category) {
-                JobRequestItem::create([
+                $jobItem = JobRequestItem::create([
                     'job_request_id' => $jobRequest->id,
                     'service_category_id' => $category->id,
                     'created_by' => $request->user()->id,
@@ -106,6 +112,19 @@ class JobRequestController extends Controller
                     'title' => $category->name,
                     'due_date' => $validated['due_date'] ?? null,
                 ]);
+
+                $jobItem->ensureChecklistFromCategory();
+
+                foreach ($additionalChecklistItems as $index => $checklistTitle) {
+                    $jobItem->checklistItems()->create([
+                        'added_by' => $request->user()->id,
+                        'title' => $checklistTitle,
+                        'status' => 'pending',
+                        'is_required' => false,
+                        'is_custom' => true,
+                        'sort_order' => 1000 + $index,
+                    ]);
+                }
             }
 
             return $jobRequest;
@@ -121,9 +140,63 @@ class JobRequestController extends Controller
         $jobRequest->load([
             'client',
             'creator',
-            'items' => fn ($query) => $query->with(['serviceCategory', 'claimer', 'project'])->orderBy('id'),
+            'items' => fn ($query) => $query->with(['serviceCategory', 'claimer', 'project', 'checklistItems'])->orderBy('id'),
         ]);
 
         return view('admin.job-requests.show', compact('jobRequest'));
+    }
+
+    public function destroyChecklistItem(JobRequestItem $jobItem, JobChecklistItem $checklistItem)
+    {
+        abort_unless((int) $checklistItem->job_request_item_id === (int) $jobItem->id, 404);
+
+        if (!in_array($jobItem->status, [
+            JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            JobRequestItem::STATUS_OPEN,
+            JobRequestItem::STATUS_CLAIMED,
+            JobRequestItem::STATUS_RETURNED,
+        ], true)) {
+            abort(409, 'Checklist cannot be changed for this job status.');
+        }
+
+        $checklistItem->delete();
+
+        return redirect()
+            ->route('admin.job-requests.show', $jobItem->job_request_id)
+            ->with('success', 'Checklist item removed.');
+    }
+
+    public function addChecklistItem(Request $request, JobRequestItem $jobItem)
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+        ]);
+
+        if (!in_array($jobItem->status, [
+            JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            JobRequestItem::STATUS_OPEN,
+            JobRequestItem::STATUS_CLAIMED,
+            JobRequestItem::STATUS_RETURNED,
+        ], true)) {
+            abort(409, 'Checklist cannot be changed for this job status.');
+        }
+
+        $jobItem->ensureChecklistFromCategory();
+        $jobItem->checklistItems()->create([
+            'added_by' => $request->user()->id,
+            'title' => trim($validated['title']),
+            'description' => isset($validated['description']) && trim((string) $validated['description']) !== ''
+                ? trim((string) $validated['description'])
+                : null,
+            'status' => 'pending',
+            'is_required' => false,
+            'is_custom' => true,
+            'sort_order' => ((int) $jobItem->checklistItems()->max('sort_order')) + 1,
+        ]);
+
+        return redirect()
+            ->route('admin.job-requests.show', $jobItem->job_request_id)
+            ->with('success', 'Checklist item added.');
     }
 }

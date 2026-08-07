@@ -61,6 +61,35 @@
                                 <span>Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}</span>
                             </div>
 
+                            @if($job->checklistItems->count())
+                                <div class="timeline" style="margin-top:10px;">
+                                    @foreach($job->checklistItems->take(4) as $checklistItem)
+                                        <article class="update">
+                                            <div class="label">{{ $checklistItem->is_custom ? 'Added checklist item' : 'Checklist item' }}</div>
+                                            <div class="value">{{ $checklistItem->title }}</div>
+                                            <form method="POST" action="{{ route('coordinator.jobs.checklist.destroy', [$job, $checklistItem]) }}" style="margin-top:8px;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="card-button secondary" type="submit" onclick="return confirm('Remove this checklist item from this job?')">Remove Item</button>
+                                            </form>
+                                        </article>
+                                    @endforeach
+                                    @if($job->checklistItems->count() > 4)
+                                        <div class="muted">+{{ $job->checklistItems->count() - 4 }} more checklist items</div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="notice locked" style="margin-top:10px;">No checklist items yet.</div>
+                            @endif
+
+                            <form method="POST" action="{{ route('coordinator.jobs.checklist.store', $job) }}" class="form-row" style="margin-top:10px;">
+                                @csrf
+                                <label for="checklist_title_{{ $job->id }}">Add Checklist Item</label>
+                                <input id="checklist_title_{{ $job->id }}" type="text" name="title" placeholder="Extra item for this job" maxlength="255" required>
+                                <input type="text" name="description" placeholder="Optional note or instruction">
+                                <button class="card-button secondary" type="submit">Add Item</button>
+                            </form>
+
                             <form method="POST" action="{{ route('coordinator.jobs.assign', $job) }}" class="form-row">
                                 @csrf
                                 <label for="assigned_to_{{ $job->id }}">Assign to</label>
@@ -124,7 +153,41 @@
                                     <div>{{ $latestAttempt->notes ?: '-' }}</div>
                                 </div>
 
+                                @if($job->checklistItems->count())
+                                    <div class="form-row" style="margin-top:10px;">
+                                        <strong>Checklist Report</strong>
+                                    </div>
+                                    <div class="timeline" style="margin-top:10px;">
+                                        @foreach($job->checklistItems as $checklistItem)
+                                            <article class="update">
+                                                <div class="label">
+                                                    {{ $checklistItem->is_custom ? 'Added checklist item' : 'Checklist item' }}
+                                                </div>
+                                                <div class="value">{{ $checklistItem->title }}</div>
+                                                @if($checklistItem->description)
+                                                    <div class="muted">{{ $checklistItem->description }}</div>
+                                                @endif
+                                                <div class="muted">
+                                                    Status: {{ str_replace('_', ' ', \Illuminate\Support\Str::title($checklistItem->status)) }}
+                                                    @if($checklistItem->completedBy)
+                                                        &middot; Completed by {{ $checklistItem->completedBy->name }}
+                                                    @endif
+                                                </div>
+                                                @if($checklistItem->notes)
+                                                    <div class="muted">Note: {{ $checklistItem->notes }}</div>
+                                                @endif
+                                                @if($checklistItem->addedBy)
+                                                    <div class="muted">Added by {{ $checklistItem->addedBy->name }}</div>
+                                                @endif
+                                            </article>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 @if($latestAttempt->requirements->count())
+                                    <div class="form-row" style="margin-top:10px;">
+                                        <strong>Requirements</strong>
+                                    </div>
                                     <div class="timeline" style="margin-top:10px;">
                                         @foreach($latestAttempt->requirements as $requirement)
                                             <article class="update">

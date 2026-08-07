@@ -6,6 +6,11 @@
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-6">Create Job Request</h1>
+        <div class="mb-6">
+            <a href="{{ route('admin.service-categories.index') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold">
+                Manage Field Categories & Checklists
+            </a>
+        </div>
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <form method="POST" action="{{ route('admin.job-requests.store') }}" class="space-y-6">
@@ -49,6 +54,12 @@
 
                 <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
                     Saved job requests go to the field coordinator first. The coordinator assigns them to staff or releases them for open claim.
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Additional Checklist Items</label>
+                    <textarea name="additional_checklist" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="One checklist item per line">{{ old('additional_checklist') }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Optional. These lines will be added to each selected category item for this job.</p>
                 </div>
 
                 <div>

@@ -182,9 +182,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Job Requests Management
     Route::get('/job-inbox', [\App\Http\Controllers\Admin\JobInboxController::class, 'index'])
         ->name('admin.job-inbox.index');
+    Route::get('/service-categories', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'index'])
+        ->name('admin.service-categories.index');
+    Route::post('/service-categories', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'store'])
+        ->name('admin.service-categories.store');
+    Route::put('/service-categories/{serviceCategory}', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'update'])
+        ->name('admin.service-categories.update');
+    Route::delete('/service-categories/{serviceCategory}', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'destroy'])
+        ->name('admin.service-categories.destroy');
+    Route::post('/service-categories/{serviceCategory}/checklist-templates', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'storeTemplate'])
+        ->name('admin.service-categories.templates.store');
+    Route::put('/checklist-templates/{template}', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'updateTemplate'])
+        ->name('admin.service-categories.templates.update');
+    Route::delete('/checklist-templates/{template}', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'destroyTemplate'])
+        ->name('admin.service-categories.templates.destroy');
     Route::resource('job-requests', \App\Http\Controllers\Admin\JobRequestController::class)
         ->only(['index', 'create', 'store', 'show'])
         ->names('admin.job-requests');
+    Route::post('/job-items/{jobItem}/checklist', [\App\Http\Controllers\Admin\JobRequestController::class, 'addChecklistItem'])
+        ->name('admin.job-items.checklist.store');
+    Route::delete('/job-items/{jobItem}/checklist/{checklistItem}', [\App\Http\Controllers\Admin\JobRequestController::class, 'destroyChecklistItem'])
+        ->name('admin.job-items.checklist.destroy');
     Route::get('/job-items/{jobItem}', [\App\Http\Controllers\Admin\JobItemController::class, 'show'])
         ->name('admin.job-items.show');
     Route::post('/job-items/{jobItem}/review', [\App\Http\Controllers\Admin\JobItemController::class, 'review'])
@@ -278,6 +296,8 @@ Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field
 
 Route::middleware(['auth', 'role:field_coordinator'])->prefix('coordinator')->group(function () {
     Route::get('/jobs', [CoordinatorJobAssignmentController::class, 'index'])->name('coordinator.jobs.index');
+    Route::post('/jobs/{jobItem}/checklist', [CoordinatorJobAssignmentController::class, 'addChecklistItem'])->name('coordinator.jobs.checklist.store');
+    Route::delete('/jobs/{jobItem}/checklist/{checklistItem}', [CoordinatorJobAssignmentController::class, 'destroyChecklistItem'])->name('coordinator.jobs.checklist.destroy');
     Route::post('/jobs/{jobItem}/assign', [CoordinatorJobAssignmentController::class, 'assign'])->name('coordinator.jobs.assign');
     Route::post('/jobs/{jobItem}/claim', [CoordinatorJobAssignmentController::class, 'claim'])->name('coordinator.jobs.claim');
     Route::post('/jobs/{jobItem}/release', [CoordinatorJobAssignmentController::class, 'release'])->name('coordinator.jobs.release');

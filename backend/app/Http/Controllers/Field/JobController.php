@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
+use App\Models\JobChecklistItem;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Services\CloudinaryImageService;
@@ -90,10 +91,12 @@ class JobController extends Controller
     public function show(JobRequestItem $jobItem)
     {
         $this->authorizeClaimedJob($jobItem);
+        $jobItem->ensureChecklistFromCategory();
 
         $jobItem->load([
                 'jobRequest.client',
                 'serviceCategory',
+                'checklistItems',
                 'attempts' => fn ($query) => $query
                     ->with(['requirements', 'media'])
                     ->where('user_id', auth()->id())
@@ -104,6 +107,7 @@ class JobController extends Controller
         $jobItem->refresh()->load([
             'jobRequest.client',
             'serviceCategory',
+            'checklistItems',
             'attempts' => fn ($query) => $query
                 ->with(['requirements', 'media'])
                 ->where('user_id', auth()->id())
@@ -117,16 +121,24 @@ class JobController extends Controller
     {
         $validated = $request->validate([
             'notes' => 'required|string|min:5',
-            'requirements' => 'required|array|min:1',
+            'checklist' => 'nullable|array',
+            'checklist.*.status' => 'required|in:pending,done,not_applicable',
+            'checklist.*.notes' => 'nullable|string',
+            'custom_checklist' => 'nullable|array',
+            'custom_checklist.*.title' => 'nullable|string|max:255',
+            'custom_checklist.*.status' => 'nullable|in:pending,done,not_applicable',
+            'custom_checklist.*.notes' => 'nullable|string',
+            'requirements' => 'nullable|array',
             'requirements.*.type' => 'required|in:material,task',
-            'requirements.*.name' => 'required|string|max:255',
+            'requirements.*.name' => 'nullable|string|max:255',
             'requirements.*.quantity' => 'nullable|string|max:100',
             'requirements.*.notes' => 'nullable|string',
             'media' => 'nullable|array',
             'media.*' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        $requirements = collect($validated['requirements'])
+        $requirements = collect($validated['requirements'] ?? [])
+            ->filter(fn ($requirement) => trim((string) ($requirement['name'] ?? '')) !== '')
             ->map(fn ($requirement) => [
                 'type' => $requirement['type'],
                 'name' => trim($requirement['name']),
@@ -135,6 +147,17 @@ class JobController extends Controller
                     : null,
                 'notes' => isset($requirement['notes']) && trim((string) $requirement['notes']) !== ''
                     ? trim((string) $requirement['notes'])
+                    : null,
+            ])
+            ->values();
+
+        $customChecklistItems = collect($validated['custom_checklist'] ?? [])
+            ->filter(fn ($item) => trim((string) ($item['title'] ?? '')) !== '')
+            ->map(fn ($item) => [
+                'title' => trim((string) $item['title']),
+                'status' => $item['status'] ?? JobChecklistItem::STATUS_PENDING,
+                'notes' => isset($item['notes']) && trim((string) $item['notes']) !== ''
+                    ? trim((string) $item['notes'])
                     : null,
             ])
             ->values();
@@ -153,7 +176,7 @@ class JobController extends Controller
                 ->withInput();
         }
 
-        DB::transaction(function () use ($jobItem, $request, $validated, $requirements, $uploads) {
+        DB::transaction(function () use ($jobItem, $request, $validated, $requirements, $customChecklistItems, $uploads) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('claimed_by', $request->user()->id)
@@ -169,6 +192,41 @@ class JobController extends Controller
                 $lockedItem->markOverdueIfPast();
 
                 return;
+            }
+
+            $lockedItem->ensureChecklistFromCategory();
+
+            foreach (($validated['checklist'] ?? []) as $checklistItemId => $checklistInput) {
+                $status = $checklistInput['status'];
+                $notes = isset($checklistInput['notes']) && trim((string) $checklistInput['notes']) !== ''
+                    ? trim((string) $checklistInput['notes'])
+                    : null;
+
+                JobChecklistItem::query()
+                    ->where('id', $checklistItemId)
+                    ->where('job_request_item_id', $lockedItem->id)
+                    ->update([
+                        'status' => $status,
+                        'notes' => $notes,
+                        'completed_by' => $status === JobChecklistItem::STATUS_DONE ? $request->user()->id : null,
+                        'completed_at' => $status === JobChecklistItem::STATUS_DONE ? now() : null,
+                    ]);
+            }
+
+            $nextSortOrder = (int) $lockedItem->checklistItems()->max('sort_order') + 1;
+
+            foreach ($customChecklistItems as $index => $item) {
+                $lockedItem->checklistItems()->create([
+                    'added_by' => $request->user()->id,
+                    'title' => $item['title'],
+                    'status' => $item['status'],
+                    'notes' => $item['notes'],
+                    'is_required' => false,
+                    'is_custom' => true,
+                    'sort_order' => $nextSortOrder + $index,
+                    'completed_by' => $item['status'] === JobChecklistItem::STATUS_DONE ? $request->user()->id : null,
+                    'completed_at' => $item['status'] === JobChecklistItem::STATUS_DONE ? now() : null,
+                ]);
             }
 
             $lockedItem->update([

@@ -29,4 +29,11 @@ class ServiceCategory extends Model
     {
         return $this->hasMany(JobRequestItem::class);
     }
+
+    public function checklistTemplates(): HasMany
+    {
+        return $this->hasMany(CategoryChecklistTemplate::class)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
 }

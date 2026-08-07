@@ -183,6 +183,39 @@ class JobRequestItem extends Model
         return $this->hasMany(JobItemAttempt::class);
     }
 
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(JobChecklistItem::class)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    public function ensureChecklistFromCategory(): void
+    {
+        if (!$this->service_category_id || $this->checklistItems()->exists()) {
+            return;
+        }
+
+        $templates = CategoryChecklistTemplate::query()
+            ->where('service_category_id', $this->service_category_id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($templates as $index => $template) {
+            $this->checklistItems()->create([
+                'category_checklist_template_id' => $template->id,
+                'title' => $template->title,
+                'description' => $template->description,
+                'status' => JobChecklistItem::STATUS_PENDING,
+                'is_required' => $template->is_required,
+                'is_custom' => false,
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
     /**
      * Get the most recent attempt.
      */

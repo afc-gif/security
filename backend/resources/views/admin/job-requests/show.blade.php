@@ -121,6 +121,44 @@
                                     <div class="text-gray-600">Not yet converted.</div>
                                 @endif
                             </div>
+                            <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Checklist</div>
+                                    <div class="text-xs text-gray-500">{{ $item->checklistItems->count() }} item{{ $item->checklistItems->count() === 1 ? '' : 's' }}</div>
+                                </div>
+                                @if($item->checklistItems->isEmpty())
+                                    <div class="text-gray-600">No checklist items yet.</div>
+                                @else
+                                    <div class="space-y-2">
+                                        @foreach($item->checklistItems as $checklistItem)
+                                            <div class="rounded border border-gray-200 bg-gray-50 p-2">
+                                                <div class="font-semibold text-gray-900">{{ $checklistItem->title }}</div>
+                                                @if($checklistItem->description)
+                                                    <div class="text-gray-600 mt-1">{{ $checklistItem->description }}</div>
+                                                @endif
+                                                <form method="POST" action="{{ route('admin.job-items.checklist.destroy', [$item, $checklistItem]) }}" class="mt-2">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-700 font-semibold" onclick="return confirm('Remove this checklist item from this job?')">Remove</button>
+                                                </form>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                @if(in_array($item->status, [
+                                    \App\Models\JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+                                    \App\Models\JobRequestItem::STATUS_OPEN,
+                                    \App\Models\JobRequestItem::STATUS_CLAIMED,
+                                    \App\Models\JobRequestItem::STATUS_RETURNED,
+                                ], true))
+                                    <form method="POST" action="{{ route('admin.job-items.checklist.store', $item) }}" class="mt-3 space-y-2">
+                                        @csrf
+                                        <input type="text" name="title" required maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Add checklist item">
+                                        <input type="text" name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Optional instruction">
+                                        <button type="submit" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-semibold">Add Checklist Item</button>
+                                    </form>
+                                @endif
+                            </div>
                             <div class="mt-4">
                                 <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center w-full bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition">
                                     Review Item

@@ -17,6 +17,7 @@
 
     $submittedRequirements = $latestOwnAttempt?->requirements ?? collect();
     $submittedMedia = $latestOwnAttempt?->media ?? collect();
+    $checklistItems = $jobItem->checklistItems ?? collect();
     $requirementRows = old('requirements', $submittedRequirements->count()
         ? $submittedRequirements->map(fn ($requirement) => [
             'type' => $requirement->type,
@@ -26,6 +27,7 @@
         ])->values()->all()
         : [['type' => 'material', 'name' => '', 'quantity' => '', 'notes' => '']]
     );
+    $customChecklistRows = old('custom_checklist', [['title' => '', 'status' => 'pending', 'notes' => '']]);
 @endphp
 
 <!DOCTYPE html>
@@ -108,8 +110,74 @@
                         <label for="notes">Inspection Notes</label>
                         <textarea id="notes" name="notes" required minlength="5">{{ old('notes') }}</textarea>
                     </div>
+
+                    <div class="form-row">
+                        <label>Checklist</label>
+                        @if($checklistItems->isEmpty())
+                            <div class="notice locked">No default checklist has been added for this category yet. Add any on-site checklist items below.</div>
+                        @else
+                            <div class="timeline">
+                                @foreach($checklistItems as $checklistItem)
+                                    <article class="update">
+                                        <div class="grid">
+                                            <div>
+                                                <div class="label">{{ $checklistItem->is_custom ? 'Added item' : 'Checklist item' }}</div>
+                                                <div class="value">{{ $checklistItem->title }}</div>
+                                                @if($checklistItem->description)
+                                                    <div class="muted">{{ $checklistItem->description }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="form-row">
+                                                <label for="checklist_{{ $checklistItem->id }}_status">Status</label>
+                                                <select id="checklist_{{ $checklistItem->id }}_status" name="checklist[{{ $checklistItem->id }}][status]" required>
+                                                    <option value="pending" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'pending')>Pending</option>
+                                                    <option value="done" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'done')>Done</option>
+                                                    <option value="not_applicable" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'not_applicable')>Not Applicable</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-row" style="margin-top:10px;">
+                                            <label for="checklist_{{ $checklistItem->id }}_notes">Checklist Notes</label>
+                                            <input id="checklist_{{ $checklistItem->id }}_notes" type="text" name="checklist[{{ $checklistItem->id }}][notes]" value="{{ old("checklist.{$checklistItem->id}.notes", $checklistItem->notes) }}">
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="form-row">
+                        <label>Additional Checklist Items</label>
+                        <div id="custom-checklist-list">
+                            @foreach($customChecklistRows as $index => $item)
+                                <div style="border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; background:#fff;">
+                                    <div class="grid">
+                                        <div class="form-row">
+                                            <label for="custom_checklist_{{ $index }}_title">Item</label>
+                                            <input id="custom_checklist_{{ $index }}_title" type="text" name="custom_checklist[{{ $index }}][title]" value="{{ $item['title'] ?? '' }}" maxlength="255">
+                                        </div>
+                                        <div class="form-row">
+                                            <label for="custom_checklist_{{ $index }}_status">Status</label>
+                                            <select id="custom_checklist_{{ $index }}_status" name="custom_checklist[{{ $index }}][status]">
+                                                <option value="pending" @selected(($item['status'] ?? 'pending') === 'pending')>Pending</option>
+                                                <option value="done" @selected(($item['status'] ?? '') === 'done')>Done</option>
+                                                <option value="not_applicable" @selected(($item['status'] ?? '') === 'not_applicable')>Not Applicable</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="margin-top:10px;">
+                                        <label for="custom_checklist_{{ $index }}_notes">Notes</label>
+                                        <input id="custom_checklist_{{ $index }}_notes" type="text" name="custom_checklist[{{ $index }}][notes]" value="{{ $item['notes'] ?? '' }}">
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="button secondary full" type="button" id="add-custom-checklist">Add Checklist Item</button>
+                    </div>
+
                     <div class="form-row">
                         <label>Requirements</label>
+                        <div class="muted">Optional. Add materials or extra tasks needed after inspection.</div>
                         <div id="requirements-list">
                             @foreach($requirementRows as $index => $requirement)
                                 <div style="border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; background:#fff;">
@@ -206,6 +274,8 @@
     <script>
         const addRequirementButton = document.getElementById('add-requirement');
         const requirementsList = document.getElementById('requirements-list');
+        const addCustomChecklistButton = document.getElementById('add-custom-checklist');
+        const customChecklistList = document.getElementById('custom-checklist-list');
 
         if (addRequirementButton && requirementsList) {
             addRequirementButton.addEventListener('click', () => {
@@ -236,6 +306,35 @@
                     </div>
                 `;
                 requirementsList.appendChild(wrapper);
+            });
+        }
+
+        if (addCustomChecklistButton && customChecklistList) {
+            addCustomChecklistButton.addEventListener('click', () => {
+                const index = customChecklistList.children.length;
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; background:#fff;';
+                wrapper.innerHTML = `
+                    <div class="grid">
+                        <div class="form-row">
+                            <label for="custom_checklist_${index}_title">Item</label>
+                            <input id="custom_checklist_${index}_title" type="text" name="custom_checklist[${index}][title]" maxlength="255">
+                        </div>
+                        <div class="form-row">
+                            <label for="custom_checklist_${index}_status">Status</label>
+                            <select id="custom_checklist_${index}_status" name="custom_checklist[${index}][status]">
+                                <option value="pending">Pending</option>
+                                <option value="done">Done</option>
+                                <option value="not_applicable">Not Applicable</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top:10px;">
+                        <label for="custom_checklist_${index}_notes">Notes</label>
+                        <input id="custom_checklist_${index}_notes" type="text" name="custom_checklist[${index}][notes]">
+                    </div>
+                `;
+                customChecklistList.appendChild(wrapper);
             });
         }
     </script>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\FieldCoordinator;
 
 use App\Http\Controllers\Controller;
+use App\Models\JobChecklistItem;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\User;
@@ -16,7 +17,7 @@ class JobAssignmentController extends Controller
     public function index()
     {
         $pendingJobs = JobRequestItem::query()
-            ->with(['jobRequest.client', 'serviceCategory', 'creator'])
+            ->with(['jobRequest.client', 'serviceCategory', 'creator', 'checklistItems'])
             ->where('status', JobRequestItem::STATUS_PENDING_ASSIGNMENT)
             ->latest('id')
             ->paginate(15);
@@ -31,6 +32,8 @@ class JobAssignmentController extends Controller
             ->with([
                 'jobRequest.client',
                 'serviceCategory',
+                'checklistItems.addedBy',
+                'checklistItems.completedBy',
                 'claimer',
                 'attempts' => fn ($query) => $query
                     ->with(['user', 'requirements', 'media.uploader'])
@@ -83,6 +86,67 @@ class JobAssignmentController extends Controller
             ->route('coordinator.jobs.index')
             ->with('success', 'Job assigned successfully.')
             ->with('whatsapp_url', $whatsappUrl);
+    }
+
+    public function addChecklistItem(Request $request, JobRequestItem $jobItem)
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($jobItem, $request, $validated) {
+            $lockedItem = JobRequestItem::query()
+                ->where('id', $jobItem->id)
+                ->whereIn('status', [
+                    JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+                    JobRequestItem::STATUS_CLAIMED,
+                    JobRequestItem::STATUS_RETURNED,
+                ])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedItem) {
+                abort(409, 'Checklist cannot be changed for this job status.');
+            }
+
+            $lockedItem->ensureChecklistFromCategory();
+
+            $lockedItem->checklistItems()->create([
+                'added_by' => $request->user()->id,
+                'title' => trim($validated['title']),
+                'description' => isset($validated['description']) && trim((string) $validated['description']) !== ''
+                    ? trim((string) $validated['description'])
+                    : null,
+                'status' => 'pending',
+                'is_required' => false,
+                'is_custom' => true,
+                'sort_order' => ((int) $lockedItem->checklistItems()->max('sort_order')) + 1,
+            ]);
+        });
+
+        return redirect()
+            ->route('coordinator.jobs.index')
+            ->with('success', 'Checklist item added.');
+    }
+
+    public function destroyChecklistItem(JobRequestItem $jobItem, JobChecklistItem $checklistItem)
+    {
+        abort_unless((int) $checklistItem->job_request_item_id === (int) $jobItem->id, 404);
+
+        if (!in_array($jobItem->status, [
+            JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            JobRequestItem::STATUS_CLAIMED,
+            JobRequestItem::STATUS_RETURNED,
+        ], true)) {
+            abort(409, 'Checklist cannot be changed for this job status.');
+        }
+
+        $checklistItem->delete();
+
+        return redirect()
+            ->route('coordinator.jobs.index')
+            ->with('success', 'Checklist item removed.');
     }
 
     public function claim(JobRequestItem $jobItem, TransportFareNotificationService $fareNotifications)

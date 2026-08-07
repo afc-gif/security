@@ -3,7 +3,9 @@
 namespace Tests\Feature\Field;
 
 use App\Models\Client;
+use App\Models\CategoryChecklistTemplate;
 use App\Models\JobItemAttempt;
+use App\Models\JobChecklistItem;
 use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\Project;
@@ -21,6 +23,11 @@ class FieldWorkflowTest extends TestCase
         $fieldStaff = $this->createUser(['role' => 'field_staff']);
         $client = Client::create(['client_name' => 'Field Client']);
         $category = ServiceCategory::create(['name' => 'Inspection', 'is_active' => true]);
+        $template = CategoryChecklistTemplate::create([
+            'service_category_id' => $category->id,
+            'title' => 'Confirm site access',
+            'sort_order' => 0,
+        ]);
         $jobRequest = JobRequest::create([
             'client_id' => $client->id,
             'title' => 'Inspect site',
@@ -36,9 +43,24 @@ class FieldWorkflowTest extends TestCase
             'status' => JobRequestItem::STATUS_CLAIMED,
             'title' => $category->name,
         ]);
+        $jobItem->ensureChecklistFromCategory();
+        $checklistItem = $jobItem->checklistItems()->firstOrFail();
 
         $response = $this->actingAs($fieldStaff)->post("/field/jobs/{$jobItem->id}/submit", [
             'notes' => 'Inspection done. Customer needs approved scope.',
+            'checklist' => [
+                $checklistItem->id => [
+                    'status' => JobChecklistItem::STATUS_DONE,
+                    'notes' => 'Gate opened by client.',
+                ],
+            ],
+            'custom_checklist' => [
+                [
+                    'title' => 'Confirm network rack location',
+                    'status' => JobChecklistItem::STATUS_DONE,
+                    'notes' => 'Rack is in the server room.',
+                ],
+            ],
             'requirements' => [
                 ['type' => 'material', 'name' => 'CCTV Camera', 'quantity' => '4', 'notes' => 'Outdoor cameras'],
                 ['type' => 'task', 'name' => 'Configure remote viewing', 'quantity' => '', 'notes' => ''],
@@ -61,6 +83,17 @@ class FieldWorkflowTest extends TestCase
             'job_item_attempt_id' => $attempt->id,
             'type' => 'task',
             'name' => 'Configure remote viewing',
+        ]);
+        $this->assertDatabaseHas('job_checklist_items', [
+            'category_checklist_template_id' => $template->id,
+            'status' => JobChecklistItem::STATUS_DONE,
+            'notes' => 'Gate opened by client.',
+        ]);
+        $this->assertDatabaseHas('job_checklist_items', [
+            'job_request_item_id' => $jobItem->id,
+            'title' => 'Confirm network rack location',
+            'is_custom' => true,
+            'status' => JobChecklistItem::STATUS_DONE,
         ]);
     }
 
@@ -143,6 +176,43 @@ class FieldWorkflowTest extends TestCase
             ->getJson('/field/dashboard/pending-assignments')
             ->assertOk()
             ->assertJson(['count' => 1]);
+    }
+
+    public function test_field_coordinator_can_add_and_remove_job_checklist_items(): void
+    {
+        $admin = $this->createAdmin();
+        $coordinator = $this->createUser(['role' => 'field_coordinator']);
+        $client = Client::create(['client_name' => 'Coordinator Checklist Client']);
+        $category = ServiceCategory::create(['name' => 'Coordinator Checklist Category', 'is_active' => true]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Coordinator checklist job',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'status' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+            'title' => $category->name,
+        ]);
+
+        $this->actingAs($coordinator)
+            ->post("/coordinator/jobs/{$jobItem->id}/checklist", [
+                'title' => 'Coordinator added checklist item',
+            ])
+            ->assertRedirect('/coordinator/jobs');
+
+        $checklistItem = JobChecklistItem::firstOrFail();
+
+        $this->actingAs($coordinator)
+            ->delete("/coordinator/jobs/{$jobItem->id}/checklist/{$checklistItem->id}")
+            ->assertRedirect('/coordinator/jobs');
+
+        $this->assertDatabaseMissing('job_checklist_items', [
+            'id' => $checklistItem->id,
+        ]);
     }
 
     public function test_field_staff_dashboard_does_not_show_coordinator_assignment_notification(): void
