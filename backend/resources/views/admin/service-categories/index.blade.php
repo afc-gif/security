@@ -204,14 +204,14 @@
                                 <div data-tab-panel="preview">
                                     <div class="field-preview">
                                         <div class="mb-4">
-                                            <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Field Staff View</div>
-                                            <h3 class="text-xl font-bold text-gray-900 mt-1">Checklist</h3>
-                                            <p class="text-sm text-gray-600 mt-1">This preview shows the default checklist layout staff will work through on a job.</p>
+                                            <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Field View</div>
+                                            <h3 class="text-xl font-bold text-gray-900 mt-1">{{ $category->name }}</h3>
+                                            <p class="text-sm text-gray-600 mt-1">This is how staff will work through the steps on a job.</p>
                                         </div>
 
                                         @if($templates->where('is_active', true)->isEmpty())
                                             <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
-                                                No active checklist items yet. Field staff will see an empty default checklist for this category.
+                                                No active steps yet. Staff will see an empty list for this category.
                                             </div>
                                         @else
                                             <div class="space-y-3">
@@ -222,12 +222,19 @@
                                                     @endphp
                                                     <article class="field-preview-card">
                                                         <div class="grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px]">
-                                                            <div>
-                                                                <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Checklist Item</div>
-                                                                <div class="font-bold text-gray-900 mt-1">{{ $template->title }}</div>
-                                                                @if($template->description)
-                                                                    <div class="text-sm text-gray-600 mt-1">{{ $template->description }}</div>
-                                                                @endif
+                                                            <div class="flex gap-3">
+                                                                <div class="mt-0.5 flex h-8 min-w-8 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">
+                                                                    {{ $loop->iteration }}
+                                                                </div>
+                                                                <div class="min-w-0">
+                                                                    <div class="font-bold text-gray-900">{{ $template->title }}</div>
+                                                                    @if($template->description)
+                                                                        <div class="text-sm text-gray-600 mt-1">{{ $template->description }}</div>
+                                                                    @endif
+                                                                    @if($template->is_required)
+                                                                        <div class="mt-2 inline-flex rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">Required</div>
+                                                                    @endif
+                                                                </div>
                                                             </div>
                                                             <div>
                                                                 <label class="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Status</label>
@@ -267,7 +274,7 @@
                                                         </div>
 
                                                         <div class="mt-3">
-                                                            <label class="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Checklist Notes</label>
+                                                            <label class="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Notes</label>
                                                             <input type="text" disabled class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" placeholder="Optional notes">
                                                         </div>
                                                     </article>
