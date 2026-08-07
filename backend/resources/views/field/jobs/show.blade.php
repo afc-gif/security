@@ -17,6 +17,8 @@
 
     $submittedRequirements = $latestOwnAttempt?->requirements ?? collect();
     $submittedMedia = $latestOwnAttempt?->media ?? collect();
+    $submittedMediaByChecklist = $submittedMedia->whereNotNull('job_checklist_item_id')->groupBy('job_checklist_item_id');
+    $generalSubmittedMedia = $submittedMedia->whereNull('job_checklist_item_id');
     $checklistItems = $jobItem->checklistItems ?? collect();
     $requirementRows = old('requirements', $submittedRequirements->count()
         ? $submittedRequirements->map(fn ($requirement) => [
@@ -160,6 +162,9 @@
                                                         </label>
                                                     @endforeach
                                                 </div>
+                                            @elseif($inputType === 'photo')
+                                                <input type="file" name="checklist[{{ $checklistItem->id }}][photos][]" multiple accept="image/*" capture="environment" @required($checklistItem->is_required)>
+                                                <div class="muted">Upload or open camera. JPG or PNG, maximum 5 MB each.</div>
                                             @elseif($inputType === 'number')
                                                 <input type="number" name="checklist[{{ $checklistItem->id }}][response]" value="{{ $oldResponse }}">
                                             @elseif($inputType === 'text')
@@ -264,9 +269,48 @@
             @endif
         </section>
 
-        @if($submittedRequirements->count() || $submittedMedia->count())
+        @if($checklistItems->count() || $submittedRequirements->count() || $submittedMedia->count())
             <section class="panel">
                 <h2>Latest Submission</h2>
+                @if($checklistItems->count())
+                    <div class="timeline">
+                        @foreach($checklistItems as $checklistItem)
+                            @php($itemMedia = $submittedMediaByChecklist->get($checklistItem->id, collect()))
+                            <article class="update">
+                                <div class="label">Step {{ $loop->iteration }}</div>
+                                <div class="value">{{ $checklistItem->title }}</div>
+                                @if($checklistItem->description)
+                                    <div class="muted">{{ $checklistItem->description }}</div>
+                                @endif
+                                <div class="muted">Status: {{ str_replace('_', ' ', \Illuminate\Support\Str::title($checklistItem->status)) }}</div>
+                                @if($checklistItem->response)
+                                    <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                @endif
+                                @if($checklistItem->notes)
+                                    <div class="muted">Note: {{ $checklistItem->notes }}</div>
+                                @endif
+                                @if($itemMedia->count())
+                                    <div class="files" style="margin-top:10px;">
+                                        @foreach($itemMedia as $media)
+                                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                            <div class="file">
+                                                @if($mediaUrl)
+                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">
+                                                        <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Checklist photo' }}">
+                                                        {{ $media->file_name ?? 'Checklist photo' }}
+                                                    </a>
+                                                @else
+                                                    <strong>{{ $media->file_name ?? 'Checklist photo' }}</strong>
+                                                @endif
+                                                <div class="muted">{{ $media->file_type ?: 'Photo' }} @if($media->file_size) &middot; {{ number_format($media->file_size / 1024, 1) }} KB @endif</div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
                 @if($submittedRequirements->count())
                     <div class="timeline">
                         @foreach($submittedRequirements as $requirement)
@@ -283,13 +327,16 @@
                         @endforeach
                     </div>
                 @endif
-                @if($submittedMedia->count())
+                @if($generalSubmittedMedia->count())
                     <div class="files">
-                        @foreach($submittedMedia as $media)
+                        @foreach($generalSubmittedMedia as $media)
                             @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
                             <div class="file">
                                 @if($mediaUrl)
-                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">{{ $media->file_name ?? 'Inspection photo' }}</a>
+                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">
+                                        <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Inspection photo' }}">
+                                        {{ $media->file_name ?? 'Inspection photo' }}
+                                    </a>
                                 @else
                                     <strong>{{ $media->file_name ?? 'Inspection photo' }}</strong>
                                 @endif

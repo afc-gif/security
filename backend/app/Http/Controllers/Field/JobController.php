@@ -119,12 +119,16 @@ class JobController extends Controller
 
     public function submit(Request $request, JobRequestItem $jobItem, CloudinaryImageService $cloudinary)
     {
+        $jobItem->ensureChecklistFromCategory();
+
         $validated = $request->validate([
             'notes' => 'required|string|min:5',
             'checklist' => 'nullable|array',
             'checklist.*.status' => 'required|in:pending,done,not_applicable',
             'checklist.*.response' => 'nullable',
             'checklist.*.notes' => 'nullable|string',
+            'checklist.*.photos' => 'nullable|array',
+            'checklist.*.photos.*' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'custom_checklist' => 'nullable|array',
             'custom_checklist.*.title' => 'nullable|string|max:255',
             'custom_checklist.*.status' => 'nullable|in:pending,done,not_applicable',
@@ -163,7 +167,24 @@ class JobController extends Controller
             ])
             ->values();
 
+        $photoChecklistItems = $jobItem->checklistItems()
+            ->where('input_type', 'photo')
+            ->get(['id', 'title', 'is_required']);
+
+        foreach ($photoChecklistItems as $photoChecklistItem) {
+            $checklistInput = $validated['checklist'][$photoChecklistItem->id] ?? [];
+            $status = $checklistInput['status'] ?? JobChecklistItem::STATUS_PENDING;
+            $files = $this->normalizeUploadedFiles(data_get($request->file('checklist', []), "{$photoChecklistItem->id}.photos", []));
+
+            if ($photoChecklistItem->is_required && $status !== JobChecklistItem::STATUS_NOT_APPLICABLE && count($files) === 0) {
+                return back()
+                    ->withErrors(["checklist.{$photoChecklistItem->id}.photos" => "Please upload at least one photo for {$photoChecklistItem->title}."])
+                    ->withInput();
+            }
+        }
+
         $uploads = [];
+        $checklistUploads = [];
         try {
             foreach ($request->file('media', []) as $file) {
                 $uploads[] = [
@@ -171,13 +192,24 @@ class JobController extends Controller
                     'upload' => $cloudinary->uploadMedia($file, 'jobs/' . $jobItem->id . '/inspection'),
                 ];
             }
+
+            foreach ($photoChecklistItems as $photoChecklistItem) {
+                $files = $this->normalizeUploadedFiles(data_get($request->file('checklist', []), "{$photoChecklistItem->id}.photos", []));
+
+                foreach ($files as $file) {
+                    $checklistUploads[$photoChecklistItem->id][] = [
+                        'file' => $file,
+                        'upload' => $cloudinary->uploadMedia($file, 'jobs/' . $jobItem->id . '/checklist/' . $photoChecklistItem->id),
+                    ];
+                }
+            }
         } catch (RuntimeException $e) {
             return back()
                 ->withErrors(['media' => 'Photo upload failed. Please confirm Cloudinary is configured and try again.'])
                 ->withInput();
         }
 
-        DB::transaction(function () use ($jobItem, $request, $validated, $requirements, $customChecklistItems, $uploads) {
+        DB::transaction(function () use ($jobItem, $request, $validated, $requirements, $customChecklistItems, $uploads, $checklistUploads) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->where('claimed_by', $request->user()->id)
@@ -274,6 +306,24 @@ class JobController extends Controller
                     'file_size' => $file->getSize(),
                 ]);
             }
+
+            foreach ($checklistUploads as $checklistItemId => $storedFiles) {
+                foreach ($storedFiles as $stored) {
+                    $file = $stored['file'];
+                    $upload = $stored['upload'];
+
+                    $attempt->media()->create([
+                        'job_checklist_item_id' => $checklistItemId,
+                        'uploaded_by' => $request->user()->id,
+                        'file_path' => $upload['url'],
+                        'cloudinary_public_id' => $upload['public_id'],
+                        'cloudinary_resource_type' => $upload['resource_type'] ?? null,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
+            }
         });
 
         $jobItem->refresh();
@@ -301,5 +351,21 @@ class JobController extends Controller
                 abort(403, 'Unauthorized job access');
             }
         }
+    }
+
+    private function normalizeUploadedFiles(mixed $files): array
+    {
+        if ($files instanceof \Illuminate\Http\UploadedFile) {
+            return [$files];
+        }
+
+        if (!is_array($files)) {
+            return [];
+        }
+
+        return collect($files)
+            ->filter(fn ($file) => $file instanceof \Illuminate\Http\UploadedFile)
+            ->values()
+            ->all();
     }
 }

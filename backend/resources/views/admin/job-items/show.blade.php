@@ -14,6 +14,8 @@
         ])->values()->all()
         : [['include' => '1', 'type' => 'material', 'name' => '', 'quantity' => '', 'notes' => '']]
     );
+    $mediaByChecklist = $latestAttempt?->media?->whereNotNull('job_checklist_item_id')->groupBy('job_checklist_item_id') ?? collect();
+    $generalMedia = $latestAttempt?->media?->whereNull('job_checklist_item_id') ?? collect();
 @endphp
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -133,13 +135,14 @@
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Inspection Photos</h2>
-            @if($latestAttempt?->media?->count())
+            @if($generalMedia->count())
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($latestAttempt->media as $media)
+                    @foreach($generalMedia as $media)
                         @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
                             @if($mediaUrl)
                                 <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                    <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Inspection photo' }}" class="mb-2 h-32 w-full rounded-lg object-cover">
                                     {{ $media->file_name ?? 'Inspection photo' }}
                                 </a>
                             @else
@@ -155,6 +158,67 @@
                 <div class="text-gray-600">No photos uploaded.</div>
             @endif
         </div>
+
+        @if($latestAttempt && $jobItem->checklistItems->count())
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Checklist Report</h2>
+                <div class="space-y-3">
+                    @foreach($jobItem->checklistItems as $checklistItem)
+                        @php($itemMedia = $mediaByChecklist->get($checklistItem->id, collect()))
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Step {{ $loop->iteration }}</div>
+                                    <div class="font-semibold text-gray-900 mt-1">{{ $checklistItem->title }}</div>
+                                    @if($checklistItem->description)
+                                        <div class="text-sm text-gray-600 mt-1">{{ $checklistItem->description }}</div>
+                                    @endif
+                                </div>
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-200 text-gray-700">
+                                    {{ str_replace('_', ' ', \Illuminate\Support\Str::title($checklistItem->status)) }}
+                                </span>
+                            </div>
+
+                            <div class="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                                @if($checklistItem->response)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Response</div>
+                                        <div class="text-gray-900">{{ $checklistItem->response }}</div>
+                                    </div>
+                                @endif
+                                @if($checklistItem->notes)
+                                    <div>
+                                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Note</div>
+                                        <div class="text-gray-900">{{ $checklistItem->notes }}</div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($itemMedia->count())
+                                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    @foreach($itemMedia as $media)
+                                        @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                        <div class="rounded-lg border border-gray-200 bg-white p-3">
+                                            @if($mediaUrl)
+                                                <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
+                                                    <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Checklist photo' }}" class="mb-2 h-32 w-full rounded-lg object-cover">
+                                                    {{ $media->file_name ?? 'Checklist photo' }}
+                                                </a>
+                                            @else
+                                                <div class="font-semibold text-gray-900">{{ $media->file_name ?? 'Checklist photo' }}</div>
+                                            @endif
+                                            <div class="text-xs text-gray-600 mt-1">
+                                                {{ $media->file_type ?: 'Photo' }} @if($media->file_size) &middot; {{ number_format($media->file_size / 1024, 1) }} KB @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         @if($jobItem->status === \App\Models\JobRequestItem::STATUS_PENDING_ADMIN_REVIEW && $latestAttempt)
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">

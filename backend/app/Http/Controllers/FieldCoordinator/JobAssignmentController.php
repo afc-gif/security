@@ -34,6 +34,7 @@ class JobAssignmentController extends Controller
                 'serviceCategory',
                 'checklistItems.addedBy',
                 'checklistItems.completedBy',
+                'checklistItems.media',
                 'claimer',
                 'attempts' => fn ($query) => $query
                     ->with(['user', 'requirements', 'media.uploader'])

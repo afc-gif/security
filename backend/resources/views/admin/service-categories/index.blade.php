@@ -66,6 +66,7 @@
         'number' => 'Number',
         'single_choice' => 'Single Choice',
         'multi_choice' => 'Multiple Choice',
+        'photo' => 'Photo Upload',
     ];
 @endphp
 
@@ -263,6 +264,10 @@
                                                                             <span>{{ $option }}</span>
                                                                         </label>
                                                                     @endforeach
+                                                                </div>
+                                                            @elseif($inputType === 'photo')
+                                                                <div class="rounded-lg border border-dashed border-gray-300 bg-gray-100 px-3 py-4 text-sm font-semibold text-gray-600">
+                                                                    Upload photo or open camera
                                                                 </div>
                                                             @elseif($inputType === 'number')
                                                                 <input type="number" disabled class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" placeholder="Number response">

@@ -14,6 +14,7 @@ class JobItemMedia extends Model
 
     protected $fillable = [
         'job_item_attempt_id',
+        'job_checklist_item_id',
         'uploaded_by',
         'file_path',
         'cloudinary_public_id',
@@ -26,6 +27,11 @@ class JobItemMedia extends Model
     public function attempt(): BelongsTo
     {
         return $this->belongsTo(JobItemAttempt::class, 'job_item_attempt_id');
+    }
+
+    public function checklistItem(): BelongsTo
+    {
+        return $this->belongsTo(JobChecklistItem::class, 'job_checklist_item_id');
     }
 
     public function uploader(): BelongsTo

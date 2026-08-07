@@ -24,6 +24,8 @@ class JobItemController extends Controller
             'serviceCategory',
             'claimer',
             'project',
+            'checklistItems.addedBy',
+            'checklistItems.completedBy',
             'attempts' => fn ($query) => $query
                 ->with(['user', 'requirements', 'media.uploader'])
                 ->latest('created_at')

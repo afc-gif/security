@@ -130,7 +130,11 @@
             @else
                 <div class="job-grid">
                     @foreach($submittedJobs as $job)
-                        @php($latestAttempt = $job->attempts->first())
+                        @php
+                            $latestAttempt = $job->attempts->first();
+                            $mediaByChecklist = $latestAttempt?->media?->whereNotNull('job_checklist_item_id')->groupBy('job_checklist_item_id') ?? collect();
+                            $generalMedia = $latestAttempt?->media?->whereNull('job_checklist_item_id') ?? collect();
+                        @endphp
                         <article class="job-card">
                             <div class="job-top">
                                 <div>
@@ -159,10 +163,9 @@
                                     </div>
                                     <div class="timeline" style="margin-top:10px;">
                                         @foreach($job->checklistItems as $checklistItem)
+                                            @php($itemMedia = $mediaByChecklist->get($checklistItem->id, collect()))
                                             <article class="update">
-                                                <div class="label">
-                                                    {{ $checklistItem->is_custom ? 'Added checklist item' : 'Checklist item' }}
-                                                </div>
+                                                <div class="label">Step {{ $loop->iteration }}</div>
                                                 <div class="value">{{ $checklistItem->title }}</div>
                                                 @if($checklistItem->description)
                                                     <div class="muted">{{ $checklistItem->description }}</div>
@@ -181,6 +184,23 @@
                                                 @endif
                                                 @if($checklistItem->addedBy)
                                                     <div class="muted">Added by {{ $checklistItem->addedBy->name }}</div>
+                                                @endif
+                                                @if($itemMedia->count())
+                                                    <div class="files" style="margin-top:10px;">
+                                                        @foreach($itemMedia as $media)
+                                                            @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                                            <div class="file">
+                                                                @if($mediaUrl)
+                                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">
+                                                                        <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Checklist photo' }}">
+                                                                        {{ $media->file_name ?? 'Checklist photo' }}
+                                                                    </a>
+                                                                @else
+                                                                    <strong>{{ $media->file_name ?? 'Checklist photo' }}</strong>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 @endif
                                             </article>
                                         @endforeach
@@ -207,13 +227,16 @@
                                     </div>
                                 @endif
 
-                                @if($latestAttempt->media->count())
+                                @if($generalMedia->count())
                                     <div class="files" style="margin-top:10px;">
-                                        @foreach($latestAttempt->media as $media)
+                                        @foreach($generalMedia as $media)
                                             @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
                                             <div class="file">
                                                 @if($mediaUrl)
-                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">{{ $media->file_name ?? 'Inspection photo' }}</a>
+                                                    <a href="{{ $mediaUrl }}" target="_blank" rel="noopener">
+                                                        <img src="{{ $mediaUrl }}" alt="{{ $media->file_name ?? 'Inspection photo' }}">
+                                                        {{ $media->file_name ?? 'Inspection photo' }}
+                                                    </a>
                                                 @else
                                                     <strong>{{ $media->file_name ?? 'Inspection photo' }}</strong>
                                                 @endif

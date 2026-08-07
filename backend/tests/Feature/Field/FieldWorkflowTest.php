@@ -10,7 +10,9 @@ use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\Project;
 use App\Models\ServiceCategory;
+use App\Services\CloudinaryImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class FieldWorkflowTest extends TestCase
@@ -98,6 +100,76 @@ class FieldWorkflowTest extends TestCase
             'title' => 'Confirm network rack location',
             'is_custom' => true,
             'status' => JobChecklistItem::STATUS_DONE,
+        ]);
+    }
+
+    public function test_field_staff_submits_required_checklist_photo_to_cloudinary(): void
+    {
+        $this->app->instance(CloudinaryImageService::class, new class extends CloudinaryImageService {
+            public function uploadMedia(UploadedFile $file, string $subFolder): array
+            {
+                return [
+                    'url' => 'https://res.cloudinary.com/demo/image/upload/' . $subFolder . '/' . $file->getClientOriginalName(),
+                    'public_id' => $subFolder . '/' . pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    'resource_type' => 'image',
+                ];
+            }
+        });
+
+        $admin = $this->createAdmin();
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Photo Client']);
+        $category = ServiceCategory::create(['name' => 'Photo Inspection', 'is_active' => true]);
+        $template = CategoryChecklistTemplate::create([
+            'service_category_id' => $category->id,
+            'title' => 'Photograph equipment condition',
+            'input_type' => 'photo',
+            'is_required' => true,
+            'sort_order' => 0,
+        ]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Inspect equipment',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'claimed_by' => $fieldStaff->id,
+            'claimed_at' => now(),
+            'status' => JobRequestItem::STATUS_CLAIMED,
+            'title' => $category->name,
+        ]);
+        $jobItem->ensureChecklistFromCategory();
+        $checklistItem = $jobItem->checklistItems()->firstOrFail();
+
+        $photo = UploadedFile::fake()->create('equipment.jpg', 120, 'image/jpeg');
+
+        $response = $this->actingAs($fieldStaff)->post("/field/jobs/{$jobItem->id}/submit", [
+            'notes' => 'Equipment photo captured on site.',
+            'checklist' => [
+                $checklistItem->id => [
+                    'status' => JobChecklistItem::STATUS_DONE,
+                    'photos' => [$photo],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect("/field/jobs/{$jobItem->id}");
+        $attempt = JobItemAttempt::firstOrFail();
+
+        $this->assertDatabaseHas('job_checklist_items', [
+            'id' => $checklistItem->id,
+            'category_checklist_template_id' => $template->id,
+            'status' => JobChecklistItem::STATUS_DONE,
+        ]);
+        $this->assertDatabaseHas('job_item_media', [
+            'job_item_attempt_id' => $attempt->id,
+            'job_checklist_item_id' => $checklistItem->id,
+            'file_name' => 'equipment.jpg',
+            'cloudinary_public_id' => 'jobs/' . $jobItem->id . '/checklist/' . $checklistItem->id . '/equipment',
         ]);
     }
 

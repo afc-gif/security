@@ -635,6 +635,15 @@
         font-weight: 900;
     }
 
+    .file img {
+        display: block;
+        width: 100%;
+        max-height: 220px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
     .bottom-nav {
         position: fixed;
         left: 50%;

@@ -78,7 +78,7 @@ class ServiceCategoryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice'],
+            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice,photo'],
             'options' => ['nullable', 'string'],
             'is_required' => ['nullable', 'boolean'],
         ]);
@@ -103,7 +103,7 @@ class ServiceCategoryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice'],
+            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice,photo'],
             'options' => ['nullable', 'string'],
             'is_required' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],

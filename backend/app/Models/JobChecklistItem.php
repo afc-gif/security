@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobChecklistItem extends Model
 {
@@ -57,5 +58,10 @@ class JobChecklistItem extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(JobItemMedia::class)->orderBy('id');
     }
 }
