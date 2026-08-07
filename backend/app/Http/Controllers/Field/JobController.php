@@ -123,6 +123,7 @@ class JobController extends Controller
             'notes' => 'required|string|min:5',
             'checklist' => 'nullable|array',
             'checklist.*.status' => 'required|in:pending,done,not_applicable',
+            'checklist.*.response' => 'nullable',
             'checklist.*.notes' => 'nullable|string',
             'custom_checklist' => 'nullable|array',
             'custom_checklist.*.title' => 'nullable|string|max:255',
@@ -201,12 +202,20 @@ class JobController extends Controller
                 $notes = isset($checklistInput['notes']) && trim((string) $checklistInput['notes']) !== ''
                     ? trim((string) $checklistInput['notes'])
                     : null;
+                $response = $checklistInput['response'] ?? null;
+
+                if (is_array($response)) {
+                    $response = collect($response)
+                        ->filter(fn ($value) => trim((string) $value) !== '')
+                        ->implode(', ');
+                }
 
                 JobChecklistItem::query()
                     ->where('id', $checklistItemId)
                     ->where('job_request_item_id', $lockedItem->id)
                     ->update([
                         'status' => $status,
+                        'response' => trim((string) $response) !== '' ? trim((string) $response) : null,
                         'notes' => $notes,
                         'completed_by' => $status === JobChecklistItem::STATUS_DONE ? $request->user()->id : null,
                         'completed_at' => $status === JobChecklistItem::STATUS_DONE ? now() : null,

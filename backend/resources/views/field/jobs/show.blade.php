@@ -137,6 +137,38 @@
                                             </div>
                                         </div>
                                         <div class="form-row" style="margin-top:10px;">
+                                            <label>Response</label>
+                                            @php
+                                                $inputType = $checklistItem->input_type ?? 'textarea';
+                                                $options = collect($checklistItem->options ?? []);
+                                                $oldResponse = old("checklist.{$checklistItem->id}.response", $checklistItem->response);
+                                                $selectedResponses = is_array($oldResponse) ? $oldResponse : array_map('trim', explode(',', (string) $oldResponse));
+                                            @endphp
+                                            @if($inputType === 'single_choice' && $options->isNotEmpty())
+                                                <select name="checklist[{{ $checklistItem->id }}][response]">
+                                                    <option value="">Select response</option>
+                                                    @foreach($options as $option)
+                                                        <option value="{{ $option }}" @selected((string) $oldResponse === (string) $option)>{{ $option }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif($inputType === 'multi_choice' && $options->isNotEmpty())
+                                                <div class="timeline">
+                                                    @foreach($options as $option)
+                                                        <label class="update" style="display:flex; gap:10px; align-items:center;">
+                                                            <input type="checkbox" name="checklist[{{ $checklistItem->id }}][response][]" value="{{ $option }}" @checked(in_array((string) $option, $selectedResponses, true))>
+                                                            <span>{{ $option }}</span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            @elseif($inputType === 'number')
+                                                <input type="number" name="checklist[{{ $checklistItem->id }}][response]" value="{{ $oldResponse }}">
+                                            @elseif($inputType === 'text')
+                                                <input type="text" name="checklist[{{ $checklistItem->id }}][response]" value="{{ $oldResponse }}">
+                                            @else
+                                                <textarea name="checklist[{{ $checklistItem->id }}][response]" rows="3">{{ $oldResponse }}</textarea>
+                                            @endif
+                                        </div>
+                                        <div class="form-row" style="margin-top:10px;">
                                             <label for="checklist_{{ $checklistItem->id }}_notes">Checklist Notes</label>
                                             <input id="checklist_{{ $checklistItem->id }}_notes" type="text" name="checklist[{{ $checklistItem->id }}][notes]" value="{{ old("checklist.{$checklistItem->id}.notes", $checklistItem->notes) }}">
                                         </div>

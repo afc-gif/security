@@ -173,6 +173,9 @@
                                                         &middot; Completed by {{ $checklistItem->completedBy->name }}
                                                     @endif
                                                 </div>
+                                                @if($checklistItem->response)
+                                                    <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                                @endif
                                                 @if($checklistItem->notes)
                                                     <div class="muted">Note: {{ $checklistItem->notes }}</div>
                                                 @endif

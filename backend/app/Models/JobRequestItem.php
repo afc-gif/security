@@ -208,6 +208,8 @@ class JobRequestItem extends Model
                 'category_checklist_template_id' => $template->id,
                 'title' => $template->title,
                 'description' => $template->description,
+                'input_type' => $template->input_type,
+                'options' => $template->options,
                 'status' => JobChecklistItem::STATUS_PENDING,
                 'is_required' => $template->is_required,
                 'is_custom' => false,

@@ -78,12 +78,16 @@ class ServiceCategoryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice'],
+            'options' => ['nullable', 'string'],
             'is_required' => ['nullable', 'boolean'],
         ]);
 
         $serviceCategory->checklistTemplates()->create([
             'title' => trim($validated['title']),
             'description' => $validated['description'] ?? null,
+            'input_type' => $validated['input_type'] ?? 'textarea',
+            'options' => $this->parseOptions($validated['options'] ?? null),
             'is_required' => $request->boolean('is_required', true),
             'is_active' => true,
             'sort_order' => ((int) $serviceCategory->checklistTemplates()->max('sort_order')) + 1,
@@ -99,6 +103,8 @@ class ServiceCategoryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'input_type' => ['nullable', 'in:text,textarea,number,single_choice,multi_choice'],
+            'options' => ['nullable', 'string'],
             'is_required' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -107,6 +113,8 @@ class ServiceCategoryController extends Controller
         $template->update([
             'title' => trim($validated['title']),
             'description' => $validated['description'] ?? null,
+            'input_type' => $validated['input_type'] ?? 'textarea',
+            'options' => $this->parseOptions($validated['options'] ?? null),
             'is_required' => $request->boolean('is_required'),
             'is_active' => $request->boolean('is_active'),
             'sort_order' => $validated['sort_order'] ?? $template->sort_order,
@@ -124,5 +132,16 @@ class ServiceCategoryController extends Controller
         return redirect()
             ->route('admin.service-categories.index')
             ->with('success', 'Checklist template item deleted.');
+    }
+
+    private function parseOptions(?string $options): ?array
+    {
+        $parsed = collect(preg_split('/\r\n|\r|\n/', (string) $options))
+            ->map(fn ($option) => trim($option))
+            ->filter()
+            ->values()
+            ->all();
+
+        return count($parsed) ? $parsed : null;
     }
 }

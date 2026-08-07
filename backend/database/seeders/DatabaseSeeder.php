@@ -143,5 +143,6 @@ class DatabaseSeeder extends Seeder
 
         // Seed service categories for job request workflow
         $this->call(ServiceCategorySeeder::class);
+        $this->call(CctvChecklistTemplateSeeder::class);
     }
 }

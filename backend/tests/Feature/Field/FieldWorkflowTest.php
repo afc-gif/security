@@ -26,6 +26,8 @@ class FieldWorkflowTest extends TestCase
         $template = CategoryChecklistTemplate::create([
             'service_category_id' => $category->id,
             'title' => 'Confirm site access',
+            'input_type' => 'single_choice',
+            'options' => ['Yes', 'No'],
             'sort_order' => 0,
         ]);
         $jobRequest = JobRequest::create([
@@ -51,6 +53,7 @@ class FieldWorkflowTest extends TestCase
             'checklist' => [
                 $checklistItem->id => [
                     'status' => JobChecklistItem::STATUS_DONE,
+                    'response' => 'Yes',
                     'notes' => 'Gate opened by client.',
                 ],
             ],
@@ -87,6 +90,7 @@ class FieldWorkflowTest extends TestCase
         $this->assertDatabaseHas('job_checklist_items', [
             'category_checklist_template_id' => $template->id,
             'status' => JobChecklistItem::STATUS_DONE,
+            'response' => 'Yes',
             'notes' => 'Gate opened by client.',
         ]);
         $this->assertDatabaseHas('job_checklist_items', [

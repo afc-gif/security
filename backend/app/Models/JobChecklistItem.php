@@ -21,6 +21,9 @@ class JobChecklistItem extends Model
         'completed_by',
         'title',
         'description',
+        'input_type',
+        'options',
+        'response',
         'status',
         'notes',
         'is_required',
@@ -33,6 +36,7 @@ class JobChecklistItem extends Model
         'is_required' => 'boolean',
         'is_custom' => 'boolean',
         'completed_at' => 'datetime',
+        'options' => 'array',
     ];
 
     public function jobRequestItem(): BelongsTo

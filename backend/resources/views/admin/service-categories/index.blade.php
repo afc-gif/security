@@ -88,10 +88,18 @@
                             <div class="text-sm text-gray-600">{{ $category->checklistTemplates->count() }} item{{ $category->checklistTemplates->count() === 1 ? '' : 's' }}</div>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.service-categories.templates.store', $category) }}" class="grid grid-cols-1 md:grid-cols-[1fr_1.4fr_auto] gap-3 mb-4">
+                        <form method="POST" action="{{ route('admin.service-categories.templates.store', $category) }}" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                             @csrf
                             <input type="text" name="title" required maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Checklist item">
                             <input type="text" name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Optional instruction">
+                            <select name="input_type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                <option value="textarea">Long Text</option>
+                                <option value="text">Short Text</option>
+                                <option value="number">Number</option>
+                                <option value="single_choice">Single Choice</option>
+                                <option value="multi_choice">Multiple Choice</option>
+                            </select>
+                            <textarea name="options" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Options, one per line. Use for choice fields only."></textarea>
                             <div class="flex items-center gap-3">
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" name="is_required" value="1" checked class="rounded border-gray-300 text-blue-600">
@@ -123,6 +131,20 @@
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-500 mb-1">Instruction</label>
                                                 <input type="text" name="description" value="{{ $template->description }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-500 mb-1">Answer Type</label>
+                                                <select name="input_type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                                    @foreach(['textarea' => 'Long Text', 'text' => 'Short Text', 'number' => 'Number', 'single_choice' => 'Single Choice', 'multi_choice' => 'Multiple Choice'] as $value => $label)
+                                                        <option value="{{ $value }}" @selected(($template->input_type ?? 'textarea') === $value)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-500 mb-1">Options</label>
+                                                <textarea name="options" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="One per line">{{ implode("\n", $template->options ?? []) }}</textarea>
                                             </div>
                                         </div>
                                         <div class="mt-3 flex flex-wrap items-center gap-3">

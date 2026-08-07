@@ -14,6 +14,8 @@ class CategoryChecklistTemplate extends Model
         'service_category_id',
         'title',
         'description',
+        'input_type',
+        'options',
         'is_required',
         'is_active',
         'sort_order',
@@ -22,6 +24,7 @@ class CategoryChecklistTemplate extends Model
     protected $casts = [
         'is_required' => 'boolean',
         'is_active' => 'boolean',
+        'options' => 'array',
     ];
 
     public function serviceCategory(): BelongsTo
