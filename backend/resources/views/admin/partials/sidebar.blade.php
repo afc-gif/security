@@ -16,7 +16,7 @@
         'operations' => [
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
             ['key' => 'job-requests', 'label' => 'Job Requests', 'route' => 'admin.job-requests.index', 'tab' => 'job-requests', 'icon' => 'JR'],
-            ['key' => 'field-categories', 'label' => 'Field Categories', 'route' => 'admin.service-categories.index', 'tab' => null, 'icon' => 'FC'],
+            ['key' => 'field-categories', 'label' => 'Job Categories', 'route' => 'admin.service-categories.index', 'tab' => null, 'icon' => 'JC'],
             ['key' => 'job-inbox', 'label' => 'Job Inbox', 'route' => 'admin.job-inbox.index', 'tab' => 'job-inbox', 'icon' => 'JI'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
             // Legacy Tasks, Field Reports, and Inspections modules remain routed but are hidden from the main workflow navigation.
