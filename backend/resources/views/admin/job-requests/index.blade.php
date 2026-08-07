@@ -8,11 +8,16 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Job Requests</h1>
-                <p class="text-sm text-gray-600 mt-1">Create client requests and organize work by service category.</p>
+                <p class="text-sm text-gray-600 mt-1">Create client requests and organize work by field category.</p>
             </div>
-            <a href="{{ route('admin.job-requests.create') }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
-                Create Job Request
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <a href="{{ route('admin.service-categories.index') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition">
+                    Field Categories
+                </a>
+                <a href="{{ route('admin.job-requests.create') }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                    Create Job Request
+                </a>
+            </div>
         </div>
 
         @if (session('success'))

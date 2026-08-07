@@ -16,6 +16,7 @@
         'operations' => [
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
             ['key' => 'job-requests', 'label' => 'Job Requests', 'route' => 'admin.job-requests.index', 'tab' => 'job-requests', 'icon' => 'JR'],
+            ['key' => 'field-categories', 'label' => 'Field Categories', 'route' => 'admin.service-categories.index', 'tab' => null, 'icon' => 'FC'],
             ['key' => 'job-inbox', 'label' => 'Job Inbox', 'route' => 'admin.job-inbox.index', 'tab' => 'job-inbox', 'icon' => 'JI'],
             ['key' => 'projects', 'label' => 'Projects', 'route' => 'admin.projects.index', 'tab' => 'projects', 'icon' => 'PJ'],
             // Legacy Tasks, Field Reports, and Inspections modules remain routed but are hidden from the main workflow navigation.
@@ -43,6 +44,7 @@
             'pos' => request()->routeIs('pos.*'),
             'clients' => request()->routeIs('admin.clients.*'),
             'job-requests' => request()->routeIs('admin.job-requests.*'),
+            'field-categories' => request()->routeIs('admin.service-categories.*'),
             'job-inbox' => request()->routeIs('admin.job-inbox.*'),
             'projects' => request()->routeIs('admin.projects.*'),
             'tasks' => request()->routeIs('admin.tasks.*'),
@@ -69,13 +71,13 @@
             @endif
 
             @foreach ($sectionItems as $item)
-                @if ($isDashboardSidebar)
+                @if ($isDashboardSidebar && $item['tab'])
                     <button class="nav-btn {{ $item['key'] === 'overview' ? 'active' : '' }}" type="button" data-tab="{{ $item['tab'] }}">
                         <span class="nav-icon" aria-hidden="true">{{ $item['icon'] }}</span>
                         <span class="nav-label">{{ $item['label'] }}</span>
                     </button>
                 @else
-                    @php($href = $item['route'] === 'admin.dashboard' && $item['tab'] !== 'overview' ? $dashboardUrl . '#' . $item['tab'] : route($item['route']))
+                    @php($href = $item['route'] === 'admin.dashboard' && $item['tab'] && $item['tab'] !== 'overview' ? $dashboardUrl . '#' . $item['tab'] : route($item['route']))
                     <a href="{{ $href }}" class="nav-item {{ $routeActive($item) ? 'active' : '' }}">
                         <span class="nav-icon" aria-hidden="true">{{ $item['icon'] }}</span>
                         <span class="nav-label">{{ $item['label'] }}</span>

@@ -202,6 +202,30 @@ class AdminUiTest extends TestCase
         ]);
     }
 
+    public function test_job_request_create_uses_field_categories(): void
+    {
+        $admin = $this->createAdmin();
+        $category = ServiceCategory::create([
+            'name' => 'CCTV',
+            'description' => 'CCTV field work',
+            'is_active' => true,
+        ]);
+        CategoryChecklistTemplate::create([
+            'service_category_id' => $category->id,
+            'title' => 'Property Type',
+            'input_type' => 'multi_choice',
+            'options' => ['Residential', 'Commercial'],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/job-requests/create')
+            ->assertOk()
+            ->assertSee('Field Categories')
+            ->assertSee('CCTV')
+            ->assertSee('1 checklist template item');
+    }
+
     public function test_admin_can_add_and_remove_job_specific_checklist_items(): void
     {
         $admin = $this->createAdmin();

@@ -54,6 +54,7 @@ class JobRequestController extends Controller
             ->get();
 
         $serviceCategories = ServiceCategory::query()
+            ->withCount(['checklistTemplates as active_checklist_templates_count' => fn ($query) => $query->where('is_active', true)])
             ->where('is_active', true)
             ->orderBy('name')
             ->get();

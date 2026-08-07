@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-                    Saved job requests go to the field coordinator first. The coordinator assigns them to staff or releases them for open claim.
+                    Saved job requests use field categories only. They go to the field coordinator first for assignment.
                 </div>
 
                 <div>
@@ -65,14 +65,15 @@
                 <div>
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Service Categories *</label>
-                            <p class="text-xs text-gray-500 mt-1">Each selected service category will become one category item on this job request.</p>
+                            <label class="block text-sm font-medium text-gray-700">Field Categories *</label>
+                            <p class="text-xs text-gray-500 mt-1">Only field service categories appear here. Each selected category becomes one item on this job request.</p>
                         </div>
+                        <a href="{{ route('admin.service-categories.index') }}" class="text-sm font-semibold text-blue-700 hover:text-blue-900">Manage Field Categories</a>
                     </div>
 
                     @if($serviceCategories->count() === 0)
                         <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-900">
-                            No active service categories are available.
+                            No active field categories are available.
                         </div>
                     @else
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -84,6 +85,9 @@
                                         @if($category->description)
                                             <span class="block text-sm text-gray-600 mt-1">{{ $category->description }}</span>
                                         @endif
+                                        <span class="block text-xs text-gray-500 mt-2">
+                                            {{ $category->active_checklist_templates_count }} checklist template item{{ $category->active_checklist_templates_count === 1 ? '' : 's' }}
+                                        </span>
                                     </span>
                                 </label>
                             @endforeach
