@@ -103,6 +103,54 @@ class FieldWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_field_staff_submits_checklist_response_without_explicit_status_and_it_is_marked_done(): void
+    {
+        $admin = $this->createAdmin();
+        $fieldStaff = $this->createUser(['role' => 'field_staff']);
+        $client = Client::create(['client_name' => 'Auto Status Client']);
+        $category = ServiceCategory::create(['name' => 'Auto Status', 'is_active' => true]);
+        $template = CategoryChecklistTemplate::create([
+            'service_category_id' => $category->id,
+            'title' => 'Confirm access gate',
+            'input_type' => 'text',
+            'sort_order' => 0,
+        ]);
+        $jobRequest = JobRequest::create([
+            'client_id' => $client->id,
+            'title' => 'Inspect gate',
+            'created_by' => $admin->id,
+            'status' => 'open',
+        ]);
+        $jobItem = JobRequestItem::create([
+            'job_request_id' => $jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $admin->id,
+            'claimed_by' => $fieldStaff->id,
+            'claimed_at' => now(),
+            'status' => JobRequestItem::STATUS_CLAIMED,
+            'title' => $category->name,
+        ]);
+        $jobItem->ensureChecklistFromCategory();
+        $checklistItem = $jobItem->checklistItems()->firstOrFail();
+
+        $response = $this->actingAs($fieldStaff)->post("/field/jobs/{$jobItem->id}/submit", [
+            'notes' => 'Gate inspected successfully.',
+            'checklist' => [
+                $checklistItem->id => [
+                    'response' => 'Gate is accessible.',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect("/field/jobs/{$jobItem->id}");
+        $this->assertDatabaseHas('job_checklist_items', [
+            'id' => $checklistItem->id,
+            'category_checklist_template_id' => $template->id,
+            'status' => JobChecklistItem::STATUS_DONE,
+            'response' => 'Gate is accessible.',
+        ]);
+    }
+
     public function test_field_staff_submits_required_checklist_photo_to_cloudinary(): void
     {
         $this->app->instance(CloudinaryImageService::class, new class extends CloudinaryImageService {

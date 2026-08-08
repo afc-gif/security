@@ -137,7 +137,7 @@
                                             </div>
                                             <div class="form-row">
                                                 <label for="checklist_{{ $checklistItem->id }}_status">Status</label>
-                                                <select id="checklist_{{ $checklistItem->id }}_status" name="checklist[{{ $checklistItem->id }}][status]" required>
+                                                <select id="checklist_{{ $checklistItem->id }}_status" name="checklist[{{ $checklistItem->id }}][status]" data-checklist-status-select>
                                                     <option value="pending" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'pending')>Pending</option>
                                                     <option value="done" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'done')>Done</option>
                                                     <option value="not_applicable" @selected(old("checklist.{$checklistItem->id}.status", $checklistItem->status) === 'not_applicable')>Not Applicable</option>
@@ -392,6 +392,34 @@
             });
         };
 
+        const updateChecklistStatusFromResponse = (row) => {
+            const statusSelect = row.querySelector('select[data-checklist-status-select]');
+
+            if (!statusSelect) return;
+
+            const hasMeaningfulResponse = Array.from(row.querySelectorAll('input, select, textarea')).some((field) => {
+                if (field.name?.includes('[status]')) return false;
+
+                if (field.type === 'checkbox') {
+                    return field.checked;
+                }
+
+                if (field.type === 'file') {
+                    return field.files && field.files.length > 0;
+                }
+
+                if (field.tagName === 'SELECT' && field.name?.includes('[response]')) {
+                    return field.value.trim() !== '';
+                }
+
+                return field.value && String(field.value).trim() !== '';
+            });
+
+            if (hasMeaningfulResponse && statusSelect.value === 'pending') {
+                statusSelect.value = 'done';
+            }
+        };
+
         const hideChecklistRows = (rows) => {
             rows.forEach((row) => setChecklistRowHidden(row, true));
         };
@@ -447,8 +475,13 @@
 
         checklistRows.forEach((row) => {
             row.querySelectorAll('input, select, textarea').forEach((field) => {
-                field.addEventListener('change', applyChecklistDependencies);
+                field.addEventListener('change', () => {
+                    applyChecklistDependencies();
+                    updateChecklistStatusFromResponse(row);
+                });
             });
+
+            updateChecklistStatusFromResponse(row);
         });
 
         applyChecklistDependencies();

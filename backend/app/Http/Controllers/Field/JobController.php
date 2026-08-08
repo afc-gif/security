@@ -124,7 +124,7 @@ class JobController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string|min:5',
             'checklist' => 'nullable|array',
-            'checklist.*.status' => 'required|in:pending,done,not_applicable',
+            'checklist.*.status' => 'nullable|in:pending,done,not_applicable',
             'checklist.*.response' => 'nullable',
             'checklist.*.notes' => 'nullable|string',
             'checklist.*.photos' => 'nullable|array',
@@ -230,11 +230,15 @@ class JobController extends Controller
             $lockedItem->ensureChecklistFromCategory();
 
             foreach (($validated['checklist'] ?? []) as $checklistItemId => $checklistInput) {
-                $status = $checklistInput['status'];
+                $status = $checklistInput['status'] ?? null;
                 $notes = isset($checklistInput['notes']) && trim((string) $checklistInput['notes']) !== ''
                     ? trim((string) $checklistInput['notes'])
                     : null;
                 $response = $checklistInput['response'] ?? null;
+
+                if (in_array($status, [null, '', JobChecklistItem::STATUS_PENDING], true) && $this->checklistInputHasResponse($checklistInput)) {
+                    $status = JobChecklistItem::STATUS_DONE;
+                }
 
                 if (is_array($response)) {
                     $response = collect($response)
@@ -351,6 +355,35 @@ class JobController extends Controller
                 abort(403, 'Unauthorized job access');
             }
         }
+    }
+
+    private function checklistInputHasResponse(array $checklistInput): bool
+    {
+        $response = data_get($checklistInput, 'response');
+        $notes = data_get($checklistInput, 'notes');
+        $photos = data_get($checklistInput, 'photos');
+
+        if (is_array($response)) {
+            return collect($response)->contains(fn ($value) => trim((string) $value) !== '');
+        }
+
+        if (is_string($response) && trim($response) !== '') {
+            return true;
+        }
+
+        if (is_string($notes) && trim($notes) !== '') {
+            return true;
+        }
+
+        if ($photos instanceof \Illuminate\Http\UploadedFile) {
+            return true;
+        }
+
+        if (is_array($photos)) {
+            return collect($photos)->contains(fn ($file) => $file instanceof \Illuminate\Http\UploadedFile);
+        }
+
+        return false;
     }
 
     private function normalizeUploadedFiles(mixed $files): array
