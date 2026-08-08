@@ -120,7 +120,13 @@
                         @else
                             <div class="timeline">
                                 @foreach($checklistItems as $checklistItem)
-                                    <article class="update">
+                                    @php
+                                        $checklistTitle = (string) $checklistItem->title;
+                                        $checklistGroup = str_contains($checklistTitle, ' - ')
+                                            ? \Illuminate\Support\Str::before($checklistTitle, ' - ')
+                                            : '';
+                                    @endphp
+                                    <article class="update" data-checklist-row data-checklist-title="{{ \Illuminate\Support\Str::lower($checklistTitle) }}" data-checklist-group="{{ \Illuminate\Support\Str::lower($checklistGroup) }}">
                                         <div class="grid">
                                             <div>
                                                 <div class="label">{{ $checklistItem->is_custom ? 'Added item' : 'Checklist item' }}</div>
@@ -355,6 +361,97 @@
         const requirementsList = document.getElementById('requirements-list');
         const addCustomChecklistButton = document.getElementById('add-custom-checklist');
         const customChecklistList = document.getElementById('custom-checklist-list');
+        const checklistRows = Array.from(document.querySelectorAll('[data-checklist-row]'));
+
+        const normalizeChecklistValue = (value) => String(value || '').trim().toLowerCase();
+
+        const selectedChecklistValues = (row) => {
+            const checked = Array.from(row.querySelectorAll('input[type="checkbox"]:checked'))
+                .map((input) => input.value);
+            const selects = Array.from(row.querySelectorAll('select'))
+                .filter((select) => select.name.includes('[response]') && select.value !== '')
+                .map((select) => select.value);
+
+            return checked.concat(selects).map(normalizeChecklistValue);
+        };
+
+        const rowHasYesNoResponse = (row) => {
+            const select = row.querySelector('select[name*="[response]"]');
+
+            if (!select) return false;
+
+            const values = Array.from(select.options).map((option) => normalizeChecklistValue(option.value || option.textContent));
+
+            return values.includes('yes') && values.includes('no');
+        };
+
+        const setChecklistRowHidden = (row, hidden) => {
+            row.hidden = hidden;
+            row.querySelectorAll('input, select, textarea').forEach((field) => {
+                field.disabled = hidden;
+            });
+        };
+
+        const hideChecklistRows = (rows) => {
+            rows.forEach((row) => setChecklistRowHidden(row, true));
+        };
+
+        const rowsAfterInSameGroup = (triggerRow) => {
+            const triggerIndex = checklistRows.indexOf(triggerRow);
+            const group = triggerRow.dataset.checklistGroup;
+            const dependentRows = [];
+
+            for (let index = triggerIndex + 1; index < checklistRows.length; index += 1) {
+                const row = checklistRows[index];
+
+                if (row.dataset.checklistGroup !== group) break;
+                if (rowHasYesNoResponse(row)) break;
+
+                dependentRows.push(row);
+            }
+
+            return dependentRows;
+        };
+
+        const applyChecklistDependencies = () => {
+            checklistRows.forEach((row) => setChecklistRowHidden(row, false));
+
+            const installationTypeRow = checklistRows.find((row) => row.dataset.checklistTitle === 'installation type');
+            const installationValues = installationTypeRow ? selectedChecklistValues(installationTypeRow) : [];
+            const newInstallationOnly = installationValues.includes('new installation')
+                && !installationValues.some((value) => value.includes('existing') || value.includes('upgrade') || value.includes('expansion') || value.includes('replacement') || value.includes('maintenance'));
+
+            if (newInstallationOnly) {
+                hideChecklistRows(checklistRows.filter((row) => row.dataset.checklistGroup === 'existing system'));
+            }
+
+            checklistRows.forEach((row) => {
+                const title = row.dataset.checklistTitle || '';
+                const values = selectedChecklistValues(row);
+
+                if (!values.includes('no')) return;
+
+                if (title.includes('existing inverter') || title.includes('existing batteries')) {
+                    hideChecklistRows(rowsAfterInSameGroup(row));
+                }
+
+                if (title.includes('cabling already been installed')) {
+                    hideChecklistRows(checklistRows.filter((candidate) => {
+                        const candidateTitle = candidate.dataset.checklistTitle || '';
+
+                        return candidateTitle.includes('existing cable type') || candidateTitle.includes('existing cabling condition');
+                    }));
+                }
+            });
+        };
+
+        checklistRows.forEach((row) => {
+            row.querySelectorAll('input, select, textarea').forEach((field) => {
+                field.addEventListener('change', applyChecklistDependencies);
+            });
+        });
+
+        applyChecklistDependencies();
 
         if (addRequirementButton && requirementsList) {
             addRequirementButton.addEventListener('click', () => {

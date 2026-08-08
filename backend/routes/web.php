@@ -197,7 +197,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/checklist-templates/{template}', [\App\Http\Controllers\Admin\ServiceCategoryController::class, 'destroyTemplate'])
         ->name('admin.service-categories.templates.destroy');
     Route::resource('job-requests', \App\Http\Controllers\Admin\JobRequestController::class)
-        ->only(['index', 'create', 'store', 'show'])
+        ->only(['index', 'create', 'store', 'show', 'update', 'destroy'])
         ->names('admin.job-requests');
     Route::post('/job-items/{jobItem}/checklist', [\App\Http\Controllers\Admin\JobRequestController::class, 'addChecklistItem'])
         ->name('admin.job-items.checklist.store');

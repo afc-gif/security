@@ -147,6 +147,36 @@ class JobRequestController extends Controller
         return view('admin.job-requests.show', compact('jobRequest'));
     }
 
+    public function update(Request $request, JobRequest $jobRequest)
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $jobRequest->update([
+            'title' => trim($validated['title']),
+        ]);
+
+        return redirect()
+            ->route('admin.job-requests.show', $jobRequest)
+            ->with('success', 'Job title updated.');
+    }
+
+    public function destroy(JobRequest $jobRequest)
+    {
+        if ($jobRequest->items()->whereHas('project')->exists()) {
+            return redirect()
+                ->route('admin.job-requests.show', $jobRequest)
+                ->withErrors(['job' => 'This job cannot be deleted because it has already been converted to a project.']);
+        }
+
+        $jobRequest->delete();
+
+        return redirect()
+            ->route('admin.job-requests.index')
+            ->with('success', 'Job deleted.');
+    }
+
     public function destroyChecklistItem(JobRequestItem $jobItem, JobChecklistItem $checklistItem)
     {
         abort_unless((int) $checklistItem->job_request_item_id === (int) $jobItem->id, 404);

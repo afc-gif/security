@@ -3,6 +3,10 @@
 @section('title', 'Job Request Details | ARTSCI Admin Console')
 
 @section('content')
+@php
+    $canDeleteJobRequest = !$jobRequest->items->contains(fn ($item) => $item->project !== null);
+@endphp
+
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -20,6 +24,44 @@
                 {{ session('success') }}
             </div>
         @endif
+
+        @if($errors->any())
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                @foreach($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+                <form method="POST" action="{{ route('admin.job-requests.update', $jobRequest) }}" class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label for="job_title" class="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                        <input id="job_title" type="text" name="title" value="{{ old('title', $jobRequest->title) }}" required maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold">
+                        Save Title
+                    </button>
+                </form>
+
+                @if($canDeleteJobRequest)
+                    <form method="POST" action="{{ route('admin.job-requests.destroy', $jobRequest) }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex w-full items-center justify-center bg-red-50 hover:bg-red-100 text-red-700 px-5 py-2.5 rounded-lg font-semibold" onclick="return confirm('Delete this job and all its category items?')">
+                            Delete Job
+                        </button>
+                    </form>
+                @else
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        This job cannot be deleted because it has already been converted to a project.
+                    </div>
+                @endif
+            </div>
+        </div>
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
