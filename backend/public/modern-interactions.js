@@ -168,18 +168,30 @@ const showPreviousImage = () => {
 };
 
 if (installationLightbox) {
-  document.querySelectorAll('[data-open-installation]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const media = button.closest('.installation-card')?.querySelector('[data-gallery]');
-      if (!media) return;
+  const openInstallationGallery = (triggerElement) => {
+    const media = triggerElement.closest('.installation-card')?.querySelector('[data-gallery]');
+    if (!media) return;
 
-      try {
-        const gallery = JSON.parse(media.getAttribute('data-gallery') || '[]');
-        openLightbox(gallery, 0);
-      } catch (error) {
-        console.error('Failed to parse gallery images', error);
-      }
-    });
+    let gallery = [];
+    try {
+      gallery = JSON.parse(media.getAttribute('data-gallery') || '[]');
+    } catch (error) {
+      console.error('Failed to parse gallery images', error);
+    }
+
+    if (!gallery.length && media.src) {
+      gallery = [media.src];
+    }
+
+    openLightbox(gallery, 0);
+  };
+
+  document.querySelectorAll('[data-open-installation]').forEach((button) => {
+    button.addEventListener('click', () => openInstallationGallery(button));
+  });
+
+  document.querySelectorAll('.installation-media img[data-gallery]').forEach((image) => {
+    image.addEventListener('click', () => openInstallationGallery(image));
   });
 
   lightboxClose?.addEventListener('click', closeLightbox);
