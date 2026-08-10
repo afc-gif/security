@@ -1613,8 +1613,8 @@
         return;
       }
 
-      let orderSummary = `*🛍️ ARTSCI Security Solutions - Order*\n\n`;
-      orderSummary += `*👤 Customer Details:*\n`;
+      let orderSummary = `* ARTSCI Security Solutions - Order*\n\n`;
+      orderSummary += `*Customer Details:*\n`;
       orderSummary += `Name: ${name}\n`;
       orderSummary += `Email: ${email}\n`;
       orderSummary += `Location: ${location}\n\n`;
