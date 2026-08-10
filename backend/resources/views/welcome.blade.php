@@ -124,7 +124,7 @@
         <p>Integrated security and power systems for complete infrastructure protection</p>
       </div>
       <div class="solutions-grid">
-        <a href="solutions.html#cctv" class="solution-card solution-cctv">
+        <a href="{{ route('solutions.index') }}#cctv" class="solution-card solution-cctv">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/survelliance.webp') }}" alt="CCTV and surveillance systems">
@@ -139,7 +139,7 @@
           </div>
         </a>
 
-        <a href="solutions.html#solar" class="solution-card solution-power">
+        <a href="{{ route('solutions.index') }}#solar" class="solution-card solution-power">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/solar power.jpg') }}" alt="Solar power systems">
@@ -154,7 +154,7 @@
           </div>
         </a>
 
-        <a href="solutions.html#access" class="solution-card solution-access">
+        <a href="{{ route('solutions.index') }}#access" class="solution-card solution-access">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/access-control.webp') }}" alt="Access control solutions">
@@ -169,7 +169,7 @@
           </div>
         </a>
 
-        <a href="solutions.html#perimeter" class="solution-card solution-fence">
+        <a href="{{ route('solutions.index') }}#perimeter" class="solution-card solution-fence">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/Perimeter Security.jpg') }}" alt="Perimeter security and electric fencing">
@@ -184,7 +184,7 @@
           </div>
         </a>
 
-        <a href="solutions.html#automation" class="solution-card solution-smart">
+        <a href="{{ route('solutions.index') }}#automation" class="solution-card solution-smart">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/Smart-Automation.png') }}" alt="Smart automation systems">
@@ -199,7 +199,7 @@
           </div>
         </a>
 
-        <a href="solutions.html#integration" class="solution-card solution-integration">
+        <a href="{{ route('solutions.index') }}#integration" class="solution-card solution-integration">
           <span class="solution-bg" aria-hidden="true"></span>
           <div class="solution-content">
             <img class="solution-thumb" src="{{ asset('images/smart integration.jpg') }}" alt="System integration and unified dashboards">
@@ -517,12 +517,12 @@
       <div class="footer-middle">
         <div class="footer-column">
           <h4>Solutions</h4>
-          <a href="solutions.html#cctv">CCTV & Surveillance</a>
-          <a href="solutions.html#solar">Solar Power Systems</a>
-          <a href="solutions.html#access">Access Control</a>
-          <a href="solutions.html#perimeter">Perimeter Security</a>
-          <a href="solutions.html#automation">Smart Automation</a>
-          <a href="solutions.html#integration">Full Integration</a>
+          <a href="{{ route('solutions.index') }}#cctv">CCTV & Surveillance</a>
+          <a href="{{ route('solutions.index') }}#solar">Solar Power Systems</a>
+          <a href="{{ route('solutions.index') }}#access">Access Control</a>
+          <a href="{{ route('solutions.index') }}#perimeter">Perimeter Security</a>
+          <a href="{{ route('solutions.index') }}#automation">Smart Automation</a>
+          <a href="{{ route('solutions.index') }}#integration">Full Integration</a>
         </div>
 
         <div class="footer-column">

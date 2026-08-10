@@ -566,11 +566,11 @@
         <span class="brand-name">ARTSCI</span>
       </div>
       <ul class="nav-menu">
-        <li><a href="index.html">Home</a></li>
+        <li><a href="{{ route('home') }}">Home</a></li>
         <li><a href="#cctv">CCTV</a></li>
         <li><a href="#solar">Solar</a></li>
         <li><a href="#access">Access</a></li>
-        <li><a href="index.html#contact" class="cta-nav">Get Started</a></li>
+        <li><a href="{{ route('home') }}#contact" class="cta-nav">Get Started</a></li>
       </ul>
       <button class="nav-toggle" aria-label="Toggle menu">
         <span></span>
@@ -641,15 +641,15 @@
       <div class="footer-middle">
         <div class="footer-column">
           <h4>Solutions</h4>
-          <a href="solutions.html#products">All Products</a>
+          <a href="{{ route('solutions.index') }}#products">All Products</a>
         </div>
 
         <div class="footer-column">
           <h4>Company</h4>
-          <a href="index.html#why-artsci">About Us</a>
-          <a href="index.html#solutions">Our Services</a>
-          <a href="index.html#partners">Our Partners</a>
-          <a href="index.html#contact">Contact Us</a>
+          <a href="{{ route('home') }}#why-artsci">About Us</a>
+          <a href="{{ route('home') }}#solutions">Our Services</a>
+          <a href="{{ route('home') }}#partners">Our Partners</a>
+          <a href="{{ route('home') }}#contact">Contact Us</a>
           <a href="#">Privacy Policy</a>
           <a href="#">Terms & Conditions</a>
         </div>
