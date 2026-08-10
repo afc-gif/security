@@ -16,10 +16,19 @@
 @endsection
 
 @section('extra-js')
+<script id="solutions-data" type="application/json">{!! json_encode($solutions, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
 <script>
     const pollInterval = 5000;
-    let solutions = @json($solutions);
+    const solutionsData = document.getElementById('solutions-data');
+    let solutions = [];
+    if (solutionsData) {
+        try {
+            solutions = JSON.parse(solutionsData.textContent || '[]');
+        } catch (error) {
+            console.error('Invalid solutions JSON', error);
+        }
+    }
 
     function slugify(text) {
         return (text || '').toString().toLowerCase()
