@@ -17,7 +17,7 @@
           'logo' => asset('logo.png'),
           'image' => $seoImage,
           'description' => $seoDescription,
-          'telephone' => '+2349016045077',
+          'telephone' => '+2349160450776',
           'email' => 'support@artsci.com.ng',
           'sameAs' => [
             'https://instagram.com/artsci_official',
@@ -40,7 +40,7 @@
           'name' => 'ARTSCI Security & Power Solutions',
           'url' => $canonicalUrl,
           'image' => $seoImage,
-          'telephone' => '+2349016045077',
+          'telephone' => '+2349160450776',
           'email' => 'support@artsci.com.ng',
           'priceRange' => '$$',
           'areaServed' => 'Nigeria',
@@ -525,7 +525,7 @@
               <span class="method-icon"><i class="fas fa-phone"></i></span>
               <div>
                 <p class="method-label">Phone</p>
-                <a href="tel:+2349016045077">090160450776</a>
+                <a href="tel:+2349160450776">09160450776</a>
               </div>
             </div>
             <div class="contact-method">
@@ -556,7 +556,7 @@
   </footer>
 
   <!-- Sticky WhatsApp Button -->
-  <a href="https://wa.me/2349016045077" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
+  <a href="https://wa.me/09160450776" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 

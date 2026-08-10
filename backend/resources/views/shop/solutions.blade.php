@@ -616,7 +616,7 @@
         <h2>Ready to Secure Your Enterprise?</h2>
         <p>Contact our security experts for a free consultation and custom quote</p>
         <div class="cta-actions">
-          <a href="tel:+2349016045077" class="btn btn-primary">Call: 090160450776</a>
+          <a href="tel:+2349160450776" class="btn btn-primary">Call: 09160450776</a>
           <a href="mailto:support@artsci.com.ng" class="btn btn-primary">Email Us</a>
         </div>
       </div>
@@ -661,7 +661,7 @@
               <span class="method-icon"><i class="fas fa-phone"></i></span>
               <div>
                 <div class="method-label">Phone</div>
-                <a href="tel:+2349016045077">090160450776</a>
+                <a href="tel:+2349160450776">09160450776</a>
               </div>
             </div>
             <div class="contact-method">
@@ -1636,7 +1636,7 @@
       orderSummary += `*Total Amount: ₦${totalFormatted}*\n`;
       orderSummary += `\n✅ Please confirm this order and we will respond with payment details and delivery timeline.`;
 
-      const whatsappNumber = '2349016045077';
+      const whatsappNumber = '09160450776';
       const encodedMessage = encodeURIComponent(orderSummary);
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
@@ -1728,7 +1728,7 @@
   </script>
   
   <!-- Sticky WhatsApp Button -->
-  <a href="https://wa.me/2349016045077" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
+  <a href="https://wa.me/09160450776" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 </body>
