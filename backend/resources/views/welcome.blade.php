@@ -387,7 +387,7 @@
                 src="{{ $card['image'] }}"
                 alt="{{ $card['title'] }}"
                 loading="lazy"
-                data-gallery='@json(array_values(array_unique(array_filter(array_merge([$card["image"]], $card["gallery_images"] ?? [])))))'
+                data-gallery="{{ json_encode(array_values(array_unique(array_filter(array_merge([$card['image']], $card['gallery_images'] ?? []))))) }}"
               >
               <span class="installation-badge">Verified Installation</span>
             </div>
