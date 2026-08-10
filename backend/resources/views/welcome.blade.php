@@ -421,6 +421,23 @@
     </div>
   </section>
 
+  <div class="installation-lightbox" aria-hidden="true">
+    <div class="lightbox-inner">
+      <div class="lightbox-top">
+        <button type="button" class="lightbox-close" aria-label="Close installation gallery">×</button>
+      </div>
+      <div class="lightbox-stage">
+        <button type="button" class="lightbox-nav prev" aria-label="Previous image">‹</button>
+        <img class="lightbox-image" src="" alt="Installation photo" />
+        <button type="button" class="lightbox-nav next" aria-label="Next image">›</button>
+      </div>
+      <div class="lightbox-caption">
+        <strong class="lightbox-title">Installation photo</strong>
+        <span class="lightbox-count"></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Clients & Partners Section -->
   <section class="partners-section" id="partners">
     <div class="container">
