@@ -1,5 +1,8 @@
 'use strict';
 
+// Quick load check for debugging — removed after verification
+console.log('[modern-interactions] script loaded', { readyState: document.readyState });
+
 // ============================================
 // Hero Image Carousel
 // ============================================
