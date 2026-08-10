@@ -1636,7 +1636,7 @@
       orderSummary += `*Total Amount: ₦${totalFormatted}*\n`;
       orderSummary += `\n✅ Please confirm this order and we will respond with payment details and delivery timeline.`;
 
-      const whatsappNumber = '09160450776';
+      const whatsappNumber = '2349160450776';
       const encodedMessage = encodeURIComponent(orderSummary);
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
