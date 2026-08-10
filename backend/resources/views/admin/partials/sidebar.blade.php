@@ -10,6 +10,7 @@
         'commerce' => [
             ['key' => 'categories', 'label' => 'Categories', 'route' => 'admin.solutions.index', 'tab' => 'categories', 'icon' => 'CA'],
             ['key' => 'products', 'label' => 'Products', 'route' => 'admin.products.index', 'tab' => 'menu', 'icon' => 'PR'],
+            ['key' => 'installations', 'label' => 'Installations', 'route' => 'admin.installations.index', 'tab' => null, 'icon' => 'IN'],
             ['key' => 'orders', 'label' => 'Orders', 'route' => 'admin.orders.index', 'tab' => 'orders', 'icon' => 'OR'],
             ['key' => 'pos', 'label' => 'POS', 'route' => 'pos.index', 'tab' => 'pos', 'icon' => 'PS'],
         ],
