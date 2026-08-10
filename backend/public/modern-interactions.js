@@ -139,7 +139,20 @@ const updateLightbox = () => {
 };
 
 const openLightbox = (gallery, startIndex = 0) => {
-  if (!installationLightbox || !lightboxImage || !gallery?.length) return;
+  console.log('[installation-lightbox] openLightbox called with:', gallery, startIndex);
+
+  if (!installationLightbox || !lightboxImage) {
+    console.error('[installation-lightbox] Lightbox elements not found on the page', {
+      installationLightbox,
+      lightboxImage,
+    });
+    return;
+  }
+
+  if (!gallery?.length) {
+    console.error('[installation-lightbox] openLightbox called with an empty gallery', gallery);
+    return;
+  }
 
   installationGallery = gallery;
   installationIndex = Math.min(Math.max(startIndex, 0), gallery.length - 1);
@@ -169,21 +182,49 @@ const showPreviousImage = () => {
 
 if (installationLightbox) {
   const openInstallationGallery = (triggerElement) => {
-    const media = triggerElement.closest('.installation-card')?.querySelector('[data-gallery]');
-    if (!media) return;
-
-    let gallery = [];
     try {
-      gallery = JSON.parse(media.getAttribute('data-gallery') || '[]');
+      const card = triggerElement.closest('.installation-card');
+      if (!card) {
+        console.error('[installation-lightbox] Could not find a parent .installation-card for', triggerElement);
+        return;
+      }
+
+      const media = card.querySelector('img[data-gallery]') || card.querySelector('[data-gallery]');
+      if (!media) {
+        console.error('[installation-lightbox] Could not find an element with [data-gallery] inside the installation card', card);
+        return;
+      }
+
+      const rawGallery = media.getAttribute('data-gallery');
+      console.log('[installation-lightbox] raw data-gallery attribute:', rawGallery);
+
+      let gallery = [];
+      if (rawGallery) {
+        try {
+          const parsed = JSON.parse(rawGallery);
+          gallery = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (error) {
+          console.error('[installation-lightbox] Failed to parse gallery images JSON', error, rawGallery);
+        }
+      }
+
+      gallery = gallery.filter(Boolean);
+
+      if (!gallery.length && media.src) {
+        gallery = [media.src];
+      }
+
+      console.log('[installation-lightbox] resolved gallery images:', gallery);
+
+      if (!gallery.length) {
+        console.error('[installation-lightbox] No gallery images available to display', media);
+        return;
+      }
+
+      openLightbox(gallery, 0);
     } catch (error) {
-      console.error('Failed to parse gallery images', error);
+      console.error('[installation-lightbox] Unexpected error opening installation gallery', error);
     }
-
-    if (!gallery.length && media.src) {
-      gallery = [media.src];
-    }
-
-    openLightbox(gallery, 0);
   };
 
   document.querySelectorAll('[data-open-installation]').forEach((button) => {
