@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -24,8 +25,11 @@ class ImageUrl
 
         // For local paths, check if file exists
         // If it doesn't exist, return null to trigger placeholder image in frontend
-        if (Storage::disk('public')->exists($value)) {
-            return Storage::disk('public')->url($value);
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        if ($disk->exists($value)) {
+            return $disk->url($value);
         }
 
         // File not found - return null instead of broken 404 link

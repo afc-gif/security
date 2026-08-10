@@ -14,6 +14,10 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Redirect stale static homepage files to Laravel routes.
+    RewriteRule ^index\.html$ / [R=301,L]
+    RewriteRule ^solutions\.html$ /solutions [R=301,L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
