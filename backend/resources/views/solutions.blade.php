@@ -10,7 +10,7 @@
             <p style="color: #6b7280;">Managed in the admin console. Products, barcodes, stock, and images update live.</p>
         </div>
 
-        <div id="solutions-container"></div>
+        <div id="solutions-container" data-solutions="{{ json_encode($solutions) }}"></div>
     </div>
 </div>
 @endsection
@@ -19,7 +19,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
 <script>
     const pollInterval = 5000;
-    let solutions = @json($solutions);
+    const containerEl = document.getElementById('solutions-container');
+    let solutions = JSON.parse(containerEl?.dataset?.solutions || '[]');
 
     function slugify(text) {
         return (text || '').toString().toLowerCase()

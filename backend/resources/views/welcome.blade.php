@@ -556,7 +556,7 @@
   </footer>
 
   <!-- Sticky WhatsApp Button -->
-  <a href="https://wa.me/09160450776" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
+  <a href="https://wa.me/2349160450776" target="_blank" class="whatsapp-sticky" title="Chat with us on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 
