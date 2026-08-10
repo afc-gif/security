@@ -320,7 +320,9 @@
             'completed_label' => 'Completed Nov 2025',
             'completed_at' => '2025-11',
             'image' => asset('images/survelliance.webp'),
-            'gallery_images' => [],
+            'gallery_images' => [
+              asset('images/survelliance.webp'),
+            ],
           ],
           [
             'category' => 'Solar',
@@ -332,7 +334,9 @@
             'completed_label' => 'Completed Oct 2025',
             'completed_at' => '2025-10',
             'image' => asset('images/solar power.jpg'),
-            'gallery_images' => [],
+            'gallery_images' => [
+              asset('images/solar power.jpg'),
+            ],
           ],
           [
             'category' => 'Access Control',
@@ -344,7 +348,9 @@
             'completed_label' => 'Completed Sep 2025',
             'completed_at' => '2025-09',
             'image' => asset('images/access-control.webp'),
-            'gallery_images' => [],
+            'gallery_images' => [
+              asset('images/access-control.webp'),
+            ],
           ],
           [
             'category' => 'Perimeter',
@@ -356,7 +362,9 @@
             'completed_label' => 'Completed Aug 2025',
             'completed_at' => '2025-08',
             'image' => asset('images/Perimeter Security.jpg'),
-            'gallery_images' => [],
+            'gallery_images' => [
+              asset('images/Perimeter Security.jpg'),
+            ],
           ],
         ]);
 
