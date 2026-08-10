@@ -8,6 +8,6 @@ return [
         'root_folder' => env('CLOUDINARY_ROOT_FOLDER', 'security'),
     ],
     'whatsapp' => [
-        'admin_number' => env('ADMIN_WHATSAPP_NUMBER', '2349160450776'),
+        'admin_number' => env('ADMIN_WHATSAPP_NUMBER', '09160450776'),
     ],
 ];
