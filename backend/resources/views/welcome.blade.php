@@ -585,6 +585,6 @@
     <i class="fab fa-whatsapp"></i>
   </a>
 
-  <script src="{{ asset('modern-interactions.js') }}"></script>
+  <script src="{{ asset('modern-interactions.js') }}?v={{ filemtime(public_path('modern-interactions.js')) }}"></script>
 </body>
 </html>
