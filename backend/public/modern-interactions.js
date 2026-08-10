@@ -181,15 +181,21 @@ const showPreviousImage = () => {
 };
 
 if (installationLightbox) {
+  console.log('[modern-interactions] lightbox init', { installationLightboxExists: !!installationLightbox });
+
   const openInstallationGallery = (triggerElement) => {
     try {
+      console.log('[modern-interactions] openInstallationGallery triggered', { triggerElement });
+
       const card = triggerElement.closest('.installation-card');
       if (!card) {
         console.error('[installation-lightbox] Could not find a parent .installation-card for', triggerElement);
         return;
       }
 
+      // Prefer an img with data-gallery, otherwise any element with data-gallery
       const media = card.querySelector('img[data-gallery]') || card.querySelector('[data-gallery]');
+      console.log('[modern-interactions] found media element', { media });
       if (!media) {
         console.error('[installation-lightbox] Could not find an element with [data-gallery] inside the installation card', card);
         return;
@@ -210,6 +216,7 @@ if (installationLightbox) {
 
       gallery = gallery.filter(Boolean);
 
+      // Fallback to the media src if no gallery entries
       if (!gallery.length && media.src) {
         gallery = [media.src];
       }
@@ -227,12 +234,24 @@ if (installationLightbox) {
     }
   };
 
+  // Attach to the card buttons
   document.querySelectorAll('[data-open-installation]').forEach((button) => {
-    button.addEventListener('click', () => openInstallationGallery(button));
+    button.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      console.log('[modern-interactions] installation button clicked', { button });
+      openInstallationGallery(button);
+    });
   });
 
+  // Attach to the images themselves
   document.querySelectorAll('.installation-media img[data-gallery]').forEach((image) => {
-    image.addEventListener('click', () => openInstallationGallery(image));
+    image.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      console.log('[modern-interactions] installation image clicked', { image });
+      openInstallationGallery(image);
+    });
   });
 
   lightboxClose?.addEventListener('click', closeLightbox);
