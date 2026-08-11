@@ -1,10 +1,11 @@
 @php
     $editing = isset($expense);
     $contextType = old('context_type', $editing
-        ? ($expense->inspection_id ? 'inspection' : 'job')
+        ? ($expense->project_id ? 'project' : ($expense->inspection_id ? 'inspection' : 'job'))
         : ($selectedContextType ?: 'inspection'));
     $selectedInspectionId = old('inspection_id', $editing ? $expense->inspection_id : ($contextType === 'inspection' ? $selectedContextId : null));
     $selectedJobItemId = old('job_request_item_id', $editing ? $expense->job_request_item_id : ($contextType === 'job' ? $selectedContextId : null));
+    $selectedProjectId = old('project_id', $editing ? $expense->project_id : ($contextType === 'project' ? $selectedContextId : null));
     $selectedCategoryId = old('finance_expense_category_id', $editing ? $expense->finance_expense_category_id : optional($categories->firstWhere('slug', 'transportation'))->id);
     $selectedStatus = old('status', $editing ? $expense->status : \App\Models\FinancialExpense::STATUS_PENDING);
 @endphp
@@ -24,6 +25,7 @@
             <select id="context_type" name="context_type" class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
                 <option value="inspection" @selected($contextType === 'inspection')>Inspection</option>
                 <option value="job" @selected($contextType === 'job')>Job</option>
+                <option value="project" @selected($contextType === 'project')>Project</option>
             </select>
         </div>
 
@@ -55,6 +57,18 @@
                 @foreach($jobItems as $jobItem)
                     <option value="{{ $jobItem->id }}" @selected((string) $selectedJobItemId === (string) $jobItem->id)>
                         Job Item #{{ $jobItem->id }} - {{ $jobItem->jobRequest?->client?->client_name ?? 'Client unavailable' }} - {{ $jobItem->jobRequest?->title ?? $jobItem->title }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="project_id" class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+            <select id="project_id" name="project_id" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <option value="">Select project</option>
+                @foreach($projects as $project)
+                    <option value="{{ $project->id }}" @selected((string) $selectedProjectId === (string) $project->id)>
+                        {{ $project->project_code }} - {{ $project->client?->client_name ?? 'Client unavailable' }} - {{ $project->title }}
                     </option>
                 @endforeach
             </select>

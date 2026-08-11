@@ -10,11 +10,16 @@
                 <h1 class="text-3xl font-bold text-gray-900">Pre-Project Expenses</h1>
                 <p class="text-sm text-gray-600 mt-1">Inspection and job expenses before project finance begins.</p>
             </div>
-            @can(\App\Models\FinancePermission::CREATE)
-                <a href="{{ route('finance.expenses.create') }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
-                    Record Expense
+            <div class="flex flex-col sm:flex-row gap-2">
+                <a href="{{ route('finance.projects.index') }}" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                    Project Finance
                 </a>
-            @endcan
+                @can(\App\Models\FinancePermission::CREATE)
+                    <a href="{{ route('finance.expenses.create') }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                        Record Expense
+                    </a>
+                @endcan
+            </div>
         </div>
 
         @if (session('success'))

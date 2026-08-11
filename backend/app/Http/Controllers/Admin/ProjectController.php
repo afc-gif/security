@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\FinancialExpense;
+use App\Models\FinancialMaterialCost;
 use App\Models\Inspection;
 use App\Models\Project;
 use App\Models\ProjectUpdate;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -166,18 +169,24 @@ class ProjectController extends Controller
                 ->with('success', 'This inspection is already linked to a project.');
         }
 
-        $project = Project::create([
-            'project_code' => $this->generateProjectCode(),
-            'inspection_id' => $inspection->id,
-            'client_id' => $inspection->client_id,
-            'title' => $inspection->title,
-            'location' => $inspection->location,
-            'description' => $this->buildDescriptionFromInspection($inspection),
-            'status' => 'not_started',
-            'priority' => $inspection->priority,
-            'assigned_field_staff_id' => $inspection->assigned_to,
-            'created_by' => $request->user()->id,
-        ]);
+        $project = DB::transaction(function () use ($request, $inspection) {
+            $project = Project::create([
+                'project_code' => $this->generateProjectCode(),
+                'inspection_id' => $inspection->id,
+                'client_id' => $inspection->client_id,
+                'title' => $inspection->title,
+                'location' => $inspection->location,
+                'description' => $this->buildDescriptionFromInspection($inspection),
+                'status' => 'not_started',
+                'priority' => $inspection->priority,
+                'assigned_field_staff_id' => $inspection->assigned_to,
+                'created_by' => $request->user()->id,
+            ]);
+
+            $this->attachInspectionFinanceToProject($inspection, $project, $request->user()->id);
+
+            return $project;
+        });
 
         return redirect()
             ->route('admin.projects.show', $project)
@@ -191,6 +200,27 @@ class ProjectController extends Controller
         } while (Project::where('project_code', $code)->exists());
 
         return $code;
+    }
+
+    private function attachInspectionFinanceToProject(Inspection $inspection, Project $project, int $userId): void
+    {
+        FinancialExpense::query()
+            ->where('inspection_id', $inspection->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
+
+        FinancialMaterialCost::query()
+            ->where('inspection_id', $inspection->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
     }
 
     private function buildDescriptionFromInspection(Inspection $inspection): ?string

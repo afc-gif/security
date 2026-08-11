@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\FinancialExpense;
+use App\Models\FinancialMaterialCost;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\Project;
@@ -219,6 +221,7 @@ class JobItemController extends Controller
             }
 
             $project = Project::create($projectPayload);
+            $this->attachJobItemFinanceToProject($lockedItem, $project, (int) auth()->id());
 
             $approvedAttempt = $lockedItem->attempts->first();
             foreach (($approvedAttempt?->requirements ?? collect()) as $requirement) {
@@ -237,6 +240,27 @@ class JobItemController extends Controller
         return redirect()
             ->route('admin.projects.show', $project)
             ->with('success', 'Category item converted to project successfully.');
+    }
+
+    private function attachJobItemFinanceToProject(JobRequestItem $jobItem, Project $project, int $userId): void
+    {
+        FinancialExpense::query()
+            ->where('job_request_item_id', $jobItem->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
+
+        FinancialMaterialCost::query()
+            ->where('job_request_item_id', $jobItem->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
     }
 
     private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote, $requirements): void

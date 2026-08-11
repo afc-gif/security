@@ -276,6 +276,32 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/projects', [FinanceController::class, 'projects'])->name('projects.index');
+    Route::get('/projects/{project}', [FinanceController::class, 'projectShow'])->name('projects.show');
+    Route::post('/projects/{project}/financial', [FinanceController::class, 'saveProjectFinancial'])
+        ->name('projects.financial.save');
+    Route::get('/projects/{project}/material-costs/create', [FinanceController::class, 'createMaterialCost'])
+        ->middleware('finance.permission:finance.create')
+        ->name('material-costs.create');
+    Route::post('/projects/{project}/material-costs', [FinanceController::class, 'storeMaterialCost'])
+        ->middleware('finance.permission:finance.create')
+        ->name('material-costs.store');
+    Route::get('/material-costs/{materialCost}', [FinanceController::class, 'showMaterialCost'])->name('material-costs.show');
+    Route::get('/material-costs/{materialCost}/edit', [FinanceController::class, 'editMaterialCost'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('material-costs.edit');
+    Route::put('/material-costs/{materialCost}', [FinanceController::class, 'updateMaterialCost'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('material-costs.update');
+    Route::post('/material-costs/{materialCost}/approve', [FinanceController::class, 'approveMaterialCost'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('material-costs.approve');
+    Route::post('/material-costs/{materialCost}/reject', [FinanceController::class, 'rejectMaterialCost'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('material-costs.reject');
+    Route::delete('/material-costs/{materialCost}', [FinanceController::class, 'destroyMaterialCost'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('material-costs.destroy');
     Route::get('/expenses', [FinanceController::class, 'expenses'])->name('expenses.index');
     Route::get('/expenses/create', [FinanceController::class, 'create'])
         ->middleware('finance.permission:finance.create')
