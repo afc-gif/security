@@ -70,4 +70,14 @@ class Inspection extends Model
     {
         return $this->morphMany(Task::class, 'assignable');
     }
+
+    public function financialExpenses()
+    {
+        return $this->hasMany(FinancialExpense::class);
+    }
+
+    public function financialMaterialCosts()
+    {
+        return $this->hasMany(FinancialMaterialCost::class);
+    }
 }

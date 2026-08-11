@@ -190,6 +190,16 @@ class JobRequestItem extends Model
             ->orderBy('id');
     }
 
+    public function financialExpenses(): HasMany
+    {
+        return $this->hasMany(FinancialExpense::class);
+    }
+
+    public function financialMaterialCosts(): HasMany
+    {
+        return $this->hasMany(FinancialMaterialCost::class);
+    }
+
     public function ensureChecklistFromCategory(): void
     {
         if (!$this->service_category_id || $this->checklistItems()->exists()) {

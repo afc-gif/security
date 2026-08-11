@@ -51,6 +51,13 @@ class User extends Model implements AuthenticatableContract
         return $this->hasMany(AdminNotification::class);
     }
 
+    public function financePermissions()
+    {
+        return $this->belongsToMany(FinancePermission::class, 'user_finance_permissions')
+            ->withPivot(['granted_by', 'granted_at'])
+            ->withTimestamps();
+    }
+
     public function isAdmin()
     {
         return $this->role === 'admin';
@@ -86,6 +93,13 @@ class User extends Model implements AuthenticatableContract
         $roles = is_array($roles) ? $roles : func_get_args();
 
         return in_array($this->role, $roles, true);
+    }
+
+    public function hasFinancePermission(string $permission): bool
+    {
+        return $this->financePermissions()
+            ->where('slug', $permission)
+            ->exists();
     }
 
     public function isPending()

@@ -93,6 +93,21 @@ class Project extends Model
         return $this->hasMany(ProjectRequirement::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function financial()
+    {
+        return $this->hasOne(ProjectFinancial::class);
+    }
+
+    public function financialExpenses()
+    {
+        return $this->hasMany(FinancialExpense::class);
+    }
+
+    public function financialMaterialCosts()
+    {
+        return $this->hasMany(FinancialMaterialCost::class);
+    }
+
     public function isBeingEdited(): bool
     {
         return $this->active_editor_id !== null && !$this->editingLockExpired();
