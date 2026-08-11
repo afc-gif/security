@@ -27,6 +27,7 @@
                 <option value="job" @selected($contextType === 'job')>Job</option>
                 <option value="project" @selected($contextType === 'project')>Project</option>
             </select>
+            <div class="text-xs text-gray-500 mt-1">Inspection/job costs are pre-project records. Project costs appear on the project finance page.</div>
         </div>
 
         <div>

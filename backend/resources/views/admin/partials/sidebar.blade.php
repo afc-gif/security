@@ -3,10 +3,12 @@
 
     $sidebarMode = trim($__env->yieldContent('admin_sidebar_mode'));
     $isDashboardSidebar = $sidebarMode === 'dashboard';
-    $canViewFinance = auth()->user()?->hasFinancePermission(FinancePermission::VIEW) ?? false;
+    $currentUser = auth()->user();
+    $isFinanceUser = $currentUser?->isFinance() ?? false;
+    $canViewFinance = $isFinanceUser && ($currentUser?->hasFinancePermission(FinancePermission::VIEW) ?? false);
 
     $dashboardUrl = route('admin.dashboard');
-    $items = [
+    $items = $isFinanceUser ? [] : [
         'overview' => [
             ['key' => 'overview', 'label' => 'Overview', 'route' => 'admin.dashboard', 'tab' => 'overview', 'icon' => 'OV'],
         ],

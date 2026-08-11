@@ -76,6 +76,14 @@
                                     </button>
                                 </form>
 
+                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'finance']) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant Finance panel access to {{ $user->name }}?');">
+                                        Approve as Finance
+                                    </button>
+                                </form>
+
                                 <!-- Approve as Admin -->
                                 <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'admin']) }}" method="POST" class="inline">
                                     @csrf

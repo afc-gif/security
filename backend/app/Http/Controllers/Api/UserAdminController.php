@@ -27,7 +27,7 @@ class UserAdminController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validRoles = ['admin', 'manager', 'field_staff', 'field_coordinator', 'pos', 'user'];
+        $validRoles = ['admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'];
         $data = $request->validate([
             'role' => ['sometimes', 'required', Rule::in($validRoles)],
             'is_active' => ['sometimes', 'boolean'],

@@ -5,6 +5,8 @@
 @section('content')
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        @include('finance.partials.nav')
+
         <div class="mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Edit Material Cost</h1>
             <p class="text-sm text-gray-600 mt-1">Only pending material costs can be edited.</p>

@@ -252,6 +252,8 @@ class FinancePhase3Test extends TestCase
 
     private function grantFinance(User $user, array $permissions): void
     {
+        $user->update(['role' => 'finance']);
+
         $ids = FinancePermission::query()
             ->whereIn('slug', $permissions)
             ->pluck('id')

@@ -173,7 +173,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/users/pending', [AdminController::class, 'pendingUsers'])->name('admin.users.pending');
     Route::patch('/users/{user}/approve/{role}', [AdminController::class, 'approveUser'])->name('admin.users.approve');
     Route::patch('/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
-    Route::patch('/users/{user}/finance-permissions', [AdminController::class, 'updateFinancePermissions'])->name('admin.users.finance-permissions');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
 
     // Clients Management

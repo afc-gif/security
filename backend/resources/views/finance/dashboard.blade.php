@@ -5,6 +5,8 @@
 @section('content')
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        @include('finance.partials.nav')
+
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Finance</h1>
@@ -27,6 +29,28 @@
                 {{ session('success') }}
             </div>
         @endif
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            @can(\App\Models\FinancePermission::CREATE)
+                <a href="{{ route('finance.expenses.create', ['context_type' => 'inspection']) }}" class="bg-white rounded-lg border border-blue-200 p-5 shadow-sm hover:border-blue-400 hover:shadow transition">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-blue-700">Transportation / Pre-Project</div>
+                    <div class="mt-2 text-lg font-bold text-gray-900">Record Inspection or Job Expense</div>
+                    <div class="mt-1 text-sm text-gray-600">Use this before a project exists.</div>
+                </a>
+            @endcan
+            <a href="{{ route('finance.projects.index') }}" class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:border-gray-400 hover:shadow transition">
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Project Finance</div>
+                <div class="mt-2 text-lg font-bold text-gray-900">Open Project Financials</div>
+                <div class="mt-1 text-sm text-gray-600">Budgets, costs, profit, and documents.</div>
+            </a>
+            @can(\App\Models\FinancePermission::APPROVE)
+                <a href="{{ route('finance.expenses.index', ['status' => \App\Models\FinancialExpense::STATUS_PENDING]) }}" class="bg-white rounded-lg border border-yellow-200 p-5 shadow-sm hover:border-yellow-400 hover:shadow transition">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-yellow-700">Pending Approval</div>
+                    <div class="mt-2 text-lg font-bold text-gray-900">Review Expenses</div>
+                    <div class="mt-1 text-sm text-gray-600">{{ $pendingCount + $pendingProjectExpenseCount }} expense records pending.</div>
+                </a>
+            @endcan
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">

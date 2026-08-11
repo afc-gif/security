@@ -78,6 +78,11 @@ class User extends Model implements AuthenticatableContract
         return $this->role === 'manager';
     }
 
+    public function isFinance()
+    {
+        return $this->role === 'finance';
+    }
+
     public function isFieldStaff()
     {
         return $this->role === 'field_staff';
@@ -97,9 +102,7 @@ class User extends Model implements AuthenticatableContract
 
     public function hasFinancePermission(string $permission): bool
     {
-        return $this->financePermissions()
-            ->where('slug', $permission)
-            ->exists();
+        return $this->isFinance();
     }
 
     public function isPending()

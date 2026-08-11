@@ -6,7 +6,6 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Client;
-use App\Models\FinancePermission;
 use App\Models\JobRequest;
 use App\Models\JobRequestItem;
 use App\Models\Project;
@@ -22,7 +21,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
@@ -483,15 +481,10 @@ class AdminController extends Controller
     // Users Management
     public function users()
     {
-        $approvedUsers = User::where('status', 'approved')
-            ->with('financePermissions')
-            ->paginate(15);
+        $approvedUsers = User::where('status', 'approved')->paginate(15);
         $pendingCount = User::where('status', 'pending')->count();
-        $financePermissions = FinancePermission::query()
-            ->orderBy('id')
-            ->get();
 
-        return view('admin.users.index', compact('approvedUsers', 'pendingCount', 'financePermissions'));
+        return view('admin.users.index', compact('approvedUsers', 'pendingCount'));
     }
 
     // Pending Users (waiting for approval)
@@ -504,7 +497,7 @@ class AdminController extends Controller
     // Approve user and assign role
     public function approveUser(User $user, $role)
     {
-        if (!in_array($role, ['admin', 'manager', 'field_staff', 'field_coordinator', 'pos', 'user'], true)) {
+        if (!in_array($role, ['admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'], true)) {
             return back()->withErrors('Invalid role specified.');
         }
 
@@ -520,37 +513,6 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', "User {$user->name} approved as {$role}!");
-    }
-
-    public function updateFinancePermissions(Request $request, User $user)
-    {
-        $validPermissions = FinancePermission::query()->pluck('slug')->all();
-        $validated = $request->validate([
-            'finance_permissions' => ['nullable', 'array'],
-            'finance_permissions.*' => ['string', Rule::in($validPermissions)],
-        ]);
-
-        $permissionIds = FinancePermission::query()
-            ->whereIn('slug', $validated['finance_permissions'] ?? [])
-            ->pluck('id')
-            ->all();
-
-        $syncPayload = collect($permissionIds)
-            ->mapWithKeys(fn (int $id) => [$id => [
-                'granted_by' => $request->user()->id,
-                'granted_at' => now(),
-            ]])
-            ->all();
-
-        $user->financePermissions()->sync($syncPayload);
-
-        Log::info('User finance permissions updated', [
-            'user_id' => $user->id,
-            'updated_by' => $request->user()->id,
-            'permissions' => $validated['finance_permissions'] ?? [],
-        ]);
-
-        return back()->with('success', "Finance permissions updated for {$user->name}.");
     }
 
     // Reject pending user

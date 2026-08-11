@@ -47,41 +47,37 @@ class FinancePhase4Test extends TestCase
             ->assertDontSee('Finance');
 
         $this->actingAs($financeUser)
-            ->get(route('admin.dashboard'))
+            ->get(route('finance.dashboard'))
             ->assertOk()
-            ->assertSee('Finance');
+            ->assertSee('Finance')
+            ->assertDontSee('Products');
     }
 
-    public function test_admin_can_grant_user_specific_finance_permissions(): void
+    public function test_admin_can_approve_user_as_finance_role(): void
     {
         $admin = $this->createAdmin();
-        $user = $this->createAdmin();
+        $user = $this->createUser(['status' => 'pending']);
 
         $this->actingAs($admin)
-            ->patch(route('admin.users.finance-permissions', $user), [
-                'finance_permissions' => [
-                    FinancePermission::VIEW,
-                    FinancePermission::CREATE,
-                ],
-            ])
+            ->patch(route('admin.users.approve', ['user' => $user, 'role' => 'finance']))
             ->assertRedirect();
 
+        $this->assertSame('finance', $user->fresh()->role);
         $this->assertTrue($user->fresh()->hasFinancePermission(FinancePermission::VIEW));
-        $this->assertTrue($user->fresh()->hasFinancePermission(FinancePermission::CREATE));
-        $this->assertFalse($user->fresh()->hasFinancePermission(FinancePermission::APPROVE));
+        $this->assertTrue($user->fresh()->hasFinancePermission(FinancePermission::APPROVE));
     }
 
-    public function test_finance_view_only_user_cannot_approve_or_delete_expenses(): void
+    public function test_admin_cannot_approve_or_delete_finance_expenses(): void
     {
-        $financeUser = $this->createAdmin();
-        $this->grantFinance($financeUser, [FinancePermission::VIEW]);
+        $admin = $this->createAdmin();
+        $financeUser = $this->createUser(['role' => 'finance']);
         $expense = $this->createProjectExpense($financeUser, FinancialExpense::STATUS_PENDING);
 
-        $this->actingAs($financeUser)
+        $this->actingAs($admin)
             ->post(route('finance.expenses.approve', $expense))
             ->assertForbidden();
 
-        $this->actingAs($financeUser)
+        $this->actingAs($admin)
             ->delete(route('finance.expenses.destroy', $expense))
             ->assertForbidden();
     }
@@ -255,6 +251,8 @@ class FinancePhase4Test extends TestCase
 
     private function grantFinance(User $user, array $permissions): void
     {
+        $user->update(['role' => 'finance']);
+
         $ids = FinancePermission::query()
             ->whereIn('slug', $permissions)
             ->pluck('id')

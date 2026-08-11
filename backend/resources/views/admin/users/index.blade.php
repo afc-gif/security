@@ -14,6 +14,11 @@
         @endif
     </div>
 
+    <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
+        <div class="font-bold">Finance is a separate role.</div>
+        <div class="text-sm mt-1">Only users approved as Finance can open the Finance panel and see financial records. Admin, Manager, Field, Coordinator, and POS users do not enter Finance.</div>
+    </div>
+
     @if (session('success'))
         <div class="mb-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
             {{ session('success') }}
@@ -37,7 +42,6 @@
                         <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Role</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold">Finance Access</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Joined</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
                     </tr>
@@ -53,40 +57,39 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ $user->email }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if ($user->isAdmin())
-                                    <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">👑 Admin</span>
-                                @elseif ($user->isManager())
-                                    <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">Manager</span>
-                                @elseif ($user->isFieldStaff())
-                                    <span class="inline-block bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-xs font-semibold">Field Staff</span>
-                                @elseif ($user->isFieldCoordinator())
-                                    <span class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-semibold">Field Coordinator</span>
-                                @elseif ($user->isPos())
-                                    <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">🛒 POS</span>
+                                @if ($user->id !== auth()->id())
+                                    <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => '__role__']) }}" method="POST" class="flex flex-col gap-2" onsubmit="this.action = this.action.replace('__role__', this.elements.role.value);">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="role" class="border border-gray-300 rounded px-2 py-1 text-xs">
+                                            @foreach (['admin' => 'Admin', 'manager' => 'Manager', 'finance' => 'Finance', 'field_staff' => 'Field Staff', 'field_coordinator' => 'Field Coordinator', 'pos' => 'POS', 'user' => 'User'] as $role => $label)
+                                                <option value="{{ $role }}" @selected($user->role === $role)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded text-xs font-semibold transition">
+                                            Save Role
+                                        </button>
+                                    </form>
                                 @else
-                                    <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">None</span>
+                                    @if ($user->isAdmin())
+                                        <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">👑 Admin</span>
+                                    @elseif ($user->isManager())
+                                        <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">Manager</span>
+                                    @elseif ($user->isFinance())
+                                        <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">Finance</span>
+                                    @elseif ($user->isFieldStaff())
+                                        <span class="inline-block bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-xs font-semibold">Field Staff</span>
+                                    @elseif ($user->isFieldCoordinator())
+                                        <span class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-semibold">Field Coordinator</span>
+                                    @elseif ($user->isPos())
+                                        <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">🛒 POS</span>
+                                    @else
+                                        <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">None</span>
+                                    @endif
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded text-xs font-semibold">✓ Approved</span>
-                            </td>
-                            <td class="px-6 py-4 align-top min-w-[260px]">
-                                @php($grantedFinance = $user->financePermissions->pluck('slug')->all())
-                                <form action="{{ route('admin.users.finance-permissions', $user) }}" method="POST" class="space-y-2">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="grid grid-cols-1 gap-1">
-                                        @foreach ($financePermissions as $permission)
-                                            <label class="inline-flex items-center gap-2 text-xs text-gray-700">
-                                                <input type="checkbox" name="finance_permissions[]" value="{{ $permission->slug }}" @checked(in_array($permission->slug, $grantedFinance, true)) class="rounded border-gray-300">
-                                                <span>{{ $permission->name }}</span>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded text-xs font-semibold transition">
-                                        Save Finance Access
-                                    </button>
-                                </form>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $user->created_at->format('M d, Y') }}
