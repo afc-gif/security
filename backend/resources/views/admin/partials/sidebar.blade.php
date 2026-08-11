@@ -1,6 +1,9 @@
 @php
+    use App\Models\FinancePermission;
+
     $sidebarMode = trim($__env->yieldContent('admin_sidebar_mode'));
     $isDashboardSidebar = $sidebarMode === 'dashboard';
+    $canViewFinance = auth()->user()?->hasFinancePermission(FinancePermission::VIEW) ?? false;
 
     $dashboardUrl = route('admin.dashboard');
     $items = [
@@ -29,11 +32,18 @@
         ],
     ];
 
+    if ($canViewFinance) {
+        $items['finance'] = [
+            ['key' => 'finance', 'label' => 'Finance', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'FN'],
+        ];
+    }
+
     $sectionLabels = [
         'overview' => null,
         'commerce' => 'Commerce',
         'operations' => 'Operations',
         'system' => 'System',
+        'finance' => 'Private',
     ];
 
     $routeActive = function (array $item): bool {
@@ -51,6 +61,7 @@
             'tasks' => request()->routeIs('admin.tasks.*'),
             'field-reports' => request()->routeIs('admin.field-reports.*'),
             'users' => request()->routeIs('admin.users.*'),
+            'finance' => request()->routeIs('finance.*'),
             default => false,
         };
     };

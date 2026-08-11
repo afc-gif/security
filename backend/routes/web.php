@@ -11,6 +11,7 @@ use App\Http\Controllers\Field\JobController as FieldJobController;
 use App\Http\Controllers\Field\ProjectController as FieldProjectController;
 use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\FieldCoordinator\JobAssignmentController as CoordinatorJobAssignmentController;
+use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -271,6 +272,35 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         'update' => 'admin.installations.update',
         'destroy' => 'admin.installations.destroy',
     ])->except(['show']);
+});
+
+Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
+    Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/expenses', [FinanceController::class, 'expenses'])->name('expenses.index');
+    Route::get('/expenses/create', [FinanceController::class, 'create'])
+        ->middleware('finance.permission:finance.create')
+        ->name('expenses.create');
+    Route::post('/expenses', [FinanceController::class, 'store'])
+        ->middleware('finance.permission:finance.create')
+        ->name('expenses.store');
+    Route::get('/expenses/{expense}', [FinanceController::class, 'show'])->name('expenses.show');
+    Route::get('/expenses/{expense}/edit', [FinanceController::class, 'edit'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('expenses.edit');
+    Route::put('/expenses/{expense}', [FinanceController::class, 'update'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('expenses.update');
+    Route::post('/expenses/{expense}/approve', [FinanceController::class, 'approve'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('expenses.approve');
+    Route::post('/expenses/{expense}/reject', [FinanceController::class, 'reject'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('expenses.reject');
+    Route::delete('/expenses/{expense}', [FinanceController::class, 'destroy'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('expenses.destroy');
+    Route::get('/documents/{document}/download', [FinanceController::class, 'downloadDocument'])
+        ->name('documents.download');
 });
 
 Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field')->group(function () {
