@@ -45,6 +45,45 @@ class FinanceController extends Controller
             ->limit(8)
             ->get();
 
+        $projectFinancials = ProjectFinancial::query();
+        $approvedProjectExpenses = FinancialExpense::query()
+            ->whereNotNull('project_id')
+            ->where('status', FinancialExpense::STATUS_APPROVED);
+        $approvedProjectMaterials = FinancialMaterialCost::query()
+            ->whereNotNull('project_id')
+            ->where('status', FinancialMaterialCost::STATUS_APPROVED);
+        $pendingMaterialCosts = FinancialMaterialCost::query()
+            ->where('status', FinancialMaterialCost::STATUS_PENDING);
+        $pendingProjectExpenses = FinancialExpense::query()
+            ->whereNotNull('project_id')
+            ->where('status', FinancialExpense::STATUS_PENDING);
+
+        $totalContractValue = (clone $projectFinancials)->sum('contract_value');
+        $totalApprovedBudget = (clone $projectFinancials)->sum('approved_budget');
+        $totalApprovedProjectExpenses = (clone $approvedProjectExpenses)->sum('amount');
+        $totalApprovedMaterialCosts = (clone $approvedProjectMaterials)->sum('total_cost');
+        $totalApprovedProjectCosts = $totalApprovedProjectExpenses + $totalApprovedMaterialCosts;
+        $estimatedProjectProfit = $totalContractValue - $totalApprovedProjectCosts;
+
+        $projectReviewCount = Project::query()
+            ->whereDoesntHave('financial')
+            ->orWhereHas('financialExpenses', fn (Builder $query) => $query->where('status', FinancialExpense::STATUS_PENDING))
+            ->orWhereHas('financialMaterialCosts', fn (Builder $query) => $query->where('status', FinancialMaterialCost::STATUS_PENDING))
+            ->count();
+
+        $overBudgetProjectCount = Project::query()
+            ->with('financial')
+            ->get()
+            ->filter(fn (Project $project) => $this->projectFinancialSummary($project)['is_over_budget'])
+            ->count();
+
+        $recentMaterialCosts = FinancialMaterialCost::query()
+            ->where('status', FinancialMaterialCost::STATUS_PENDING)
+            ->with(['project.client', 'submitter'])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         return view('finance.dashboard', array_merge([
             'pendingCount' => $pendingQuery->count(),
             'pendingTotal' => $pendingQuery->sum('amount'),
@@ -54,6 +93,19 @@ class FinanceController extends Controller
             'transportCount' => $transportQuery?->count() ?? 0,
             'transportTotal' => $transportQuery?->sum('amount') ?? 0,
             'recentExpenses' => $recentExpenses,
+            'totalContractValue' => $totalContractValue,
+            'totalApprovedBudget' => $totalApprovedBudget,
+            'totalApprovedProjectExpenses' => $totalApprovedProjectExpenses,
+            'totalApprovedMaterialCosts' => $totalApprovedMaterialCosts,
+            'totalApprovedProjectCosts' => $totalApprovedProjectCosts,
+            'estimatedProjectProfit' => $estimatedProjectProfit,
+            'overBudgetProjectCount' => $overBudgetProjectCount,
+            'projectReviewCount' => $projectReviewCount,
+            'pendingProjectExpenseCount' => (clone $pendingProjectExpenses)->count(),
+            'pendingProjectExpenseTotal' => (clone $pendingProjectExpenses)->sum('amount'),
+            'pendingMaterialCostCount' => (clone $pendingMaterialCosts)->count(),
+            'pendingMaterialCostTotal' => (clone $pendingMaterialCosts)->sum('total_cost'),
+            'recentMaterialCosts' => $recentMaterialCosts,
         ], $this->viewHelpers()));
     }
 
@@ -304,15 +356,29 @@ class FinanceController extends Controller
             'financialExpenses.category',
             'financialExpenses.submitter',
             'financialExpenses.approver',
+            'financialExpenses.documents.uploader',
             'financialMaterialCosts.submitter',
             'financialMaterialCosts.approver',
+            'financialMaterialCosts.documents.uploader',
         ]);
 
         $summary = $this->projectFinancialSummary($project);
-        $activity = $this->projectFinancialActivity($project);
+        $financialDocuments = $project->financialExpenses
+            ->flatMap(fn (FinancialExpense $expense) => $expense->documents->map(fn (FinancialDocument $document) => [
+                'document' => $document,
+                'record_type' => 'Expense',
+                'record_label' => $expense->description,
+            ]))
+            ->concat($project->financialMaterialCosts->flatMap(fn (FinancialMaterialCost $materialCost) => $materialCost->documents->map(fn (FinancialDocument $document) => [
+                'document' => $document,
+                'record_type' => 'Material',
+                'record_label' => $materialCost->material_name,
+            ])))
+            ->sortByDesc(fn (array $item) => $item['document']->created_at?->getTimestamp() ?? 0)
+            ->values();
 
         return view('finance.projects.show', array_merge(
-            compact('project', 'summary', 'activity'),
+            compact('project', 'summary', 'financialDocuments'),
             $this->viewHelpers()
         ));
     }

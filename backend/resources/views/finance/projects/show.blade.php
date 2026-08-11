@@ -57,7 +57,35 @@
                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Estimated Profit</div>
                 <div class="mt-2 text-2xl font-bold {{ ($summary['estimated_profit'] ?? 0) < 0 ? 'text-red-700' : 'text-gray-900' }}">{{ $summary['estimated_profit'] === null ? '—' : $financeMoney($summary['estimated_profit']) }}</div>
                 <div class="mt-1 text-sm {{ $summary['is_over_budget'] ? 'text-red-700 font-semibold' : 'text-gray-600' }}">
-                    {{ $summary['remaining_budget'] === null ? 'No budget set' : 'Remaining budget ' . $financeMoney($summary['remaining_budget']) }}
+                    {{ $summary['remaining_budget'] === null ? ($summary['is_over_budget'] ? 'Over budget' : 'Within budget') : 'Remaining budget ' . $financeMoney($summary['remaining_budget']) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Project Financial Summary</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Approved Expenses</div>
+                    <div class="text-gray-900 font-semibold">{{ $financeMoney($summary['approved_expenses']) }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Approved Material Costs</div>
+                    <div class="text-gray-900 font-semibold">{{ $financeMoney($summary['approved_materials']) }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Remaining Budget</div>
+                    <div class="font-semibold {{ ($summary['remaining_budget'] ?? 0) < 0 ? 'text-red-700' : 'text-gray-900' }}">{{ $summary['remaining_budget'] === null ? '—' : $financeMoney($summary['remaining_budget']) }}</div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Budget Status</div>
+                    @if($summary['is_over_budget'])
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">Over budget</span>
+                    @elseif($summary['approved_budget'] === null)
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700">No budget set</span>
+                    @else
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Within budget</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -104,28 +132,108 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-2">
+            <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-bold text-gray-900">Financial History</h2>
+                        <h2 class="text-xl font-bold text-gray-900">Expenses</h2>
                     </div>
-                    @if($activity->isEmpty())
-                        <div class="p-8 text-center text-gray-600">No project finance activity recorded yet.</div>
+                    @if($project->financialExpenses->isEmpty())
+                        <div class="p-8 text-center text-gray-600">No project expenses recorded.</div>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Category</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Description</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Amount</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Submitted By</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Approved By</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($project->financialExpenses->sortByDesc(fn ($expense) => $expense->incurred_on?->getTimestamp() ?? $expense->created_at?->getTimestamp() ?? 0) as $expense)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $expense->category?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3">
+                                                <a href="{{ route('finance.expenses.show', $expense) }}" class="font-semibold text-blue-700 hover:text-blue-900">{{ $expense->description }}</a>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $financeMoney($expense->amount) }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $expense->incurred_on?->format('d M Y') ?? '—' }}</td>
+                                            <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $financeStatusClass($expense->status) }}">{{ $financeStatusLabel($expense->status) }}</span></td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $expense->submitter?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $expense->approver?->name ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Material Costs</h2>
+                    </div>
+                    @if($project->financialMaterialCosts->isEmpty())
+                        <div class="p-8 text-center text-gray-600">No project material costs recorded.</div>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Material</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Quantity</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Unit</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Unit Cost</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Total Cost</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Submitted By</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Approved By</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($project->financialMaterialCosts->sortByDesc(fn ($materialCost) => $materialCost->incurred_on?->getTimestamp() ?? $materialCost->created_at?->getTimestamp() ?? 0) as $materialCost)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3">
+                                                <a href="{{ route('finance.material-costs.show', $materialCost) }}" class="font-semibold text-blue-700 hover:text-blue-900">{{ $materialCost->material_name }}</a>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 text-right whitespace-nowrap">{{ $materialCost->quantity }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $materialCost->unit ?: '—' }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $financeMoney($materialCost->unit_cost) }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $financeMoney($materialCost->total_cost) }}</td>
+                                            <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $financeStatusClass($materialCost->status) }}">{{ $financeStatusLabel($materialCost->status) }}</span></td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $materialCost->submitter?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $materialCost->approver?->name ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Financial Documents</h2>
+                    </div>
+                    @if($financialDocuments->isEmpty())
+                        <div class="p-8 text-center text-gray-600">No private financial documents attached.</div>
                     @else
                         <div class="divide-y divide-gray-100">
-                            @foreach($activity as $item)
-                                <a href="{{ $item['url'] }}" class="block px-5 py-4 hover:bg-gray-50">
-                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                        <div>
-                                            <div class="font-semibold text-gray-900">{{ $item['label'] }}</div>
-                                            <div class="text-sm text-gray-600">{{ $item['type'] }} · {{ $item['meta'] }} · {{ $item['date']?->format('d M Y') ?? 'No date' }}</div>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold text-gray-900">{{ $financeMoney($item['amount']) }}</span>
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $financeStatusClass($item['status']) }}">{{ $financeStatusLabel($item['status']) }}</span>
-                                        </div>
+                            @foreach($financialDocuments as $item)
+                                @php($document = $item['document'])
+                                <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ $document->file_name ?? 'Financial document' }}</div>
+                                        <div class="text-sm text-gray-600">{{ $item['record_type'] }} · {{ $item['record_label'] }} · Uploaded by {{ $document->uploader?->name ?? '—' }}</div>
                                     </div>
-                                </a>
+                                    <a href="{{ route('finance.documents.download', $document) }}" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-semibold transition">
+                                        Download
+                                    </a>
+                                </div>
                             @endforeach
                         </div>
                     @endif

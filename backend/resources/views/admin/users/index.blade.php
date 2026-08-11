@@ -20,8 +20,16 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     @if ($approvedUsers->count() > 0)
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-blue-600 text-white">
                     <tr>
@@ -29,6 +37,7 @@
                         <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Role</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold">Finance Access</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Joined</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold">Actions</th>
                     </tr>
@@ -60,6 +69,24 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded text-xs font-semibold">✓ Approved</span>
+                            </td>
+                            <td class="px-6 py-4 align-top min-w-[260px]">
+                                @php($grantedFinance = $user->financePermissions->pluck('slug')->all())
+                                <form action="{{ route('admin.users.finance-permissions', $user) }}" method="POST" class="space-y-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <div class="grid grid-cols-1 gap-1">
+                                        @foreach ($financePermissions as $permission)
+                                            <label class="inline-flex items-center gap-2 text-xs text-gray-700">
+                                                <input type="checkbox" name="finance_permissions[]" value="{{ $permission->slug }}" @checked(in_array($permission->slug, $grantedFinance, true)) class="rounded border-gray-300">
+                                                <span>{{ $permission->name }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded text-xs font-semibold transition">
+                                        Save Finance Access
+                                    </button>
+                                </form>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $user->created_at->format('M d, Y') }}
