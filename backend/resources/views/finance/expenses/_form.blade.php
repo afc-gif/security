@@ -19,6 +19,11 @@
 @endif
 
 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+    <div class="mb-5 border-b border-gray-200 pb-4">
+        <h2 class="text-lg font-extrabold text-gray-950">{{ $editing ? 'Expense Details' : 'New Expense Details' }}</h2>
+        <p class="mt-1 text-sm text-gray-600">For transportation before a project exists, choose Inspection or Job as the context.</p>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
             <label for="context_type" class="block text-sm font-medium text-gray-700 mb-1">Context</label>

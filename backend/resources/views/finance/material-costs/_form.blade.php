@@ -12,6 +12,11 @@
 @endif
 
 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+    <div class="mb-5 border-b border-gray-200 pb-4">
+        <h2 class="text-lg font-extrabold text-gray-950">{{ $editing ? 'Material Cost Details' : 'New Material Cost Details' }}</h2>
+        <p class="mt-1 text-sm text-gray-600">Quantity multiplied by unit cost becomes the total material cost for this project.</p>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div class="md:col-span-2">
             <label for="material_name" class="block text-sm font-medium text-gray-700 mb-1">Material</label>

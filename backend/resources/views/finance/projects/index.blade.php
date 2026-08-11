@@ -3,16 +3,16 @@
 @section('title', 'Project Finance | ARTSCI Admin Console')
 
 @section('content')
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gray-100">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         @include('finance.partials.nav')
 
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div class="flex flex-col gap-4 mb-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Project Finance</h1>
+                <h1 class="text-3xl font-extrabold text-gray-950">Project Finance</h1>
                 <p class="text-sm text-gray-600 mt-1">Private project financial profiles, costs, and profitability tracking.</p>
             </div>
-            <a href="{{ route('finance.dashboard') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition">
+            <a href="{{ route('finance.dashboard') }}" class="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 font-bold text-gray-800 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-50">
                 Finance Dashboard
             </a>
         </div>
@@ -23,8 +23,8 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('finance.projects.index') }}" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <form method="GET" action="{{ route('finance.projects.index') }}" class="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Project Status</label>
                     <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
@@ -36,12 +36,12 @@
                 </div>
             </div>
             <div class="mt-4 flex gap-2">
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-semibold">Apply</button>
-                <a href="{{ route('finance.projects.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold">Clear</a>
+                <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 font-bold text-white hover:bg-gray-800">Apply</button>
+                <a href="{{ route('finance.projects.index') }}" class="rounded-lg bg-gray-100 px-4 py-2 font-bold text-gray-800 hover:bg-gray-200">Clear</a>
             </div>
         </form>
 
-        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             @if($projects->count() === 0)
                 <div class="p-10 text-center text-gray-600">No projects match the selected filters.</div>
             @else

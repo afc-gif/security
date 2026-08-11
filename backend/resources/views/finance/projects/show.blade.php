@@ -3,27 +3,30 @@
 @section('title', 'Project Finance Detail | ARTSCI Admin Console')
 
 @section('content')
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gray-100">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         @include('finance.partials.nav')
 
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">{{ $project->project_code }}</h1>
-                <p class="text-sm text-gray-600 mt-1">{{ $project->title }} · {{ $project->client?->client_name ?? 'Client unavailable' }}</p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-2">
+        <div class="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase tracking-wide text-blue-700">Project Financial File</div>
+                    <h1 class="mt-1 text-3xl font-extrabold text-gray-950">{{ $project->project_code }}</h1>
+                    <p class="mt-1 text-sm text-gray-600">{{ $project->title }} · {{ $project->client?->client_name ?? 'Client unavailable' }}</p>
+                </div>
+                <div class="flex flex-col gap-2 sm:flex-row">
                 @can(\App\Models\FinancePermission::CREATE)
-                    <a href="{{ route('finance.expenses.create', ['context_type' => 'project', 'context_id' => $project->id]) }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                    <a href="{{ route('finance.expenses.create', ['context_type' => 'project', 'context_id' => $project->id]) }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 font-bold text-white transition hover:bg-blue-700">
                         Add Expense
                     </a>
-                    <a href="{{ route('finance.material-costs.create', $project) }}" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                    <a href="{{ route('finance.material-costs.create', $project) }}" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 font-bold text-white transition hover:bg-emerald-700">
                         Add Material
                     </a>
                 @endcan
-                <a href="{{ route('finance.projects.index') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition">
+                <a href="{{ route('finance.projects.index') }}" class="inline-flex items-center justify-center rounded-lg bg-gray-100 px-5 py-2.5 font-bold text-gray-800 transition hover:bg-gray-200">
                     Back
                 </a>
+                </div>
             </div>
         </div>
 
@@ -40,6 +43,10 @@
                 @endforeach
             </div>
         @endif
+
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-lg font-extrabold text-gray-950">Financial Snapshot</h2>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
