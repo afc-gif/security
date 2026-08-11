@@ -248,10 +248,13 @@ class FinanceController extends Controller
         abort_unless($expense instanceof FinancialExpense, 404);
         $this->ensurePreProjectExpense($expense);
 
-        abort_unless(Storage::disk('local')->exists($document->file_path), 404);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+
+        abort_unless($disk->exists($document->file_path), 404);
 
         return response()->download(
-            storage_path('app/' . ltrim($document->file_path, '/')),
+            $disk->path($document->file_path),
             $document->file_name
         );
     }
