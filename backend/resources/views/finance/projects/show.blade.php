@@ -178,13 +178,22 @@
                                     <div class="finance-expense-amount-section">
                                         <div class="finance-expense-amount-display">{{ $financeMoney($expense->amount) }}</div>
                                         @if($expense->status === 'pending')
-                                            @can(\App\Models\FinancePermission::DELETE)
-                                                <form method="POST" action="{{ route('finance.expenses.destroy', $expense) }}" style="display: inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="finance-btn-delete-expense" onclick="return confirm('Delete this expense?')">Delete</button>
-                                                </form>
-                                            @endcan
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <a href="{{ route('finance.expenses.show', $expense) }}" class="text-[11px] font-semibold text-sky-700 hover:underline">View</a>
+                                                @can(\App\Models\FinancePermission::APPROVE)
+                                                    <form method="POST" action="{{ route('finance.expenses.approve', $expense) }}" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-colors">Approve</button>
+                                                    </form>
+                                                @endcan
+                                                @can(\App\Models\FinancePermission::DELETE)
+                                                    <form method="POST" action="{{ route('finance.expenses.destroy', $expense) }}" style="display: inline;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="finance-btn-delete-expense" onclick="return confirm('Delete this expense?')">Delete</button>
+                                                    </form>
+                                                @endcan
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -223,6 +232,17 @@
                                     </div>
                                     <div class="finance-expense-amount-section">
                                         <div class="finance-expense-amount-display">{{ $financeMoney($material->total_cost) }}</div>
+                                        @if($material->status === 'pending')
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <a href="{{ route('finance.material-costs.show', $material) }}" class="text-[11px] font-semibold text-sky-700 hover:underline">View</a>
+                                                @can(\App\Models\FinancePermission::APPROVE)
+                                                    <form method="POST" action="{{ route('finance.material-costs.approve', $material) }}" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-colors">Approve</button>
+                                                    </form>
+                                                @endcan
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
