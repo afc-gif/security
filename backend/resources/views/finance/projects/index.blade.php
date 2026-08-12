@@ -62,7 +62,7 @@
                             </div>
                             <div class="finance-job-detail finance-job-detail-amount">
                                 <div class="finance-job-label">Balance Due</div>
-                                <div class="finance-job-value-amount" style="color: {{ $balanceColor }};">
+                                <div class="finance-job-value-amount @if(!empty($summary['is_overpaid'])) text-red-600 @elseif(($summary['balance_due'] ?? 0) > 0) text-amber-600 @endif">
                                     @if($summary['contract_value'] === null)
                                         -
                                     @elseif(!empty($summary['is_overpaid']))
