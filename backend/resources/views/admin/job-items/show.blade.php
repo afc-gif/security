@@ -35,7 +35,7 @@
             </div>
         @endif
 
-        @if($errors->any())
+        @if(($errors ?? null)?->any())
             <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
                 @foreach($errors->all() as $error)
                     <div>{{ $error }}</div>
