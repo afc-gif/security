@@ -6,6 +6,11 @@
     $currentUser = auth()->user();
     $isFinanceUser = $currentUser?->isFinance() ?? false;
     $canViewFinance = $isFinanceUser && ($currentUser?->hasFinancePermission(FinancePermission::VIEW) ?? false);
+    $financeInitials = collect(explode(' ', trim($currentUser?->name ?? 'Finance')))
+        ->filter()
+        ->take(2)
+        ->map(fn ($part) => Illuminate\Support\Str::upper(Illuminate\Support\Str::substr($part, 0, 1)))
+        ->join('');
 
     $dashboardUrl = route('admin.dashboard');
     $items = $isFinanceUser ? [
@@ -118,16 +123,31 @@
                 <span class="nav-icon" aria-hidden="true">ME</span>
                 <span class="nav-label">My Profile</span>
             </a>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                @csrf
+                <button type="submit" class="nav-btn" style="width:100%;" aria-label="Logout" title="Logout">
+                    <span class="nav-icon" aria-hidden="true">LO</span>
+                    <span class="nav-label">Logout</span>
+                </button>
+            </form>
+            <div class="finance-sidebar-person">
+                <span class="finance-avatar" aria-hidden="true">{{ $financeInitials ?: 'FN' }}</span>
+                <div class="min-w-0">
+                    <div class="finance-sidebar-name">{{ $currentUser?->name ?? 'Finance user' }}</div>
+                    <div class="finance-sidebar-role">Finance</div>
+                </div>
+            </div>
+        @else
+            <div class="admin-user-meta">
+                Signed in as {{ auth()->user()->name ?? 'User' }}
+            </div>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                @csrf
+                <button type="submit" class="nav-btn" style="width:100%; justify-content:center;" aria-label="Logout" title="Logout">
+                    <span class="nav-icon" aria-hidden="true">LO</span>
+                    <span class="nav-label">Logout</span>
+                </button>
+            </form>
         @endif
-        <div class="admin-user-meta">
-            Signed in as {{ auth()->user()->name ?? 'User' }}
-        </div>
-        <form method="POST" action="{{ route('logout') }}" style="margin:0;">
-            @csrf
-            <button type="submit" class="nav-btn" style="width:100%; justify-content:center;" aria-label="Logout" title="Logout">
-                <span class="nav-icon" aria-hidden="true">LO</span>
-                <span class="nav-label">Logout</span>
-            </button>
-        </form>
     </div>
 </aside>
