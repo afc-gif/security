@@ -150,8 +150,8 @@
                              <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
                                  <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Actions</div>
                                  <div class="flex flex-wrap items-center gap-2 mt-2">
-                                     <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').showModal()" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md font-semibold text-xs">View Item Details</button>
-                                     <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md font-semibold text-xs">Open Review Page</a>
+                                     <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').classList.remove('hidden')" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md font-semibold text-xs">View Quick Details</button>
+                                     <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md font-semibold text-xs">Open Full Review Page</a>
                                      @if($item->isOverdue() || in_array($item->status, ['overdue', 'closed', 'rejected'], true))
                                          <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
                                              @csrf
@@ -162,51 +162,53 @@
                              </div>
 
                              <!-- Item Details Popup Modal -->
-                             <dialog id="item-modal-{{ $item->id }}" class="rounded-xl shadow-2xl border border-gray-200 p-6 max-w-2xl w-full backdrop:bg-gray-900/50">
-                                 <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-                                     <div>
-                                         <h3 class="text-lg font-bold text-gray-900">{{ $item->serviceCategory?->name ?? $item->title ?? 'Item Details' }}</h3>
-                                         <p class="text-xs text-gray-500">ID #{{ $item->id }} &bull; Job Request: {{ $jobRequest->title }}</p>
+                             <div id="item-modal-{{ $item->id }}" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) this.classList.add('hidden')">
+                                 <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-w-2xl w-full relative transform transition-all">
+                                     <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                         <div>
+                                             <h3 class="text-lg font-bold text-gray-900">{{ $item->serviceCategory?->name ?? $item->title ?? 'Item Details' }}</h3>
+                                             <p class="text-xs text-gray-500">ID #{{ $item->id }} &bull; Job Request: {{ $jobRequest->title }}</p>
+                                         </div>
+                                         <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 p-1 font-bold text-xl leading-none">&times;</button>
                                      </div>
-                                     <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').close()" class="text-gray-400 hover:text-gray-600 p-1 font-bold text-lg">&times;</button>
-                                 </div>
-                                 <div class="space-y-4 text-sm">
-                                     <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                         <div>
-                                             <div class="text-xs text-gray-500 uppercase font-semibold">Status</div>
-                                             <div class="font-bold text-gray-900 capitalize">{{ str_replace('_', ' ', $displayStatus) }}</div>
+                                     <div class="space-y-4 text-sm">
+                                         <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                             <div>
+                                                 <div class="text-xs text-gray-500 uppercase font-semibold">Status</div>
+                                                 <div class="font-bold text-gray-900 capitalize">{{ str_replace('_', ' ', $displayStatus) }}</div>
+                                             </div>
+                                             <div>
+                                                 <div class="text-xs text-gray-500 uppercase font-semibold">Claimed By</div>
+                                                 <div class="font-semibold text-gray-900">{{ $item->claimer?->name ?? 'Unclaimed' }}</div>
+                                             </div>
+                                             <div>
+                                                 <div class="text-xs text-gray-500 uppercase font-semibold">Due Date</div>
+                                                 <div class="{{ $item->isOverdue() ? 'font-bold text-red-700' : 'text-gray-900' }}">{{ $item->due_date?->format('d M Y H:i') ?? '—' }}</div>
+                                             </div>
+                                             <div>
+                                                 <div class="text-xs text-gray-500 uppercase font-semibold">Checklist Count</div>
+                                                 <div class="font-semibold text-gray-900">{{ $item->checklistItems->count() }} item(s)</div>
+                                             </div>
                                          </div>
-                                         <div>
-                                             <div class="text-xs text-gray-500 uppercase font-semibold">Claimed By</div>
-                                             <div class="font-semibold text-gray-900">{{ $item->claimer?->name ?? 'Unclaimed' }}</div>
-                                         </div>
-                                         <div>
-                                             <div class="text-xs text-gray-500 uppercase font-semibold">Due Date</div>
-                                             <div class="{{ $item->isOverdue() ? 'font-bold text-red-700' : 'text-gray-900' }}">{{ $item->due_date?->format('d M Y H:i') ?? '—' }}</div>
-                                         </div>
-                                         <div>
-                                             <div class="text-xs text-gray-500 uppercase font-semibold">Checklist Count</div>
-                                             <div class="font-semibold text-gray-900">{{ $item->checklistItems->count() }} item(s)</div>
-                                         </div>
-                                     </div>
-                                     @if($item->description)
-                                         <div>
-                                             <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Description</div>
-                                             <div class="text-gray-800 bg-white p-3 rounded border border-gray-200 whitespace-pre-line">{{ $item->description }}</div>
-                                         </div>
-                                     @endif
-                                     <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
-                                         @if($item->isOverdue() || in_array($item->status, ['overdue', 'closed', 'rejected'], true))
-                                             <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
-                                                 @csrf
-                                                 <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold text-xs">Reopen Job</button>
-                                             </form>
+                                         @if($item->description)
+                                             <div>
+                                                 <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Description</div>
+                                                 <div class="text-gray-800 bg-white p-3 rounded border border-gray-200 whitespace-pre-line">{{ $item->description }}</div>
+                                             </div>
                                          @endif
-                                         <a href="{{ route('admin.job-items.show', $item) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-xs">Open Review Page</a>
-                                         <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').close()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold text-xs">Close</button>
+                                         <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
+                                             @if($item->isOverdue() || in_array($item->status, ['overdue', 'closed', 'rejected'], true))
+                                                 <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
+                                                     @csrf
+                                                     <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold text-xs">Reopen Job</button>
+                                                 </form>
+                                             @endif
+                                             <a href="{{ route('admin.job-items.show', $item) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-xs">Open Full Review Page</a>
+                                             <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').classList.add('hidden')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold text-xs">Close</button>
+                                         </div>
                                      </div>
                                  </div>
-                             </dialog>
+                             </div>
                             <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Project Conversion</div>
                                 @if($item->project)
