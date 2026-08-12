@@ -291,6 +291,9 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
     Route::post('/projects/{project}/payments', [FinanceController::class, 'storeProjectPayment'])
         ->middleware('finance.permission:finance.create')
         ->name('projects.payments.store');
+    Route::put('/projects/{project}/payments/{payment}', [FinanceController::class, 'updateProjectPayment'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('projects.payments.update');
     Route::delete('/projects/{project}/payments/{payment}', [FinanceController::class, 'destroyProjectPayment'])
         ->middleware('finance.permission:finance.delete')
         ->name('projects.payments.destroy');

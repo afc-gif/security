@@ -1162,6 +1162,39 @@ class FinanceController extends Controller
             ->with('success', 'Payment recorded successfully.');
     }
 
+    public function updateProjectPayment(Request $request, Project $project, ProjectPayment $payment)
+    {
+        $this->authorizeFinance(FinancePermission::EDIT);
+
+        abort_unless($payment->project_id === $project->id, 404);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0'],
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        DB::transaction(function () use ($request, $payment, $validated) {
+            $payment->update([
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $this->storeFinancialDocument($request, $payment);
+        });
+
+        return redirect()
+            ->route('finance.projects.show', $project)
+            ->with('success', 'Payment updated successfully.');
+    }
+
     public function destroyProjectPayment(Request $request, Project $project, ProjectPayment $payment)
     {
         $this->authorizeFinance(FinancePermission::DELETE);
