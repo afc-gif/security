@@ -66,7 +66,7 @@
                     @if($summary['contract_value'] === null)
                         -
                     @elseif(!empty($summary['is_overpaid']))
-                        <span style="color: #059669; font-size: 0.85em;">Overpaid ({{ $financeMoney($summary['overpaid_amount']) }})</span>
+                        <span class="text-emerald-600 text-xs font-bold">Overpaid ({{ $financeMoney($summary['overpaid_amount']) }})</span>
                     @else
                         {{ $financeMoney($summary['balance_due']) }}
                     @endif

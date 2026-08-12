@@ -23,40 +23,46 @@
         <div class="finance-stats">
             <div class="finance-stat">
                 <div class="finance-stat-inner">
-                    <span class="finance-stat-icon" aria-hidden="true">JB</span>
+                    <span class="finance-stat-icon" aria-hidden="true">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </span>
                     <div>
                         <div class="finance-stat-label">Active Jobs</div>
                         <div class="finance-stat-value">{{ $activeJobs }}</div>
                     </div>
                 </div>
-                <a href="{{ route('finance.jobs.index') }}" class="finance-stat-link">View all jobs <span aria-hidden="true">-></span></a>
+                <a href="{{ route('finance.jobs.index') }}" class="finance-stat-link">View all jobs <span aria-hidden="true">→</span></a>
             </div>
             <div class="finance-stat">
                 <div class="finance-stat-inner">
-                    <span class="finance-stat-icon" aria-hidden="true">PJ</span>
+                    <span class="finance-stat-icon" aria-hidden="true">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </span>
                     <div>
                         <div class="finance-stat-label">Active Projects</div>
                         <div class="finance-stat-value">{{ $activeProjects }}</div>
                     </div>
                 </div>
-                <a href="{{ route('finance.projects.index') }}" class="finance-stat-link">View all projects <span aria-hidden="true">-></span></a>
+                <a href="{{ route('finance.projects.index') }}" class="finance-stat-link">View all projects <span aria-hidden="true">→</span></a>
             </div>
             <div class="finance-stat">
                 <div class="finance-stat-inner">
-                    <span class="finance-stat-icon" aria-hidden="true">RV</span>
+                    <span class="finance-stat-icon" aria-hidden="true">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
                     <div>
                         <div class="finance-stat-label">Pending Review</div>
                         <div class="finance-stat-value">{{ $pendingReviewCount }}</div>
                     </div>
                 </div>
-                <a href="{{ route('finance.jobs.index', ['status' => 'pending_assignment']) }}" class="finance-stat-link">View pending <span aria-hidden="true">-></span></a>
+                <a href="{{ route('finance.jobs.index', ['status' => 'pending_assignment']) }}" class="finance-stat-link">View pending <span aria-hidden="true">→</span></a>
             </div>
         </div>
 
         <div class="finance-section-container">
-            <div class="finance-section-header">
+            <div class="finance-section-header mb-3 flex items-center justify-between">
                 <h2 class="finance-section-title">Recent Activity</h2>
-                <a href="{{ route('finance.jobs.index') }}" class="finance-card-link">View all <span aria-hidden="true">-></span></a>
+                <a href="{{ route('finance.jobs.index') }}" class="finance-card-link">View all <span aria-hidden="true">→</span></a>
             </div>
 
             <div class="finance-overview-cards">

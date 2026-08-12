@@ -73,10 +73,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
-                            <div style="display: flex; gap: 6px;">
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 mt-2">
+                            <div class="flex items-center gap-2">
                                 <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
-                                <span class="finance-status" style="background-color: #f0eaff; color: #4f24e8;">Spent: {{ $financeMoney($summary['approved_cost']) }}</span>
+                                <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 text-sky-700 border border-sky-100">Spent: {{ $financeMoney($summary['approved_cost']) }}</span>
                             </div>
                         </div>
                     </a>
