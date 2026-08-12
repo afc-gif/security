@@ -120,6 +120,7 @@ class FinanceController extends Controller
                 'financialExpenses as approved_expenses_total' => fn (Builder $query) => $query
                     ->where('status', FinancialExpense::STATUS_APPROVED),
             ], 'amount')
+            ->withSum('financialExpenses as expenses_total', 'amount')
             ->withCount('financialExpenses')
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $searchQuery) use ($search) {

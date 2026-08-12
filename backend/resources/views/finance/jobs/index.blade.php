@@ -9,9 +9,8 @@
 
         <div class="finance-header">
             <div>
-                <div class="finance-eyebrow">Jobs</div>
-                <h1 class="finance-title">Find a job and record its expenses.</h1>
-                <p class="finance-subtitle">Search by job title, client, company, or assigned work.</p>
+                <h1 class="finance-title">Jobs</h1>
+                <p class="finance-subtitle">Select a job to record expenses and track spending.</p>
             </div>
         </div>
 
@@ -21,14 +20,16 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('finance.jobs.index') }}" class="finance-panel-flat finance-filter">
-            <div class="finance-field">
-                <label for="search">Search jobs</label>
-                <input id="search" name="search" value="{{ $filters['search'] ?? '' }}" type="search" placeholder="Search jobs...">
-            </div>
-            <div class="finance-field">
-                <label for="status">Status</label>
-                <select id="status" name="status">
+        <form method="GET" action="{{ route('finance.jobs.index') }}" class="finance-filter-bar">
+            <div class="finance-filter-content">
+                <input 
+                    type="search" 
+                    name="search" 
+                    value="{{ $filters['search'] ?? '' }}" 
+                    placeholder="Search by job name, client, or staff..."
+                    class="finance-filter-input"
+                >
+                <select name="status" class="finance-filter-select">
                     <option value="">All statuses</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>
@@ -36,58 +37,56 @@
                         </option>
                     @endforeach
                 </select>
-            </div>
-            <div class="flex gap-2">
                 <button type="submit" class="finance-btn finance-btn-primary">Search</button>
                 @if(($filters['search'] ?? null) || ($filters['status'] ?? null))
-                    <a href="{{ route('finance.jobs.index') }}" class="finance-btn finance-btn-secondary">Reset</a>
+                    <a href="{{ route('finance.jobs.index') }}" class="finance-btn finance-btn-secondary">Clear</a>
                 @endif
             </div>
         </form>
 
-        <section class="finance-panel">
-            <div class="finance-section-head">
-                <div>
-                    <div class="finance-section-title">Jobs</div>
-                    <div class="finance-row-meta">{{ $jobs->total() }} {{ Illuminate\Support\Str::plural('job', $jobs->total()) }} found</div>
-                </div>
+        @if($jobs->isEmpty())
+            <div class="finance-empty-message">
+                <div class="finance-empty-icon">📋</div>
+                <div class="finance-empty-title">No jobs found</div>
+                <div class="finance-empty-text">No jobs match your search. Try adjusting your filters.</div>
             </div>
-
-            @if($jobs->isEmpty())
-                <div class="px-5 py-12 text-center finance-muted">No jobs found.</div>
-            @else
-                <div class="finance-list">
-                    @foreach($jobs as $job)
-                        @php
-                            $client = $job->jobRequest?->client;
-                            $lastExpense = $job->financialExpenses()->latest('incurred_on')->latest('created_at')->first();
-                        @endphp
-                        <div class="finance-row">
-                            <div>
-                                <div class="finance-row-title">{{ $job->title ?: $job->jobRequest?->title }}</div>
-                                <div class="finance-row-meta">{{ $client?->company_name ?: $client?->client_name ?: 'Client unavailable' }}</div>
+        @else
+            <div class="finance-jobs-list">
+                @foreach($jobs as $job)
+                    @php
+                        $client = $job->jobRequest?->client;
+                        $jobTitle = $job->title ?: $job->jobRequest?->title ?: 'Untitled job';
+                        $clientName = $client?->company_name ?: $client?->client_name ?: 'Client unavailable';
+                        $staffName = $job->claimer?->name ?? 'Unassigned';
+                        $totalSpent = $job->expenses_total ?? 0;
+                    @endphp
+                    <a href="{{ route('finance.jobs.show', $job) }}" class="finance-job-card">
+                        <div class="finance-job-header">
+                            <div class="finance-job-title">{{ $jobTitle }}</div>
+                            <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}</span>
+                        </div>
+                        <div class="finance-job-info">
+                            <div class="finance-job-detail">
+                                <span class="finance-job-label">Client</span>
+                                <span class="finance-job-value">{{ $clientName }}</span>
                             </div>
-                            <div>
-                                <div class="finance-row-meta">Assigned staff</div>
-                                <div class="font-bold text-gray-800">{{ $job->claimer?->name ?? 'Unassigned' }}</div>
+                            <div class="finance-job-detail">
+                                <span class="finance-job-label">Staff</span>
+                                <span class="finance-job-value">{{ $staffName }}</span>
                             </div>
-                            <div>
-                                <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}</span>
-                                <div class="mt-2 text-xs text-gray-500">{{ $lastExpense?->incurred_on?->format('M j, Y') ?? $lastExpense?->created_at?->format('M j, Y') ?? 'No expenses' }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-extrabold text-gray-950">{{ $financeMoney($job->approved_expenses_total ?? 0) }}</div>
-                                <a href="{{ route('finance.jobs.show', $job) }}" class="finance-btn finance-btn-primary mt-2">View</a>
+                            <div class="finance-job-detail finance-job-detail-amount">
+                                <span class="finance-job-label">Total Spent</span>
+                                <span class="finance-job-value-amount">{{ $financeMoney($totalSpent) }}</span>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            @endif
-        </section>
+                    </a>
+                @endforeach
+            </div>
 
-        <div class="mt-5">
-            {{ $jobs->links() }}
-        </div>
+            <div class="finance-pagination">
+                {{ $jobs->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection

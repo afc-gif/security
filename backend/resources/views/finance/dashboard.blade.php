@@ -53,63 +53,64 @@
             </div>
         </div>
 
-        <div class="finance-dashboard-grid">
-            <section class="finance-panel">
-                <div class="finance-section-head">
-                    <div class="finance-section-title">Recent Jobs</div>
-                    <a href="{{ route('finance.jobs.index') }}" class="finance-card-link">View all jobs <span aria-hidden="true">-></span></a>
-                </div>
+        <div class="finance-section-container">
+            <div class="finance-section-header">
+                <h2 class="finance-section-title">Recent Activity</h2>
+                <a href="{{ route('finance.jobs.index') }}" class="finance-card-link">View all <span aria-hidden="true">-></span></a>
+            </div>
 
-                @if($recentJobs->isEmpty())
-                    <div class="px-5 py-10 text-center finance-muted">No jobs available yet.</div>
+            <div class="finance-overview-cards">
+                @if($recentJobs->isEmpty() && $recentProjects->isEmpty())
+                    <div class="finance-empty-state">
+                        <div class="finance-empty-icon">📊</div>
+                        <div class="finance-empty-title">No activity yet</div>
+                        <div class="finance-empty-text">Create or assign jobs and projects to see them here</div>
+                    </div>
                 @else
-                    <div class="finance-list">
-                        @foreach($recentJobs as $job)
-                            @php($client = $job->jobRequest?->client)
-                            <div class="finance-row finance-dashboard-row">
-                                <span class="finance-stat-icon" aria-hidden="true">JB</span>
-                                <div>
-                                    <div class="finance-row-title">{{ $job->title ?: $job->jobRequest?->title ?: 'Untitled job' }}</div>
-                                    <div class="finance-row-meta">Client: {{ $client?->company_name ?: $client?->client_name ?: 'Client unavailable' }}</div>
-                                </div>
-                                <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}</span>
-                                <a href="{{ route('finance.jobs.show', $job) }}" class="finance-btn finance-btn-primary">View</a>
+                    @if(!$recentJobs->isEmpty())
+                        <div class="finance-overview-subsection">
+                            <div class="finance-subsection-header">
+                                <h3 class="finance-subsection-title">Jobs</h3>
+                                <span class="finance-count-badge">{{ $recentJobs->count() }}</span>
                             </div>
-                        @endforeach
-                    </div>
-                    <div class="finance-dashboard-footer">
-                        <a href="{{ route('finance.jobs.index') }}" class="finance-card-link">View all jobs <span aria-hidden="true">-></span></a>
-                    </div>
-                @endif
-            </section>
-
-            <section class="finance-panel">
-                <div class="finance-section-head">
-                    <div class="finance-section-title">Recent Projects</div>
-                    <a href="{{ route('finance.projects.index') }}" class="finance-card-link">View all projects <span aria-hidden="true">-></span></a>
-                </div>
-
-                @if($recentProjects->isEmpty())
-                    <div class="px-5 py-10 text-center finance-muted">No projects available yet.</div>
-                @else
-                    <div class="finance-list">
-                        @foreach($recentProjects as $project)
-                            <div class="finance-row finance-dashboard-row">
-                                <span class="finance-stat-icon" aria-hidden="true">PJ</span>
-                                <div>
-                                    <div class="finance-row-title">{{ $project->title ?: $project->project_code }}</div>
-                                    <div class="finance-row-meta">Client: {{ $project->client?->company_name ?: $project->client?->client_name ?: 'Client unavailable' }}</div>
-                                </div>
-                                <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
-                                <a href="{{ route('finance.projects.show', $project) }}" class="finance-btn finance-btn-primary">View</a>
+                            <div class="finance-card-grid">
+                                @foreach($recentJobs->take(3) as $job)
+                                    @php($client = $job->jobRequest?->client)
+                                    <a href="{{ route('finance.jobs.show', $job) }}" class="finance-overview-card">
+                                        <div class="finance-card-icon">JB</div>
+                                        <div class="finance-card-content">
+                                            <div class="finance-card-title">{{ $job->title ?: $job->jobRequest?->title ?: 'Untitled job' }}</div>
+                                            <div class="finance-card-client">{{ $client?->company_name ?: $client?->client_name ?: 'Client unavailable' }}</div>
+                                        </div>
+                                        <span class="finance-card-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}</span>
+                                    </a>
+                                @endforeach
                             </div>
-                        @endforeach
-                    </div>
-                    <div class="finance-dashboard-footer">
-                        <a href="{{ route('finance.projects.index') }}" class="finance-card-link">View all projects <span aria-hidden="true">-></span></a>
-                    </div>
+                        </div>
+                    @endif
+
+                    @if(!$recentProjects->isEmpty())
+                        <div class="finance-overview-subsection">
+                            <div class="finance-subsection-header">
+                                <h3 class="finance-subsection-title">Projects</h3>
+                                <span class="finance-count-badge">{{ $recentProjects->count() }}</span>
+                            </div>
+                            <div class="finance-card-grid">
+                                @foreach($recentProjects->take(3) as $project)
+                                    <a href="{{ route('finance.projects.show', $project) }}" class="finance-overview-card">
+                                        <div class="finance-card-icon">PJ</div>
+                                        <div class="finance-card-content">
+                                            <div class="finance-card-title">{{ $project->title ?: $project->project_code }}</div>
+                                            <div class="finance-card-client">{{ $project->client?->company_name ?: $project->client?->client_name ?: 'Client unavailable' }}</div>
+                                        </div>
+                                        <span class="finance-card-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 @endif
-            </section>
+            </div>
         </div>
 
         <div class="finance-banner">
