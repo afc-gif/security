@@ -10,21 +10,19 @@
         <div class="finance-header">
             <div>
                 <div class="finance-eyebrow">Projects</div>
-                <h1 class="finance-title">Review project value, costs, and profit.</h1>
-                <p class="finance-subtitle">Open a project to manage its financial workspace.</p>
+                <h1 class="finance-title">Project Financial Overview</h1>
+                <p class="finance-subtitle">Manage project values, payments, and expenses.</p>
             </div>
         </div>
 
         @if (session('success'))
-            <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
-                {{ session('success') }}
-            </div>
+            <div class="finance-success-alert">{{ session('success') }}</div>
         @endif
 
-        <form method="GET" action="{{ route('finance.projects.index') }}" class="finance-panel-flat finance-filter finance-filter-compact">
-            <div class="finance-field">
-                <label for="status">Status</label>
-                <select id="status" name="status">
+        <form method="GET" action="{{ route('finance.projects.index') }}" class="finance-filter-bar">
+            <div class="finance-filter-content">
+                <input type="search" name="search" placeholder="Search projects..." value="{{ $filters['search'] ?? '' }}" class="finance-filter-input">
+                <select name="status" class="finance-filter-select">
                     <option value="">All statuses</option>
                     @foreach(['not_started', 'ongoing', 'on_hold', 'ready_for_review', 'completed'] as $status)
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>
@@ -32,57 +30,64 @@
                         </option>
                     @endforeach
                 </select>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="finance-btn finance-btn-primary">Apply</button>
-                @if($filters['status'] ?? null)
-                    <a href="{{ route('finance.projects.index') }}" class="finance-btn finance-btn-secondary">Reset</a>
-                @endif
+                <button type="submit" class="finance-btn finance-btn-primary">Filter</button>
             </div>
         </form>
 
-        <section class="finance-panel">
-            <div class="finance-section-head">
-                <div>
-                    <div class="finance-section-title">Projects</div>
-                    <div class="finance-row-meta">{{ $projects->total() }} {{ Illuminate\Support\Str::plural('project', $projects->total()) }} found</div>
-                </div>
+        @if($projects->isEmpty())
+            <div class="finance-empty-message">
+                <div class="finance-empty-icon">📋</div>
+                <div class="finance-empty-title">No projects found</div>
+                <div class="finance-empty-text">There are currently no projects to display.</div>
             </div>
-
-            @if($projects->isEmpty())
-                <div class="px-5 py-12 text-center finance-muted">No projects found.</div>
-            @else
-                <div class="finance-list">
-                    @foreach($projects as $project)
-                        @php($summary = $summaries[$project->id])
-                        <div class="finance-row">
-                            <div>
-                                <div class="finance-row-title">{{ $project->title ?: $project->project_code }}</div>
-                                <div class="finance-row-meta">{{ $project->client?->company_name ?: $project->client?->client_name ?: 'Client unavailable' }}</div>
+        @else
+            <div class="finance-jobs-list">
+                @foreach($projects as $project)
+                    @php
+                        $summary = $summaries[$project->id];
+                        $balanceColor = !empty($summary['is_overpaid']) ? '#059669' : (($summary['balance_due'] ?? 0) > 0 ? '#f59e0b' : '#059669');
+                    @endphp
+                    <a href="{{ route('finance.projects.show', $project) }}" class="finance-job-card">
+                        <div class="finance-job-header">
+                            <h3 class="finance-job-title">{{ $project->title ?: $project->project_code }}</h3>
+                        </div>
+                        <div class="finance-job-info">
+                            <div class="finance-job-detail">
+                                <div class="finance-job-label">Client</div>
+                                <div class="finance-job-value">{{ $project->client?->company_name ?: $project->client?->client_name ?: 'N/A' }}</div>
                             </div>
-                            <div>
-                                <div class="finance-row-meta">Project value</div>
-                                <div class="font-extrabold text-gray-950">{{ $summary['contract_value'] === null ? '-' : $financeMoney($summary['contract_value']) }}</div>
+                            <div class="finance-job-detail">
+                                <div class="finance-job-label">Project Value</div>
+                                <div class="finance-job-value-amount">{{ $summary['contract_value'] === null ? '-' : $financeMoney($summary['contract_value']) }}</div>
                             </div>
-                            <div>
-                                <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
-                                <div class="mt-2 text-xs text-gray-500">Costs {{ $financeMoney($summary['approved_cost']) }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-extrabold {{ ($summary['estimated_profit'] ?? 0) < 0 ? 'text-red-700' : 'text-gray-950' }}">
-                                    {{ $summary['estimated_profit'] === null ? '-' : $financeMoney($summary['estimated_profit']) }}
+                            <div class="finance-job-detail finance-job-detail-amount">
+                                <div class="finance-job-label">Balance Due</div>
+                                <div class="finance-job-value-amount" style="color: {{ $balanceColor }};">
+                                    @if($summary['contract_value'] === null)
+                                        -
+                                    @elseif(!empty($summary['is_overpaid']))
+                                        Overpaid ({{ $financeMoney($summary['overpaid_amount']) }})
+                                    @else
+                                        {{ $financeMoney($summary['balance_due']) }}
+                                    @endif
                                 </div>
-                                <a href="{{ route('finance.projects.show', $project) }}" class="finance-btn finance-btn-primary mt-2">View</a>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            @endif
-        </section>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
+                            <div style="display: flex; gap: 6px;">
+                                <span class="finance-status">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
+                                <span class="finance-status" style="background-color: #f0eaff; color: #4f24e8;">Spent: {{ $financeMoney($summary['approved_cost']) }}</span>
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
 
-        <div class="mt-5">
-            {{ $projects->links() }}
-        </div>
+            <div class="finance-pagination">
+                {{ $projects->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection
+

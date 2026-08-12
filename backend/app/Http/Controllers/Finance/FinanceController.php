@@ -12,6 +12,7 @@ use App\Models\Inspection;
 use App\Models\JobRequestItem;
 use App\Models\Project;
 use App\Models\ProjectFinancial;
+use App\Models\ProjectPayment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -403,6 +404,8 @@ class FinanceController extends Controller
             $this->ensureFinanceExpense($documentable);
         } elseif ($documentable instanceof FinancialMaterialCost) {
             $this->ensureProjectMaterialCost($documentable);
+        } elseif ($documentable instanceof ProjectPayment) {
+            // Accessible to finance users
         } else {
             abort(404);
         }
@@ -420,7 +423,7 @@ class FinanceController extends Controller
 
     public function projects(Request $request)
     {
-        $filters = $request->only(['status']);
+        $filters = $request->only(['status', 'search']);
 
         $projects = Project::query()
             ->with(['client', 'financial'])
@@ -428,6 +431,13 @@ class FinanceController extends Controller
                 'financialExpenses',
                 'financialMaterialCosts',
             ])
+            ->when($filters['search'] ?? null, function (Builder $query, $search) {
+                $query->where(function (Builder $q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhere('project_code', 'like', "%{$search}%")
+                        ->orWhereHas('client', fn (Builder $cq) => $cq->where('company_name', 'like', "%{$search}%")->orWhere('client_name', 'like', "%{$search}%"));
+                });
+            })
             ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('status', $status))
             ->latest()
             ->paginate(10);
@@ -456,6 +466,8 @@ class FinanceController extends Controller
             'financialMaterialCosts.submitter',
             'financialMaterialCosts.approver',
             'financialMaterialCosts.documents.uploader',
+            'payments.recorder',
+            'payments.documents.uploader',
         ]);
 
         $summary = $this->projectFinancialSummary($project);
@@ -987,9 +999,13 @@ class FinanceController extends Controller
             ->where('status', FinancialMaterialCost::STATUS_APPROVED)
             ->sum('total_cost');
 
+        $totalPaid = (float) $project->payments()->sum('amount');
         $approvedCost = $approvedExpenses + $approvedMaterials;
         $approvedBudget = $financial?->approved_budget !== null ? (float) $financial->approved_budget : null;
         $contractValue = $financial?->contract_value !== null ? (float) $financial->contract_value : null;
+        $isOverpaid = $contractValue !== null && $totalPaid > $contractValue;
+        $overpaidAmount = $isOverpaid ? $totalPaid - $contractValue : 0;
+        $balanceDue = $contractValue !== null ? max(0, $contractValue - $totalPaid) : null;
 
         return [
             'contract_value' => $contractValue,
@@ -1000,6 +1016,10 @@ class FinanceController extends Controller
             'remaining_budget' => $approvedBudget === null ? null : $approvedBudget - $approvedCost,
             'estimated_profit' => $contractValue === null ? null : $contractValue - $approvedCost,
             'is_over_budget' => $approvedBudget !== null && $approvedCost > $approvedBudget,
+            'total_paid' => $totalPaid,
+            'balance_due' => $balanceDue,
+            'is_overpaid' => $isOverpaid,
+            'overpaid_amount' => $overpaidAmount,
         ];
     }
 
@@ -1106,5 +1126,52 @@ class FinanceController extends Controller
         }
 
         return "{$existing}\n\n{$label}: {$note}";
+    }
+
+    public function storeProjectPayment(Request $request, Project $project)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0'],
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        DB::transaction(function () use ($request, $project, $validated) {
+            $payment = ProjectPayment::create([
+                'project_id' => $project->id,
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'recorded_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $this->storeFinancialDocument($request, $payment);
+        });
+
+        return redirect()
+            ->route('finance.projects.show', $project)
+            ->with('success', 'Payment recorded successfully.');
+    }
+
+    public function destroyProjectPayment(Request $request, Project $project, ProjectPayment $payment)
+    {
+        $this->authorizeFinance(FinancePermission::DELETE);
+
+        abort_unless($payment->project_id === $project->id, 404);
+
+        $payment->delete();
+
+        return redirect()
+            ->route('finance.projects.show', $project)
+            ->with('success', 'Payment deleted.');
     }
 }

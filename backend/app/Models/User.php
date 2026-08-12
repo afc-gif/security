@@ -102,7 +102,7 @@ class User extends Model implements AuthenticatableContract
 
     public function hasFinancePermission(string $permission): bool
     {
-        return $this->isFinance();
+        return $this->isFinance() || $this->financePermissions()->where('slug', $permission)->exists();
     }
 
     public function isPending()

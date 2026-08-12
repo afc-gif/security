@@ -5,8 +5,8 @@
     $isDashboardSidebar = $sidebarMode === 'dashboard';
     $currentUser = auth()->user();
     $isFinanceUser = $currentUser?->isFinance() ?? false;
-    $canViewFinance = $isFinanceUser && ($currentUser?->hasFinancePermission(FinancePermission::VIEW) ?? false);
-    $financeInitials = collect(explode(' ', trim($currentUser?->name ?? 'Finance')))
+    $canViewFinance = $currentUser?->hasFinancePermission(FinancePermission::VIEW) ?? false;
+    $financeInitials = collect(explode(' ', trim($currentUser?->name ?? 'User')))
         ->filter()
         ->take(2)
         ->map(fn ($part) => Illuminate\Support\Str::upper(Illuminate\Support\Str::substr($part, 0, 1)))

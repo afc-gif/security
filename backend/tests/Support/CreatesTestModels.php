@@ -91,8 +91,20 @@ trait CreatesTestModels
 
     protected function createOrderItem(Order $order, SolutionItem $item, array $overrides = []): OrderItem
     {
+        $product = Product::firstOrCreate(
+            ['id' => $item->id],
+            [
+                'name' => $item->name,
+                'description' => $item->description ?? 'Test product',
+                'price' => $item->price,
+                'stock' => $item->stock ?? 10,
+                'category' => 'General',
+            ]
+        );
+
         return OrderItem::create(array_merge([
             'order_id' => $order->id,
+            'product_id' => $product->id,
             'solution_item_id' => $item->id,
             'name' => $item->name,
             'quantity' => 1,

@@ -108,6 +108,11 @@ class Project extends Model
         return $this->hasMany(FinancialMaterialCost::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(ProjectPayment::class);
+    }
+
     public function isBeingEdited(): bool
     {
         return $this->active_editor_id !== null && !$this->editingLockExpired();

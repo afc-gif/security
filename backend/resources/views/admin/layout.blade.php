@@ -2019,7 +2019,7 @@
                 border-radius: 8px;
             }
 
-            /* Premium Mobile Finance Shell Styles */
+            /* Premium Mobile finance shell styles */
             body.finance-shell .finance-mobile-topbar {
                 min-height: 70px;
                 padding: 12px 14px 12px 64px;
@@ -2825,6 +2825,87 @@
 
             body.finance-shell .finance-modal-actions .finance-btn {
                 width: 100%;
+            }
+
+            /* Project Financial Summary Grid */
+            body.finance-shell .finance-project-financial-grid {
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 12px;
+                margin: 24px 0;
+            }
+
+            body.finance-shell .finance-financial-card {
+                background: #fff;
+                border: 1px solid rgba(226,232,240,0.6);
+                border-radius: 10px;
+                padding: 14px;
+                text-align: center;
+            }
+
+            body.finance-shell .finance-financial-label {
+                font-size: 10px;
+                font-weight: 850;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                margin-bottom: 6px;
+            }
+
+            body.finance-shell .finance-financial-amount {
+                font-size: 18px;
+                font-weight: 900;
+                color: #0a0e27;
+                line-height: 1;
+            }
+
+            body.finance-shell .finance-payment-item {
+                display: flex;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 14px;
+                background: #fff;
+                border: 1px solid rgba(226,232,240,0.6);
+                border-radius: 10px;
+                transition: all 0.2s ease;
+            }
+
+            body.finance-shell .finance-payment-item:hover {
+                border-color: rgba(79,36,232,0.2);
+                box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+            }
+
+            body.finance-shell .finance-payment-amount {
+                font-size: 15px;
+                font-weight: 850;
+                color: #059669;
+            }
+
+            @media (max-width: 960px) {
+                body.finance-shell .finance-project-financial-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 10px;
+                }
+            }
+
+            @media (max-width: 640px) {
+                body.finance-shell .finance-project-financial-grid {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                    margin: 16px 0;
+                }
+
+                body.finance-shell .finance-financial-card {
+                    padding: 12px;
+                }
+
+                body.finance-shell .finance-financial-label {
+                    font-size: 9px;
+                }
+
+                body.finance-shell .finance-financial-amount {
+                    font-size: 16px;
+                }
             }
         }
     </style>

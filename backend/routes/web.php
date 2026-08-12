@@ -288,6 +288,12 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
         ->name('projects.expenses.store');
     Route::post('/projects/{project}/financial', [FinanceController::class, 'saveProjectFinancial'])
         ->name('projects.financial.save');
+    Route::post('/projects/{project}/payments', [FinanceController::class, 'storeProjectPayment'])
+        ->middleware('finance.permission:finance.create')
+        ->name('projects.payments.store');
+    Route::delete('/projects/{project}/payments/{payment}', [FinanceController::class, 'destroyProjectPayment'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('projects.payments.destroy');
     Route::get('/projects/{project}/material-costs/create', [FinanceController::class, 'createMaterialCost'])
         ->middleware('finance.permission:finance.create')
         ->name('material-costs.create');

@@ -110,7 +110,8 @@ class FinancePhase3Test extends TestCase
             ->get(route('finance.projects.show', $project))
             ->assertOk()
             ->assertSee('₦4,000.00')
-            ->assertSee('Remaining budget ₦1,000.00')
+            ->assertSee('Estimated Profit')
+            ->assertSee('₦1,000.00')
             ->assertSee('₦6,000.00')
             ->assertDontSee('₦5,200.00');
     }
