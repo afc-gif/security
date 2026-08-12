@@ -20,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
             $notifications = collect();
 
             try {
-                if (auth()->check() && auth()->user()?->isAdmin() && Schema::hasTable('admin_notifications')) {
+                $user = auth()->user();
+                if ($user instanceof \App\Models\User && $user->isAdmin() && Schema::hasTable('admin_notifications')) {
                     $notifications = AdminNotification::query()
                         ->where('user_id', auth()->id())
                         ->whereNull('read_at')
