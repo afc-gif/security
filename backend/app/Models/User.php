@@ -60,7 +60,7 @@ class User extends Model implements AuthenticatableContract
 
     public function isAdmin()
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'manager'], true);
     }
 
     public function isPos()

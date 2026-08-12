@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class JobItemController extends Controller
@@ -155,13 +156,14 @@ class JobItemController extends Controller
             ]);
 
             $adminNote = trim((string) ($validated['admin_note'] ?? ''));
+            $userId = $request->user()?->id ?? $lockedItem->created_by;
 
-            if ($adminNote !== '' && $request->user()) {
+            if ($userId) {
                 JobItemAttempt::create([
                     'job_request_item_id' => $lockedItem->id,
-                    'user_id' => $request->user()->id,
+                    'user_id' => $userId,
                     'status' => JobItemAttempt::STATUS_RETURNED,
-                    'notes' => "Reopened by admin: {$adminNote}",
+                    'notes' => $adminNote !== '' ? "Reopened by admin: {$adminNote}" : 'Reopened by admin',
                 ]);
             }
 
@@ -271,7 +273,7 @@ class JobItemController extends Controller
             ]);
     }
 
-    private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote, $requirements): void
+    private function approve(JobRequestItem $jobItem, JobItemAttempt $attempt, string $adminNote, array|Collection $requirements): void
     {
         $jobItem->update([
             'status' => JobRequestItem::STATUS_APPROVED,
