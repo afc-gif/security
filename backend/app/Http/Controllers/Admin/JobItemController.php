@@ -81,15 +81,14 @@ class JobItemController extends Controller
                 ->withInput();
         }
 
-        DB::transaction(function () use ($jobItem, $action, $adminNote, $requirements) {
+        $errorMessage = DB::transaction(function () use ($jobItem, $action, $adminNote, $requirements) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
-                ->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)
                 ->lockForUpdate()
                 ->first();
 
-            if (!$lockedItem) {
-                abort(409, 'This job item is not awaiting review.');
+            if (!$lockedItem || $lockedItem->status !== JobRequestItem::STATUS_PENDING_ADMIN_REVIEW) {
+                return 'This job item is not awaiting review.';
             }
 
             $latestAttempt = JobItemAttempt::query()
@@ -99,7 +98,7 @@ class JobItemController extends Controller
                 ->first();
 
             if (!$latestAttempt || !in_array($latestAttempt->status, [JobItemAttempt::STATUS_COORDINATOR_APPROVED, JobItemAttempt::STATUS_SUBMITTED], true)) {
-                abort(409, 'No submitted or coordinator-approved attempt is available for review.');
+                return 'No submitted or coordinator-approved attempt is available for review.';
             }
 
             match ($action) {
@@ -107,7 +106,13 @@ class JobItemController extends Controller
                 'return' => $this->returnForFix($lockedItem, $latestAttempt, $adminNote),
                 'reject' => $this->rejectAndReopen($lockedItem, $latestAttempt, $adminNote),
             };
+
+            return null;
         });
+
+        if ($errorMessage) {
+            return back()->withErrors(['review' => $errorMessage])->withInput();
+        }
 
         return redirect()
             ->route('admin.job-items.show', $jobItem)
@@ -124,7 +129,7 @@ class JobItemController extends Controller
             'admin_note' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($jobItem, $request, $validated) {
+        $errorMessage = DB::transaction(function () use ($jobItem, $request, $validated) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
                 ->lockForUpdate()
@@ -134,8 +139,11 @@ class JobItemController extends Controller
                 JobRequestItem::STATUS_OVERDUE,
                 JobRequestItem::STATUS_CLOSED,
                 JobRequestItem::STATUS_REJECTED,
+                JobRequestItem::STATUS_OPEN,
+                JobRequestItem::STATUS_CLAIMED,
+                JobRequestItem::STATUS_RETURNED,
             ], true))) {
-                abort(409, 'This job item cannot be reopened in its current state.');
+                return 'This job item cannot be reopened in its current state.';
             }
 
             $lockedItem->update([
@@ -148,15 +156,21 @@ class JobItemController extends Controller
 
             $adminNote = trim((string) ($validated['admin_note'] ?? ''));
 
-            if ($adminNote !== '') {
+            if ($adminNote !== '' && $request->user()) {
                 JobItemAttempt::create([
                     'job_request_item_id' => $lockedItem->id,
                     'user_id' => $request->user()->id,
-                    'status' => JobRequestItem::STATUS_REOPENED,
+                    'status' => JobItemAttempt::STATUS_RETURNED,
                     'notes' => "Reopened by admin: {$adminNote}",
                 ]);
             }
+
+            return null;
         });
+
+        if ($errorMessage) {
+            return back()->withErrors(['reopen' => $errorMessage])->withInput();
+        }
 
         return redirect()
             ->route('admin.job-items.show', $jobItem)

@@ -187,7 +187,7 @@ class JobRequestController extends Controller
             JobRequestItem::STATUS_CLAIMED,
             JobRequestItem::STATUS_RETURNED,
         ], true)) {
-            abort(409, 'Checklist cannot be changed for this job status.');
+            return back()->withErrors(['checklist' => 'Checklist cannot be changed for this job status.']);
         }
 
         $checklistItem->delete();
@@ -210,7 +210,7 @@ class JobRequestController extends Controller
             JobRequestItem::STATUS_CLAIMED,
             JobRequestItem::STATUS_RETURNED,
         ], true)) {
-            abort(409, 'Checklist cannot be changed for this job status.');
+            return back()->withErrors(['checklist' => 'Checklist cannot be changed for this job status.']);
         }
 
         $jobItem->ensureChecklistFromCategory();
