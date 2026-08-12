@@ -1,20 +1,15 @@
 @extends('admin.layout')
 
-@section('title', 'Project Finance | ARTSCI Admin Console')
+@section('title', 'Finance Projects | ARTSCI Admin Console')
 
 @section('content')
 <div class="min-h-screen bg-gray-100">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         @include('finance.partials.nav')
 
-        <div class="flex flex-col gap-4 mb-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-950">Project Finance</h1>
-                <p class="text-sm text-gray-600 mt-1">Private project financial profiles, costs, and profitability tracking.</p>
-            </div>
-            <a href="{{ route('finance.dashboard') }}" class="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 font-bold text-gray-800 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-50">
-                Finance Dashboard
-            </a>
+        <div class="mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-950">Projects</h1>
+            <p class="mt-1 text-sm text-gray-600">Open a project to review value, costs, materials, and expenses.</p>
         </div>
 
         @if (session('success'))
@@ -24,75 +19,111 @@
         @endif
 
         <form method="GET" action="{{ route('finance.projects.index') }}" class="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-[240px_auto] sm:items-end">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Project Status</label>
-                    <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                        <option value="">All</option>
+                    <label for="status" class="block text-sm font-bold text-gray-800">Status</label>
+                    <select id="status" name="status" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                        <option value="">All statuses</option>
                         @foreach(['not_started', 'ongoing', 'on_hold', 'ready_for_review', 'completed'] as $status)
-                            <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ str_replace('_', ' ', \Illuminate\Support\Str::title($status)) }}</option>
+                            <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>
+                                {{ str_replace('_', ' ', Illuminate\Support\Str::title($status)) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
-            </div>
-            <div class="mt-4 flex gap-2">
-                <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 font-bold text-white hover:bg-gray-800">Apply</button>
-                <a href="{{ route('finance.projects.index') }}" class="rounded-lg bg-gray-100 px-4 py-2 font-bold text-gray-800 hover:bg-gray-200">Clear</a>
+                <div class="flex gap-2">
+                    <button type="submit" class="inline-flex min-h-[42px] items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700">
+                        Apply
+                    </button>
+                    @if($filters['status'] ?? null)
+                        <a href="{{ route('finance.projects.index') }}" class="inline-flex min-h-[42px] items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-50">
+                            Reset
+                        </a>
+                    @endif
+                </div>
             </div>
         </form>
 
         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            @if($projects->count() === 0)
-                <div class="p-10 text-center text-gray-600">No projects match the selected filters.</div>
+            <div class="border-b border-gray-200 px-5 py-4">
+                <h2 class="text-lg font-extrabold text-gray-950">All Projects</h2>
+                <p class="mt-1 text-sm text-gray-600">{{ $projects->total() }} {{ Illuminate\Support\Str::plural('project', $projects->total()) }} found</p>
+            </div>
+
+            @if($projects->isEmpty())
+                <div class="px-5 py-12 text-center">
+                    <div class="text-lg font-extrabold text-gray-950">No projects found</div>
+                    <p class="mt-2 text-sm text-gray-600">Try clearing the status filter.</p>
+                </div>
             @else
-                <div class="overflow-x-auto">
+                <div class="hidden lg:block">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Project</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Client</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Contract</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Budget</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Approved Cost</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Est. Profit</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Finance Status</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Actions</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Project</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Client</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Status</th>
+                                <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-gray-500">Project Value</th>
+                                <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-gray-500">Approved Costs</th>
+                                <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-gray-500">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-gray-100 bg-white">
                             @foreach($projects as $project)
                                 @php($summary = $summaries[$project->id])
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3">
-                                        <div class="font-semibold text-gray-900">{{ $project->project_code }}</div>
-                                        <div class="text-xs text-gray-500 max-w-[260px] truncate">{{ $project->title }}</div>
+                                    <td class="px-5 py-4">
+                                        <div class="font-extrabold text-gray-950">{{ $project->title ?: $project->project_code }}</div>
+                                        <div class="mt-1 text-sm text-gray-600">{{ $project->project_code }}</div>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ $project->client?->client_name ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $summary['contract_value'] === null ? '—' : $financeMoney($summary['contract_value']) }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $summary['approved_budget'] === null ? '—' : $financeMoney($summary['approved_budget']) }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900 font-semibold text-right whitespace-nowrap">{{ $financeMoney($summary['approved_cost']) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right whitespace-nowrap font-semibold {{ ($summary['estimated_profit'] ?? 0) < 0 ? 'text-red-700' : 'text-gray-900' }}">{{ $summary['estimated_profit'] === null ? '—' : $financeMoney($summary['estimated_profit']) }}</td>
-                                    <td class="px-4 py-3">
-                                        @if($summary['is_over_budget'])
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">Over budget</span>
-                                        @elseif($project->financial)
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Profile active</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700">No profile</span>
-                                        @endif
+                                    <td class="px-5 py-4 text-sm font-bold text-gray-800">{{ $project->client?->company_name ?: $project->client?->client_name ?: 'Client unavailable' }}</td>
+                                    <td class="px-5 py-4">
+                                        <span class="inline-flex rounded-md bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-800">
+                                            {{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex justify-end">
-                                            <a href="{{ route('finance.projects.show', $project) }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-semibold">View</a>
-                                        </div>
+                                    <td class="px-5 py-4 text-right font-extrabold text-gray-950">{{ $summary['contract_value'] === null ? '-' : $financeMoney($summary['contract_value']) }}</td>
+                                    <td class="px-5 py-4 text-right">
+                                        <div class="font-extrabold text-gray-950">{{ $financeMoney($summary['approved_cost']) }}</div>
+                                        <div class="mt-1 text-xs text-gray-500">Expenses {{ $financeMoney($summary['approved_expenses']) }}</div>
+                                    </td>
+                                    <td class="px-5 py-4 text-right">
+                                        <a href="{{ route('finance.projects.show', $project) }}" class="inline-flex items-center justify-center rounded-md bg-gray-900 px-3 py-2 text-sm font-bold text-white transition hover:bg-gray-800">
+                                            View
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <div class="px-4 py-3 border-t border-gray-200">{{ $projects->links() }}</div>
+
+                <div class="divide-y divide-gray-100 lg:hidden">
+                    @foreach($projects as $project)
+                        @php($summary = $summaries[$project->id])
+                        <a href="{{ route('finance.projects.show', $project) }}" class="block px-5 py-4 hover:bg-gray-50">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="font-extrabold text-gray-950">{{ $project->title ?: $project->project_code }}</div>
+                                    <div class="mt-1 text-sm text-gray-600">{{ $project->client?->company_name ?: $project->client?->client_name ?: 'Client unavailable' }}</div>
+                                    <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                                        <span class="rounded-md bg-gray-100 px-2 py-1 font-bold text-gray-800">{{ str_replace('_', ' ', Illuminate\Support\Str::title($project->status)) }}</span>
+                                        <span class="rounded-md bg-gray-100 px-2 py-1 font-bold text-gray-800">{{ $project->project_code }}</span>
+                                    </div>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <div class="font-extrabold text-gray-950">{{ $summary['contract_value'] === null ? '-' : $financeMoney($summary['contract_value']) }}</div>
+                                    <div class="mt-1 text-xs text-gray-500">Costs {{ $financeMoney($summary['approved_cost']) }}</div>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
             @endif
+        </div>
+
+        <div class="mt-6">
+            {{ $projects->links() }}
         </div>
     </div>
 </div>

@@ -25,54 +25,15 @@ class FinanceController extends Controller
 {
     public function dashboard()
     {
-        $baseQuery = $this->preProjectExpensesQuery();
-
-        $pendingQuery = (clone $baseQuery)->where('status', FinancialExpense::STATUS_PENDING);
-        $approvedQuery = (clone $baseQuery)->where('status', FinancialExpense::STATUS_APPROVED);
-        $rejectedQuery = (clone $baseQuery)->where('status', FinancialExpense::STATUS_REJECTED);
-
-        $transportCategory = FinanceExpenseCategory::query()
-            ->where('slug', 'transportation')
-            ->first();
-
-        $transportQuery = $transportCategory
-            ? (clone $baseQuery)->where('finance_expense_category_id', $transportCategory->id)
-            : null;
-
-        $recentExpenses = (clone $baseQuery)
-            ->with($this->expenseRelations())
-            ->latest()
-            ->limit(8)
-            ->get();
-
-        $jobCount = JobRequestItem::query()->count();
-        $jobExpenseCount = FinancialExpense::query()
-            ->whereNotNull('job_request_item_id')
-            ->count();
-        $jobApprovedExpenseTotal = FinancialExpense::query()
-            ->whereNotNull('job_request_item_id')
-            ->where('status', FinancialExpense::STATUS_APPROVED)
-            ->sum('amount');
-
-        $projectFinancials = ProjectFinancial::query();
-        $approvedProjectExpenses = FinancialExpense::query()
-            ->whereNotNull('project_id')
-            ->where('status', FinancialExpense::STATUS_APPROVED);
-        $approvedProjectMaterials = FinancialMaterialCost::query()
-            ->whereNotNull('project_id')
-            ->where('status', FinancialMaterialCost::STATUS_APPROVED);
         $pendingMaterialCosts = FinancialMaterialCost::query()
             ->where('status', FinancialMaterialCost::STATUS_PENDING);
         $pendingProjectExpenses = FinancialExpense::query()
             ->whereNotNull('project_id')
             ->where('status', FinancialExpense::STATUS_PENDING);
-
-        $totalContractValue = (clone $projectFinancials)->sum('contract_value');
-        $totalApprovedBudget = (clone $projectFinancials)->sum('approved_budget');
-        $totalApprovedProjectExpenses = (clone $approvedProjectExpenses)->sum('amount');
-        $totalApprovedMaterialCosts = (clone $approvedProjectMaterials)->sum('total_cost');
-        $totalApprovedProjectCosts = $totalApprovedProjectExpenses + $totalApprovedMaterialCosts;
-        $estimatedProjectProfit = $totalContractValue - $totalApprovedProjectCosts;
+        $pendingJobExpenses = FinancialExpense::query()
+            ->whereNotNull('job_request_item_id')
+            ->whereNull('project_id')
+            ->where('status', FinancialExpense::STATUS_PENDING);
 
         $projectReviewCount = Project::query()
             ->whereDoesntHave('financial')
@@ -80,44 +41,43 @@ class FinanceController extends Controller
             ->orWhereHas('financialMaterialCosts', fn (Builder $query) => $query->where('status', FinancialMaterialCost::STATUS_PENDING))
             ->count();
 
-        $overBudgetProjectCount = Project::query()
-            ->with('financial')
-            ->get()
-            ->filter(fn (Project $project) => $this->projectFinancialSummary($project)['is_over_budget'])
+        $activeJobs = JobRequestItem::query()
+            ->whereNotIn('status', [
+                JobRequestItem::STATUS_CLOSED,
+                JobRequestItem::STATUS_REJECTED,
+            ])
             ->count();
+        $activeProjects = Project::query()
+            ->where('status', '!=', 'completed')
+            ->count();
+        $pendingReviewCount = (clone $pendingJobExpenses)->count()
+            + (clone $pendingProjectExpenses)->count()
+            + (clone $pendingMaterialCosts)->count();
 
-        $recentMaterialCosts = FinancialMaterialCost::query()
-            ->where('status', FinancialMaterialCost::STATUS_PENDING)
-            ->with(['project.client', 'submitter'])
+        $recentJobs = JobRequestItem::query()
+            ->with(['jobRequest.client', 'claimer'])
             ->latest()
-            ->limit(6)
+            ->limit(3)
+            ->get();
+        $recentProjects = Project::query()
+            ->with('client')
+            ->latest()
+            ->limit(3)
             ->get();
 
         return view('finance.dashboard', array_merge([
-            'pendingCount' => $pendingQuery->count(),
-            'pendingTotal' => $pendingQuery->sum('amount'),
-            'approvedCount' => $approvedQuery->count(),
-            'approvedTotal' => $approvedQuery->sum('amount'),
-            'rejectedCount' => $rejectedQuery->count(),
-            'transportCount' => $transportQuery?->count() ?? 0,
-            'transportTotal' => $transportQuery?->sum('amount') ?? 0,
-            'recentExpenses' => $recentExpenses,
-            'jobCount' => $jobCount,
-            'jobExpenseCount' => $jobExpenseCount,
-            'jobApprovedExpenseTotal' => $jobApprovedExpenseTotal,
-            'totalContractValue' => $totalContractValue,
-            'totalApprovedBudget' => $totalApprovedBudget,
-            'totalApprovedProjectExpenses' => $totalApprovedProjectExpenses,
-            'totalApprovedMaterialCosts' => $totalApprovedMaterialCosts,
-            'totalApprovedProjectCosts' => $totalApprovedProjectCosts,
-            'estimatedProjectProfit' => $estimatedProjectProfit,
-            'overBudgetProjectCount' => $overBudgetProjectCount,
+            'activeJobs' => $activeJobs,
+            'activeProjects' => $activeProjects,
+            'pendingReviewCount' => $pendingReviewCount,
             'projectReviewCount' => $projectReviewCount,
+            'recentJobs' => $recentJobs,
+            'recentProjects' => $recentProjects,
+            'pendingJobExpenseCount' => (clone $pendingJobExpenses)->count(),
+            'pendingJobExpenseTotal' => (clone $pendingJobExpenses)->sum('amount'),
             'pendingProjectExpenseCount' => (clone $pendingProjectExpenses)->count(),
             'pendingProjectExpenseTotal' => (clone $pendingProjectExpenses)->sum('amount'),
             'pendingMaterialCostCount' => (clone $pendingMaterialCosts)->count(),
             'pendingMaterialCostTotal' => (clone $pendingMaterialCosts)->sum('total_cost'),
-            'recentMaterialCosts' => $recentMaterialCosts,
         ], $this->viewHelpers()));
     }
 
@@ -181,7 +141,7 @@ class FinanceController extends Controller
             })
             ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('status', $status))
             ->latest()
-            ->paginate(20);
+            ->paginate(10);
 
         $jobs->appends($request->query());
 
@@ -466,7 +426,7 @@ class FinanceController extends Controller
             ])
             ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('status', $status))
             ->latest()
-            ->paginate(20);
+            ->paginate(10);
 
         $projects->appends($request->query());
 
@@ -495,6 +455,11 @@ class FinanceController extends Controller
         ]);
 
         $summary = $this->projectFinancialSummary($project);
+        $categories = FinanceExpenseCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
         $financialDocuments = $project->financialExpenses
             ->flatMap(fn (FinancialExpense $expense) => $expense->documents->map(fn (FinancialDocument $document) => [
                 'document' => $document,
@@ -510,9 +475,41 @@ class FinanceController extends Controller
             ->values();
 
         return view('finance.projects.show', array_merge(
-            compact('project', 'summary', 'financialDocuments'),
+            compact('project', 'summary', 'categories', 'financialDocuments'),
             $this->viewHelpers()
         ));
+    }
+
+    public function storeProjectExpense(Request $request, Project $project)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $this->validateJobExpense($request);
+
+        DB::transaction(function () use ($request, $project, $validated) {
+            $payload = [
+                'project_id' => $project->id,
+                'inspection_id' => null,
+                'job_request_item_id' => null,
+                'original_context_type' => Project::class,
+                'original_context_id' => $project->id,
+                'finance_expense_category_id' => $validated['finance_expense_category_id'],
+                'description' => $validated['description'],
+                'amount' => $validated['amount'],
+                'incurred_on' => $validated['incurred_on'] ?? null,
+                'status' => FinancialExpense::STATUS_PENDING,
+                'submitted_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ];
+
+            $expense = FinancialExpense::create($payload);
+            $this->storeFinancialDocument($request, $expense);
+        });
+
+        return redirect()
+            ->route('finance.projects.show', $project)
+            ->with('success', 'Expense added to this project.');
     }
 
     public function saveProjectFinancial(Request $request, Project $project)

@@ -283,6 +283,9 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
         ->name('jobs.expenses.store');
     Route::get('/projects', [FinanceController::class, 'projects'])->name('projects.index');
     Route::get('/projects/{project}', [FinanceController::class, 'projectShow'])->name('projects.show');
+    Route::post('/projects/{project}/expenses', [FinanceController::class, 'storeProjectExpense'])
+        ->middleware('finance.permission:finance.create')
+        ->name('projects.expenses.store');
     Route::post('/projects/{project}/financial', [FinanceController::class, 'saveProjectFinancial'])
         ->name('projects.financial.save');
     Route::get('/projects/{project}/material-costs/create', [FinanceController::class, 'createMaterialCost'])

@@ -336,6 +336,92 @@
             max-width: 100%;
         }
 
+        .finance-mobile-topbar {
+            display: none;
+        }
+
+        body.finance-shell .admin-shell {
+            grid-template-columns: 248px minmax(0, 1fr);
+        }
+
+        body.finance-shell .sidebar {
+            width: 248px;
+            padding: 16px;
+            background: rgba(255,255,255,0.98);
+            box-shadow: none;
+        }
+
+        body.finance-shell .admin-brand {
+            border: 0;
+            box-shadow: none;
+            padding: 6px 8px 14px;
+            border-bottom: 1px solid var(--brand-border);
+            border-radius: 0;
+        }
+
+        body.finance-shell .admin-brand img {
+            width: 42px;
+            height: 42px;
+        }
+
+        body.finance-shell .brand-name {
+            font-size: 19px;
+        }
+
+        body.finance-shell .admin-nav {
+            gap: 4px;
+            padding-right: 0;
+        }
+
+        body.finance-shell .nav-section {
+            padding: 0 8px;
+            margin-top: 8px;
+        }
+
+        body.finance-shell .nav-item,
+        body.finance-shell .nav-btn {
+            border-color: transparent;
+            background: transparent;
+            min-height: 40px;
+            padding: 9px 10px;
+        }
+
+        body.finance-shell .nav-item:hover,
+        body.finance-shell .nav-btn:hover {
+            background: var(--brand-soft);
+        }
+
+        body.finance-shell .nav-item:focus-visible,
+        body.finance-shell .nav-btn:focus-visible,
+        body.finance-shell .hamburger:focus-visible {
+            outline: 3px solid rgba(59, 130, 246, 0.35);
+            outline-offset: 2px;
+        }
+
+        body.finance-shell .nav-item.active,
+        body.finance-shell .nav-btn.active {
+            background: var(--brand-dark);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        body.finance-shell .admin-user {
+            background: transparent;
+        }
+
+        body.finance-shell .admin-content {
+            padding: 24px;
+        }
+
+        body.finance-shell.collapsed .admin-shell {
+            grid-template-columns: 72px minmax(0, 1fr);
+        }
+
+        body.finance-shell .sidebar.collapsed {
+            width: 72px;
+            padding: 12px;
+        }
+
         @media (max-width: 960px) {
             .admin-shell { grid-template-columns: 1fr; }
 
@@ -385,6 +471,48 @@
 
             .admin-content .sticky {
                 top: 0;
+            }
+
+            body.finance-shell .admin-shell {
+                grid-template-columns: 1fr;
+            }
+
+            body.finance-shell .finance-mobile-topbar {
+                display: flex;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 45;
+                min-height: 58px;
+                align-items: center;
+                padding: 8px 14px 8px 68px;
+                border-bottom: 1px solid var(--brand-border);
+                background: rgba(255,255,255,0.96);
+                backdrop-filter: blur(10px);
+            }
+
+            body.finance-shell .hamburger {
+                top: 8px;
+                left: 12px;
+                box-shadow: none;
+                z-index: 75;
+            }
+
+            body.finance-shell .sidebar,
+            body.finance-shell .sidebar.collapsed {
+                width: min(86vw, 320px);
+                max-width: 320px;
+                padding: 16px;
+            }
+
+            body.finance-shell .admin-brand {
+                border-bottom: 1px solid var(--brand-border);
+                padding: 8px 6px 14px;
+            }
+
+            body.finance-shell .admin-content {
+                padding: 76px 14px 18px;
             }
         }
 
@@ -497,11 +625,19 @@
     </style>
     @stack('styles')
 </head>
-<body>
+<body class="{{ request()->routeIs('finance.*') ? 'finance-shell' : '' }}">
     <div class="admin-shell">
         <button class="hamburger" id="toggleSidebar" type="button" aria-label="Toggle admin menu" aria-expanded="false">☰</button>
         @include('admin.partials.sidebar')
         <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop" aria-hidden="true"></div>
+        @if(request()->routeIs('finance.*'))
+            <div class="finance-mobile-topbar" aria-label="Finance header">
+                <div>
+                    <div style="font-weight:800;color:var(--brand-dark);line-height:1.1;">ARTSCI</div>
+                    <div style="font-size:12px;color:var(--brand-muted);font-weight:700;">Finance</div>
+                </div>
+            </div>
+        @endif
 
         <main class="admin-content">
             @if(($adminUnreadNotifications ?? collect())->count())

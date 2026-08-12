@@ -8,7 +8,13 @@
     $canViewFinance = $isFinanceUser && ($currentUser?->hasFinancePermission(FinancePermission::VIEW) ?? false);
 
     $dashboardUrl = route('admin.dashboard');
-    $items = $isFinanceUser ? [] : [
+    $items = $isFinanceUser ? [
+        'finance_main' => [
+            ['key' => 'finance-overview', 'label' => 'Overview', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'OV'],
+            ['key' => 'finance-jobs', 'label' => 'Jobs', 'route' => 'finance.jobs.index', 'tab' => null, 'icon' => 'JB'],
+            ['key' => 'finance-projects', 'label' => 'Projects', 'route' => 'finance.projects.index', 'tab' => null, 'icon' => 'PJ'],
+        ],
+    ] : [
         'overview' => [
             ['key' => 'overview', 'label' => 'Overview', 'route' => 'admin.dashboard', 'tab' => 'overview', 'icon' => 'OV'],
         ],
@@ -34,13 +40,14 @@
         ],
     ];
 
-    if ($canViewFinance) {
+    if ($canViewFinance && !$isFinanceUser) {
         $items['finance'] = [
             ['key' => 'finance', 'label' => 'Finance', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'FN'],
         ];
     }
 
     $sectionLabels = [
+        'finance_main' => 'Main',
         'overview' => null,
         'commerce' => 'Commerce',
         'operations' => 'Operations',
@@ -64,6 +71,9 @@
             'field-reports' => request()->routeIs('admin.field-reports.*'),
             'users' => request()->routeIs('admin.users.*'),
             'finance' => request()->routeIs('finance.*'),
+            'finance-overview' => request()->routeIs('finance.dashboard'),
+            'finance-jobs' => request()->routeIs('finance.jobs.*'),
+            'finance-projects' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*'),
             default => false,
         };
     };
@@ -74,7 +84,7 @@
         <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI logo">
         <div class="brand-text">
             <span class="brand-name">ARTSCI</span>
-            <span class="brand-tagline">Admin & POS</span>
+            <span class="brand-tagline">{{ $isFinanceUser ? 'Finance' : 'Admin & POS' }}</span>
         </div>
     </div>
 
@@ -92,7 +102,7 @@
                     </button>
                 @else
                     @php($href = $item['route'] === 'admin.dashboard' && $item['tab'] && $item['tab'] !== 'overview' ? $dashboardUrl . '#' . $item['tab'] : route($item['route']))
-                    <a href="{{ $href }}" class="nav-item {{ $routeActive($item) ? 'active' : '' }}">
+                    <a href="{{ $href }}" class="nav-item {{ $routeActive($item) ? 'active' : '' }}" @if($routeActive($item)) aria-current="page" @endif>
                         <span class="nav-icon" aria-hidden="true">{{ $item['icon'] }}</span>
                         <span class="nav-label">{{ $item['label'] }}</span>
                     </a>
@@ -102,6 +112,13 @@
     </nav>
 
     <div class="admin-user">
+        @if($isFinanceUser)
+            <div class="nav-section" style="margin-top:0;">Account</div>
+            <a href="#finance-account" class="nav-item">
+                <span class="nav-icon" aria-hidden="true">ME</span>
+                <span class="nav-label">My Profile</span>
+            </a>
+        @endif
         <div class="admin-user-meta">
             Signed in as {{ auth()->user()->name ?? 'User' }}
         </div>
