@@ -191,6 +191,12 @@
                                                             <span class="inline-flex items-center justify-center px-2 py-1 rounded text-xs font-semibold bg-gray-200 text-gray-700">Not converted</span>
                                                         @endif
                                                         <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md font-semibold text-sm">Open Item</a>
+                                                        @if(in_array($item->status, ['overdue', 'closed', 'rejected'], true))
+                                                            <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
+                                                                @csrf
+                                                                <button type="submit" class="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-semibold text-sm">Reopen</button>
+                                                            </form>
+                                                        @endif
                                                         @if($item->project)
                                                             <a href="{{ route('admin.projects.show', $item->project) }}" class="inline-flex items-center justify-center bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1.5 rounded-md font-semibold text-sm">Open Project</a>
                                                         @endif

@@ -103,8 +103,8 @@ class JobItemController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$latestAttempt || $latestAttempt->status !== JobItemAttempt::STATUS_COORDINATOR_APPROVED) {
-                abort(409, 'No coordinator-approved attempt is available for review.');
+            if (!$latestAttempt || !in_array($latestAttempt->status, [JobItemAttempt::STATUS_COORDINATOR_APPROVED, JobItemAttempt::STATUS_SUBMITTED], true)) {
+                abort(409, 'No submitted or coordinator-approved attempt is available for review.');
             }
 
             match ($action) {
@@ -272,10 +272,10 @@ class JobItemController extends Controller
         $attempt->requirements()->delete();
         foreach ($requirements as $index => $requirement) {
             $attempt->requirements()->create([
-                'type' => $requirement['type'],
-                'name' => $requirement['name'],
-                'quantity' => $requirement['quantity'],
-                'notes' => $requirement['notes'],
+                'type' => $requirement['type'] ?? 'material',
+                'name' => $requirement['name'] ?? '',
+                'quantity' => $requirement['quantity'] ?? null,
+                'notes' => $requirement['notes'] ?? null,
                 'sort_order' => $index,
             ]);
         }
@@ -335,8 +335,8 @@ class JobItemController extends Controller
         return collect($requirements)
             ->map(fn ($requirement) => [
                 'include' => (bool) ($requirement['include'] ?? false),
-                'type' => $requirement['type'],
-                'name' => trim((string) $requirement['name']),
+                'type' => $requirement['type'] ?? 'material',
+                'name' => trim((string) ($requirement['name'] ?? '')),
                 'quantity' => isset($requirement['quantity']) && trim((string) $requirement['quantity']) !== ''
                     ? trim((string) $requirement['quantity'])
                     : null,
