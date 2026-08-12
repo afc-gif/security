@@ -12,6 +12,7 @@ use App\Http\Controllers\Field\ProjectController as FieldProjectController;
 use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\FieldCoordinator\JobAssignmentController as CoordinatorJobAssignmentController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -276,6 +277,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/reports', [FinanceReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/projects', [FinanceReportController::class, 'projects'])->name('reports.projects');
+    Route::get('/reports/projects/export', [FinanceReportController::class, 'exportProjects'])->name('reports.projects.export');
+    Route::get('/reports/expenses', [FinanceReportController::class, 'expenses'])->name('reports.expenses');
+    Route::get('/reports/expenses/export', [FinanceReportController::class, 'exportExpenses'])->name('reports.expenses.export');
+    Route::get('/reports/payments', [FinanceReportController::class, 'payments'])->name('reports.payments');
+    Route::get('/reports/payments/export', [FinanceReportController::class, 'exportPayments'])->name('reports.payments.export');
     Route::get('/jobs', [FinanceController::class, 'jobs'])->name('jobs.index');
     Route::get('/jobs/{job}', [FinanceController::class, 'jobShow'])->name('jobs.show');
     Route::post('/jobs/{job}/expenses', [FinanceController::class, 'storeJobExpense'])

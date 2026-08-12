@@ -18,6 +18,7 @@
             ['key' => 'finance-overview', 'label' => 'Overview', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'OV'],
             ['key' => 'finance-jobs', 'label' => 'Jobs', 'route' => 'finance.jobs.index', 'tab' => null, 'icon' => 'JB'],
             ['key' => 'finance-projects', 'label' => 'Projects', 'route' => 'finance.projects.index', 'tab' => null, 'icon' => 'PJ'],
+            ['key' => 'finance-reports', 'label' => 'Reports', 'route' => 'finance.reports.index', 'tab' => null, 'icon' => 'RP'],
         ],
     ] : [
         'overview' => [
@@ -79,6 +80,7 @@
             'finance-overview' => request()->routeIs('finance.dashboard'),
             'finance-jobs' => request()->routeIs('finance.jobs.*'),
             'finance-projects' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*'),
+            'finance-reports' => request()->routeIs('finance.reports.*'),
             default => false,
         };
     };

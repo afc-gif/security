@@ -2890,6 +2890,29 @@
                 }
             }
         }
+
+        @media print {
+            .sidebar, .hamburger, .admin-sidebar-backdrop, .finance-bottom-nav,
+            .finance-filter-bar, .no-print, [data-no-print] {
+                display: none !important;
+            }
+            .admin-shell, .admin-content, .finance-page, .finance-wrap {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: #fff !important;
+                box-shadow: none !important;
+            }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            a {
+                text-decoration: none !important;
+                color: #000 !important;
+            }
+        }
     </style>
     @stack('styles')
 </head>
