@@ -93,7 +93,7 @@ class User extends Model implements AuthenticatableContract
         return $this->role === 'field_coordinator';
     }
 
-    public function hasRole($roles)
+    public function hasRole(array|string $roles)
     {
         $roles = is_array($roles) ? $roles : func_get_args();
 

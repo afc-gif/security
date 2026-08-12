@@ -13,6 +13,7 @@ use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\FieldCoordinator\JobAssignmentController as CoordinatorJobAssignmentController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceReportController;
+use App\Http\Controllers\Finance\FinanceAnalysisController;
 use App\Http\Controllers\ShopController;
 use App\Models\Installation;
 use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
@@ -277,6 +278,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/analysis', [FinanceAnalysisController::class, 'index'])->name('analysis');
+    Route::post('/analysis/ask', [FinanceAnalysisController::class, 'ask'])->name('analysis.ask');
     Route::get('/reports', [FinanceReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/projects', [FinanceReportController::class, 'projects'])->name('reports.projects');
     Route::get('/reports/projects/export', [FinanceReportController::class, 'exportProjects'])->name('reports.projects.export');
