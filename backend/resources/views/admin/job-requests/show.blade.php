@@ -147,6 +147,18 @@
                                     </div>
                                 </div>
                             </div>
+                             <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Actions</div>
+                                 <div class="flex flex-wrap items-center gap-2 mt-2">
+                                     <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md font-semibold text-xs">View Item Details</a>
+                                     @if($item->isOverdue() || in_array($item->status, ['overdue', 'closed', 'rejected'], true))
+                                         <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
+                                             @csrf
+                                             <button type="submit" class="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-semibold text-xs">Reopen Job</button>
+                                         </form>
+                                     @endif
+                                 </div>
+                             </div>
                             <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3 text-sm">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Project Conversion</div>
                                 @if($item->project)

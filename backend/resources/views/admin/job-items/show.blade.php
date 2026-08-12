@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        @if(in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_OVERDUE, \App\Models\JobRequestItem::STATUS_CLOSED, \App\Models\JobRequestItem::STATUS_REJECTED], true))
+        @if($jobItem->isOverdue() || in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_OVERDUE, \App\Models\JobRequestItem::STATUS_CLOSED, \App\Models\JobRequestItem::STATUS_REJECTED], true))
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Reopen Job</h2>
                 <form method="POST" action="{{ route('admin.job-items.reopen', $jobItem) }}" class="space-y-4">

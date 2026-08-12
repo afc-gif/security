@@ -49,21 +49,15 @@ class JobItemController extends Controller
                     'nullable',
                     'string',
                 ],
-                'requirements' => [
-                    Rule::requiredIf(fn () => $request->input('action') === 'approve'),
-                    'nullable',
-                    'array',
-                    'min:1',
-                ],
-                'requirements.*.type' => 'required_with:requirements|in:material,task',
-                'requirements.*.include' => 'nullable|boolean',
+                'requirements' => 'nullable|array',
+                'requirements.*.type' => 'nullable|in:material,task',
+                'requirements.*.include' => 'nullable',
                 'requirements.*.name' => 'nullable|string|max:255',
                 'requirements.*.quantity' => 'nullable|string|max:100',
                 'requirements.*.notes' => 'nullable|string',
             ],
             [
                 'admin_note.required' => 'Please add an admin note for returned or rejected jobs.',
-                'requirements.required' => 'Please keep at least one approved requirement before approving this job.',
             ]
         );
 
@@ -76,8 +70,9 @@ class JobItemController extends Controller
                 ->withInput();
         }
 
+        $rawRequirements = $validated['requirements'] ?? $request->input('requirements', []);
         $requirements = $action === 'approve'
-            ? $this->normalizedRequirements($validated['requirements'] ?? [])
+            ? $this->normalizedRequirements(is_array($rawRequirements) ? $rawRequirements : [])
             : collect();
 
         if ($action === 'approve' && $requirements->isEmpty()) {
@@ -132,15 +127,14 @@ class JobItemController extends Controller
         DB::transaction(function () use ($jobItem, $request, $validated) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
-                ->whereIn('status', [
-                    JobRequestItem::STATUS_OVERDUE,
-                    JobRequestItem::STATUS_CLOSED,
-                    JobRequestItem::STATUS_REJECTED,
-                ])
                 ->lockForUpdate()
                 ->first();
 
-            if (!$lockedItem) {
+            if (!$lockedItem || (!$lockedItem->isOverdue() && !in_array($lockedItem->status, [
+                JobRequestItem::STATUS_OVERDUE,
+                JobRequestItem::STATUS_CLOSED,
+                JobRequestItem::STATUS_REJECTED,
+            ], true))) {
                 abort(409, 'This job item cannot be reopened in its current state.');
             }
 
