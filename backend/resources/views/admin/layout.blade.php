@@ -493,67 +493,6 @@
             margin: 0 auto;
         }
 
-        body.finance-shell .finance-mobile-topbar {
-            display: none;
-        }
-
-        body.finance-shell .finance-topbar-title {
-            color: #0f172a;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        body.finance-shell .finance-topbar-user {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            min-width: 0;
-            color: #0f172a;
-            text-align: right;
-        }
-
-        body.finance-shell .finance-topbar-name {
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        body.finance-shell .finance-topbar-role {
-            color: #64748b;
-            font-size: 11.5px;
-            font-weight: 600;
-        }
-
-        body.finance-shell .finance-bell,
-        body.finance-shell .finance-avatar {
-            display: inline-flex;
-            width: 34px;
-            height: 34px;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 auto;
-            border-radius: 999px;
-            font-weight: 800;
-            font-size: 12px;
-        }
-
-        body.finance-shell .finance-bell {
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            color: #0284c7;
-        }
-
-        body.finance-shell .finance-avatar {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: #fff;
-        }
-
         body.finance-shell .finance-account-anchor {
             position: absolute;
             width: 1px;
@@ -1830,12 +1769,6 @@
                 grid-template-columns: 1fr;
             }
 
-            body.finance-shell .finance-mobile-topbar {
-                left: 0;
-                min-height: 72px;
-                padding: 10px 14px 10px 68px;
-            }
-
             body.finance-shell .hamburger {
                 top: 13px;
                 left: 12px;
@@ -1859,7 +1792,7 @@
             }
 
             body.finance-shell .finance-page {
-                padding: 96px 14px 18px;
+                padding: 16px 14px 32px;
             }
 
             body.finance-shell .finance-header {
@@ -2033,43 +1966,6 @@
             }
 
             /* Premium Mobile finance shell styles */
-            body.finance-shell .finance-mobile-topbar {
-                min-height: 70px;
-                padding: 12px 14px 12px 64px;
-                border-bottom: 1px solid rgba(226,232,240,0.5);
-                backdrop-filter: blur(10px);
-                background: rgba(255,255,255,0.92);
-            }
-
-            body.finance-shell .finance-topbar-title {
-                display: none;
-            }
-
-            body.finance-shell .finance-topbar-user {
-                gap: 10px;
-            }
-
-            body.finance-shell .finance-topbar-name {
-                max-width: 100px;
-                font-size: 13px;
-                font-weight: 850;
-            }
-
-            body.finance-shell .finance-bell {
-                display: none;
-            }
-
-            body.finance-shell .finance-topbar-role {
-                display: none;
-            }
-
-            body.finance-shell .finance-avatar {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(79,36,232,0.24);
-            }
-
             body.finance-shell .hamburger {
                 top: 14px;
                 left: 12px;
@@ -2998,47 +2894,6 @@
     @stack('styles')
 </head>
 <body class="{{ request()->routeIs('finance.*') ? 'finance-shell' : '' }}">
-    @if(request()->routeIs('finance.*'))
-        <div class="finance-mobile-topbar" aria-label="Finance header">
-            @php
-                $financeUser = auth()->user();
-                $financeName = $financeUser?->name ?? 'Finance user';
-                $financeInitials = collect(explode(' ', trim($financeName)))
-                    ->filter()
-                    ->take(2)
-                    ->map(fn ($part) => Illuminate\Support\Str::upper(Illuminate\Support\Str::substr($part, 0, 1)))
-                    ->join('');
-            @endphp
-            <div class="finance-topbar-title">ARTSCI Finance</div>
-            <div class="finance-topbar-user">
-                <span class="finance-bell" aria-hidden="true">FN</span>
-                <div>
-                    <div class="finance-topbar-name">{{ $financeName }}</div>
-                    <div class="finance-topbar-role">Finance</div>
-                </div>
-                <span class="finance-avatar" aria-hidden="true">{{ $financeInitials ?: 'FN' }}</span>
-            </div>
-        </div>
-
-        <nav class="finance-mobile-bottom-nav" aria-label="Mobile quick navigation">
-            <a href="{{ route('finance.dashboard') }}" class="finance-bottom-nav-item {{ request()->routeIs('finance.dashboard') ? 'active' : '' }}">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                <span>Overview</span>
-            </a>
-            <a href="{{ route('finance.jobs.index') }}" class="finance-bottom-nav-item {{ request()->routeIs('finance.jobs.*') ? 'active' : '' }}">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 022 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                <span>Jobs</span>
-            </a>
-            <a href="{{ route('finance.projects.index') }}" class="finance-bottom-nav-item {{ request()->routeIs('finance.projects.*') ? 'active' : '' }}">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                <span>Projects</span>
-            </a>
-            <a href="#finance-account" class="finance-bottom-nav-item">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span>Account</span>
-            </a>
-        </nav>
-    @endif
     <div class="admin-shell">
         <button class="hamburger" id="toggleSidebar" type="button" aria-label="Toggle admin menu" aria-expanded="false">☰</button>
         @include('admin.partials.sidebar')
