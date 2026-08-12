@@ -26,59 +26,66 @@ class FinanceController extends Controller
 {
     public function dashboard()
     {
-        $pendingMaterialCosts = FinancialMaterialCost::query()
-            ->where('status', FinancialMaterialCost::STATUS_PENDING);
-        $pendingProjectExpenses = FinancialExpense::query()
-            ->whereNotNull('project_id')
-            ->where('status', FinancialExpense::STATUS_PENDING);
-        $pendingJobExpenses = FinancialExpense::query()
-            ->whereNotNull('job_request_item_id')
-            ->whereNull('project_id')
-            ->where('status', FinancialExpense::STATUS_PENDING);
+        $this->authorizeFinance(FinancePermission::VIEW);
 
-        $projectReviewCount = Project::query()
-            ->whereDoesntHave('financial')
-            ->orWhereHas('financialExpenses', fn (Builder $query) => $query->where('status', FinancialExpense::STATUS_PENDING))
-            ->orWhereHas('financialMaterialCosts', fn (Builder $query) => $query->where('status', FinancialMaterialCost::STATUS_PENDING))
+        $projectValueTotal = (float) ProjectFinancial::query()->sum('contract_value');
+        $receivedTotal = (float) ProjectPayment::query()->sum('amount');
+        $outstandingTotal = max(0, $projectValueTotal - $receivedTotal);
+
+        $approvedExpensesTotal = (float) FinancialExpense::query()
+            ->where('status', FinancialExpense::STATUS_APPROVED)
+            ->sum('amount');
+
+        $approvedMaterialsTotal = (float) FinancialMaterialCost::query()
+            ->where('status', FinancialMaterialCost::STATUS_APPROVED)
+            ->sum('total_cost');
+
+        $approvedCostsTotal = $approvedExpensesTotal + $approvedMaterialsTotal;
+        $estimatedProfitTotal = $projectValueTotal - $approvedCostsTotal;
+
+        $pendingMaterialCostsCount = FinancialMaterialCost::query()
+            ->where('status', FinancialMaterialCost::STATUS_PENDING)
             ->count();
 
-        $activeJobs = JobRequestItem::query()
-            ->whereNotIn('status', [
-                JobRequestItem::STATUS_CLOSED,
-                JobRequestItem::STATUS_REJECTED,
-            ])
+        $pendingExpensesCount = FinancialExpense::query()
+            ->where('status', FinancialExpense::STATUS_PENDING)
             ->count();
-        $activeProjects = Project::query()
-            ->where('status', '!=', 'completed')
-            ->count();
-        $pendingReviewCount = (clone $pendingJobExpenses)->count()
-            + (clone $pendingProjectExpenses)->count()
-            + (clone $pendingMaterialCosts)->count();
+
+        $pendingReviewCount = $pendingExpensesCount + $pendingMaterialCostsCount;
 
         $recentJobs = JobRequestItem::query()
             ->with(['jobRequest.client', 'claimer'])
-            ->latest()
-            ->limit(3)
-            ->get();
-        $recentProjects = Project::query()
-            ->with('client')
-            ->latest()
+            ->latest('id')
             ->limit(3)
             ->get();
 
+        $recentProjects = Project::query()
+            ->with(['client', 'financial'])
+            ->latest('id')
+            ->limit(3)
+            ->get();
+
+        $attentionItems = [];
+        if ($pendingReviewCount > 0) {
+            $attentionItems[] = [
+                'type' => 'warning',
+                'title' => 'Pending Financial Approvals',
+                'count' => $pendingReviewCount,
+                'description' => "{$pendingReviewCount} pending expense or material cost item(s) awaiting review.",
+                'link' => route('finance.jobs.index'),
+                'link_text' => 'Review Pending',
+            ];
+        }
+
         return view('finance.dashboard', array_merge([
-            'activeJobs' => $activeJobs,
-            'activeProjects' => $activeProjects,
-            'pendingReviewCount' => $pendingReviewCount,
-            'projectReviewCount' => $projectReviewCount,
+            'projectValueTotal' => $projectValueTotal,
+            'receivedTotal' => $receivedTotal,
+            'outstandingTotal' => $outstandingTotal,
+            'approvedCostsTotal' => $approvedCostsTotal,
+            'estimatedProfitTotal' => $estimatedProfitTotal,
             'recentJobs' => $recentJobs,
             'recentProjects' => $recentProjects,
-            'pendingJobExpenseCount' => (clone $pendingJobExpenses)->count(),
-            'pendingJobExpenseTotal' => (clone $pendingJobExpenses)->sum('amount'),
-            'pendingProjectExpenseCount' => (clone $pendingProjectExpenses)->count(),
-            'pendingProjectExpenseTotal' => (clone $pendingProjectExpenses)->sum('amount'),
-            'pendingMaterialCostCount' => (clone $pendingMaterialCosts)->count(),
-            'pendingMaterialCostTotal' => (clone $pendingMaterialCosts)->sum('total_cost'),
+            'attentionItems' => $attentionItems,
         ], $this->viewHelpers()));
     }
 
