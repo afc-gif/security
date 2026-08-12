@@ -45,6 +45,15 @@ class FinanceController extends Controller
             ->limit(8)
             ->get();
 
+        $jobCount = JobRequestItem::query()->count();
+        $jobExpenseCount = FinancialExpense::query()
+            ->whereNotNull('job_request_item_id')
+            ->count();
+        $jobApprovedExpenseTotal = FinancialExpense::query()
+            ->whereNotNull('job_request_item_id')
+            ->where('status', FinancialExpense::STATUS_APPROVED)
+            ->sum('amount');
+
         $projectFinancials = ProjectFinancial::query();
         $approvedProjectExpenses = FinancialExpense::query()
             ->whereNotNull('project_id')
@@ -93,6 +102,9 @@ class FinanceController extends Controller
             'transportCount' => $transportQuery?->count() ?? 0,
             'transportTotal' => $transportQuery?->sum('amount') ?? 0,
             'recentExpenses' => $recentExpenses,
+            'jobCount' => $jobCount,
+            'jobExpenseCount' => $jobExpenseCount,
+            'jobApprovedExpenseTotal' => $jobApprovedExpenseTotal,
             'totalContractValue' => $totalContractValue,
             'totalApprovedBudget' => $totalApprovedBudget,
             'totalApprovedProjectExpenses' => $totalApprovedProjectExpenses,
@@ -135,6 +147,126 @@ class FinanceController extends Controller
             compact('expenses', 'categories', 'filters'),
             $this->viewHelpers()
         ));
+    }
+
+    public function jobs(Request $request)
+    {
+        $filters = $request->only(['search', 'status']);
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        $jobs = JobRequestItem::query()
+            ->with(['jobRequest.client', 'serviceCategory', 'claimer'])
+            ->withSum([
+                'financialExpenses as approved_expenses_total' => fn (Builder $query) => $query
+                    ->where('status', FinancialExpense::STATUS_APPROVED),
+            ], 'amount')
+            ->withCount('financialExpenses')
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $query->where(function (Builder $searchQuery) use ($search) {
+                    $searchQuery
+                        ->where('title', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('jobRequest', fn (Builder $jobRequestQuery) => $jobRequestQuery
+                            ->where('title', 'like', "%{$search}%")
+                            ->orWhereHas('client', fn (Builder $clientQuery) => $clientQuery
+                                ->where('client_name', 'like', "%{$search}%")
+                                ->orWhere('company_name', 'like', "%{$search}%")
+                                ->orWhere('contact_person', 'like', "%{$search}%")
+                            )
+                        )
+                        ->orWhereHas('serviceCategory', fn (Builder $categoryQuery) => $categoryQuery
+                            ->where('name', 'like', "%{$search}%")
+                        );
+                });
+            })
+            ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('status', $status))
+            ->latest()
+            ->paginate(20);
+
+        $jobs->appends($request->query());
+
+        $statuses = JobRequestItem::query()
+            ->select('status')
+            ->distinct()
+            ->whereNotNull('status')
+            ->orderBy('status')
+            ->pluck('status');
+
+        return view('finance.jobs.index', array_merge(
+            compact('jobs', 'filters', 'statuses'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function jobShow(JobRequestItem $job)
+    {
+        $job->load([
+            'jobRequest.client',
+            'serviceCategory',
+            'claimer',
+            'financialExpenses.category',
+            'financialExpenses.submitter',
+            'financialExpenses.documents.uploader',
+        ]);
+
+        $expenses = $job->financialExpenses
+            ->sortByDesc(fn (FinancialExpense $expense) => $expense->incurred_on?->getTimestamp() ?? $expense->created_at?->getTimestamp() ?? 0)
+            ->values();
+
+        $summary = [
+            'approved_total' => (float) $expenses
+                ->where('status', FinancialExpense::STATUS_APPROVED)
+                ->sum(fn (FinancialExpense $expense) => (float) $expense->amount),
+            'pending_total' => (float) $expenses
+                ->where('status', FinancialExpense::STATUS_PENDING)
+                ->sum(fn (FinancialExpense $expense) => (float) $expense->amount),
+            'expense_count' => $expenses->count(),
+        ];
+
+        $categories = FinanceExpenseCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('finance.jobs.show', array_merge(
+            compact('job', 'expenses', 'summary', 'categories'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function storeJobExpense(Request $request, JobRequestItem $job)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $this->validateJobExpense($request);
+
+        $expense = DB::transaction(function () use ($request, $job, $validated) {
+            $payload = [
+                'project_id' => null,
+                'inspection_id' => null,
+                'job_request_item_id' => $job->id,
+                'original_context_type' => JobRequestItem::class,
+                'original_context_id' => $job->id,
+                'finance_expense_category_id' => $validated['finance_expense_category_id'],
+                'description' => $validated['description'],
+                'amount' => $validated['amount'],
+                'incurred_on' => $validated['incurred_on'] ?? null,
+                'status' => FinancialExpense::STATUS_PENDING,
+                'submitted_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ];
+
+            $expense = FinancialExpense::create($payload);
+            $this->storeFinancialDocument($request, $expense);
+
+            return $expense;
+        });
+
+        return redirect()
+            ->route('finance.jobs.show', $job)
+            ->with('success', 'Expense added to this job.');
     }
 
     public function create(Request $request)
@@ -742,6 +874,17 @@ class FinanceController extends Controller
                 FinancialExpense::STATUS_REJECTED,
             ])],
             'notes' => ['nullable', 'string', 'max:5000'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+    }
+
+    private function validateJobExpense(Request $request): array
+    {
+        return $request->validate([
+            'finance_expense_category_id' => ['required', 'exists:finance_expense_categories,id'],
+            'description' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'incurred_on' => ['nullable', 'date'],
             'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
     }

@@ -1,8 +1,8 @@
 @php
     $financeNavItems = [
-        ['label' => 'Dashboard', 'route' => 'finance.dashboard', 'active' => request()->routeIs('finance.dashboard')],
-        ['label' => 'Pre-Project Expenses', 'route' => 'finance.expenses.index', 'active' => request()->routeIs('finance.expenses.*')],
-        ['label' => 'Project Finance', 'route' => 'finance.projects.index', 'active' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*')],
+        ['label' => 'Overview', 'route' => 'finance.dashboard', 'active' => request()->routeIs('finance.dashboard')],
+        ['label' => 'Jobs', 'route' => 'finance.jobs.index', 'active' => request()->routeIs('finance.jobs.*')],
+        ['label' => 'Projects', 'route' => 'finance.projects.index', 'active' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*')],
     ];
 @endphp
 
@@ -12,7 +12,7 @@
             <div>
                 <div class="text-xs font-bold uppercase tracking-wide text-blue-200">Private Workspace</div>
                 <div class="mt-1 text-2xl font-extrabold leading-tight">Finance Panel</div>
-                <div class="mt-1 text-sm text-gray-300">Budgets, transportation, project costs, approvals, and private receipts.</div>
+                <div class="mt-1 text-sm text-gray-300">Job expenses, project finance, approvals, and private receipts.</div>
             </div>
             <div class="rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm">
                 <div class="text-gray-300">Signed in as</div>
@@ -30,10 +30,8 @@
             @endforeach
         </nav>
 
-        @can(\App\Models\FinancePermission::CREATE)
-            <a href="{{ route('finance.expenses.create') }}" class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700">
-                Record New Expense
-            </a>
-        @endcan
+        <a href="{{ route('finance.jobs.index') }}" class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700">
+            Open Jobs
+        </a>
     </div>
 </div>

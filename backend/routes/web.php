@@ -276,6 +276,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/jobs', [FinanceController::class, 'jobs'])->name('jobs.index');
+    Route::get('/jobs/{job}', [FinanceController::class, 'jobShow'])->name('jobs.show');
+    Route::post('/jobs/{job}/expenses', [FinanceController::class, 'storeJobExpense'])
+        ->middleware('finance.permission:finance.create')
+        ->name('jobs.expenses.store');
     Route::get('/projects', [FinanceController::class, 'projects'])->name('projects.index');
     Route::get('/projects/{project}', [FinanceController::class, 'projectShow'])->name('projects.show');
     Route::post('/projects/{project}/financial', [FinanceController::class, 'saveProjectFinancial'])
