@@ -40,7 +40,7 @@ class FinanceJobsRedesignTest extends TestCase
             ->assertDontSee('project_id');
     }
 
-    public function test_job_finance_total_uses_approved_expenses_only(): void
+    public function test_job_finance_total_uses_all_job_expenses(): void
     {
         $financeUser = $this->createUser(['role' => 'finance']);
         $jobItem = $this->createJobItem();
@@ -71,9 +71,10 @@ class FinanceJobsRedesignTest extends TestCase
         $this->actingAs($financeUser)
             ->get(route('finance.jobs.show', $jobItem))
             ->assertOk()
-            ->assertSee('₦20,000.00')
-            ->assertSee('Pending: ₦10,000.00')
-            ->assertDontSee('₦30,000.00');
+            ->assertSee('₦30,000.00')
+            ->assertSee('Approved')
+            ->assertSee('Pending')
+            ->assertDontSee('Pending: ₦10,000.00');
     }
 
     public function test_finance_user_can_add_expense_directly_to_opened_job(): void

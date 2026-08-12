@@ -8,24 +8,25 @@
     $jobTitle = $job->title ?: $job->jobRequest?->title ?: 'Job';
     $clientName = $client?->company_name ?: $client?->client_name ?: 'Client unavailable';
     $location = trim(collect([$client?->address, $client?->city_state])->filter()->implode(', '));
+    $showExpenseModal = $errors->any();
 @endphp
 
 <div class="min-h-screen bg-gray-100">
-    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         @include('finance.partials.nav')
 
-        <div class="mb-6">
+        <div class="mb-5">
             <a href="{{ route('finance.jobs.index') }}" class="text-sm font-bold text-blue-700 hover:text-blue-900">Back to Jobs</a>
         </div>
 
         @if (session('success'))
-            <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+            <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
                 {{ session('success') }}
             </div>
         @endif
 
         @if ($errors->any())
-            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
                 <div class="font-bold">Please check the expense form.</div>
                 <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
                     @foreach ($errors->all() as $error)
@@ -35,170 +36,184 @@
             </div>
         @endif
 
-        <div class="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <section class="mb-6 rounded-lg border border-gray-200 bg-white px-5 py-5 shadow-sm">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
-                    <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Job Finance</div>
-                    <h1 class="mt-1 text-3xl font-extrabold leading-tight text-gray-950">{{ $jobTitle }}</h1>
-                    <div class="mt-2 text-lg font-bold text-gray-800">{{ $clientName }}</div>
-                    <div class="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Job</div>
+                    <h1 class="mt-1 text-2xl font-extrabold leading-tight text-gray-950 sm:text-3xl">{{ $jobTitle }}</h1>
+                    <dl class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         <div>
-                            <span class="font-bold text-gray-800">Assigned to:</span>
-                            {{ $job->claimer?->name ?? 'Unassigned' }}
+                            <dt class="font-bold text-gray-500">Client</dt>
+                            <dd class="mt-1 font-bold text-gray-950">{{ $clientName }}</dd>
                         </div>
                         <div>
-                            <span class="font-bold text-gray-800">Status:</span>
-                            {{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}
+                            <dt class="font-bold text-gray-500">Location</dt>
+                            <dd class="mt-1 text-gray-800">{{ $location !== '' ? $location : 'Not recorded' }}</dd>
                         </div>
                         <div>
-                            <span class="font-bold text-gray-800">Date:</span>
-                            {{ $job->created_at?->format('M j, Y') ?? '-' }}
+                            <dt class="font-bold text-gray-500">Status</dt>
+                            <dd class="mt-1 text-gray-800">{{ str_replace('_', ' ', Illuminate\Support\Str::title($job->status)) }}</dd>
                         </div>
                         <div>
-                            <span class="font-bold text-gray-800">Location:</span>
-                            {{ $location !== '' ? $location : 'Not recorded' }}
+                            <dt class="font-bold text-gray-500">Assigned Staff</dt>
+                            <dd class="mt-1 text-gray-800">{{ $job->claimer?->name ?? 'Unassigned' }}</dd>
                         </div>
-                    </div>
+                    </dl>
                 </div>
 
-                <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 lg:min-w-[260px]">
-                    <div class="text-sm font-bold text-gray-600">Total Expenses</div>
-                    <div class="mt-2 text-3xl font-extrabold text-gray-950">{{ $financeMoney($summary['approved_total']) }}</div>
-                    <div class="mt-1 text-xs font-semibold text-gray-500">Approved records only</div>
-                    @if($summary['pending_total'] > 0)
-                        <div class="mt-3 rounded-md bg-yellow-50 px-3 py-2 text-sm font-bold text-yellow-800">
-                            Pending: {{ $financeMoney($summary['pending_total']) }}
-                        </div>
-                    @endif
-                    @can(\App\Models\FinancePermission::CREATE)
-                        <a href="#add-expense" class="mt-4 inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">
-                            + Add Expense
-                        </a>
-                    @endcan
+                <div class="shrink-0 rounded-lg bg-gray-50 px-5 py-4 lg:min-w-[240px]">
+                    <div class="text-sm font-bold text-gray-500">Total Expenses</div>
+                    <div class="mt-2 text-3xl font-extrabold text-gray-950">{{ $financeMoney($summary['total']) }}</div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 class="text-lg font-extrabold text-gray-950">Expenses</h2>
-                        <p class="mt-1 text-sm text-gray-600">{{ $summary['expense_count'] }} {{ Illuminate\Support\Str::plural('record', $summary['expense_count']) }} attached to this job</p>
-                    </div>
+        <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div class="flex flex-col gap-3 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-lg font-extrabold text-gray-950">Expenses</h2>
+                    <p class="mt-1 text-sm text-gray-600">{{ $summary['expense_count'] }} {{ Illuminate\Support\Str::plural('expense', $summary['expense_count']) }} recorded for this job</p>
                 </div>
+                @can(\App\Models\FinancePermission::CREATE)
+                    <button type="button" data-expense-modal-open class="inline-flex min-h-[42px] items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700">
+                        + Add Expense
+                    </button>
+                @endcan
+            </div>
 
-                @if($expenses->isEmpty())
-                    <div class="px-5 py-12 text-center">
-                        <div class="text-lg font-extrabold text-gray-950">No expenses recorded yet</div>
-                        <p class="mt-2 text-sm text-gray-600">Use the Add Expense form to record spending for this job.</p>
-                    </div>
-                @else
-                    <div class="hidden lg:block">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Expense</th>
-                                    <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Date</th>
-                                    <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Submitted by</th>
-                                    <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">Status</th>
-                                    <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-gray-500">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @foreach($expenses as $expense)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-5 py-4">
-                                            <div class="font-extrabold text-gray-950">{{ $expense->category?->name ?? 'Expense' }}</div>
-                                            <div class="mt-1 text-sm text-gray-600">{{ $expense->description }}</div>
-                                        </td>
-                                        <td class="px-5 py-4 text-sm text-gray-700">{{ $expense->incurred_on?->format('M j, Y') ?? $expense->created_at?->format('M j, Y') ?? '-' }}</td>
-                                        <td class="px-5 py-4 text-sm text-gray-700">{{ $expense->submitter?->name ?? 'Finance' }}</td>
-                                        <td class="px-5 py-4">
-                                            <span class="inline-flex rounded-md px-2.5 py-1 text-xs font-bold {{ $financeStatusClass($expense->status) }}">
-                                                {{ $financeStatusLabel($expense->status) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-5 py-4 text-right font-extrabold text-gray-950">{{ $financeMoney($expense->amount) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="divide-y divide-gray-100 lg:hidden">
-                        @foreach($expenses as $expense)
-                            <div class="px-5 py-4">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <div class="font-extrabold text-gray-950">{{ $expense->category?->name ?? 'Expense' }}</div>
-                                        <div class="mt-1 text-sm text-gray-600">{{ $expense->description }}</div>
-                                        <div class="mt-2 text-xs text-gray-500">
-                                            {{ $expense->incurred_on?->format('M j, Y') ?? $expense->created_at?->format('M j, Y') ?? '-' }}
-                                            / {{ $expense->submitter?->name ?? 'Finance' }}
-                                        </div>
-                                    </div>
-                                    <div class="shrink-0 text-right">
-                                        <div class="font-extrabold text-gray-950">{{ $financeMoney($expense->amount) }}</div>
-                                        <span class="mt-2 inline-flex rounded-md px-2 py-1 text-xs font-bold {{ $financeStatusClass($expense->status) }}">
-                                            {{ $financeStatusLabel($expense->status) }}
-                                        </span>
-                                    </div>
+            @if($expenses->isEmpty())
+                <div class="px-5 py-12 text-center text-gray-600">No expenses recorded yet.</div>
+            @else
+                <div class="divide-y divide-gray-100">
+                    @foreach($expenses as $expense)
+                        <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <div class="font-extrabold text-gray-950">{{ $expense->category?->name ?? 'Expense' }}</div>
+                                <div class="mt-1 text-sm text-gray-600">{{ $expense->description ?: 'No description' }}</div>
+                                <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-gray-500">
+                                    <span>{{ $expense->incurred_on?->format('M j, Y') ?? $expense->created_at?->format('M j, Y') ?? '-' }}</span>
+                                    <span>{{ $expense->submitter?->name ?? 'Finance' }}</span>
+                                    <span>{{ $financeStatusLabel($expense->status) }}</span>
                                 </div>
                             </div>
-                        @endforeach
+                            <div class="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end">
+                                <div class="text-lg font-extrabold text-gray-950">{{ $financeMoney($expense->amount) }}</div>
+                                @if($expense->status === \App\Models\FinancialExpense::STATUS_PENDING)
+                                    <div class="flex gap-2">
+                                        @can(\App\Models\FinancePermission::DELETE)
+                                            <form method="POST" action="{{ route('finance.expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this pending expense?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-xs font-bold text-red-700 hover:text-red-900">Delete</button>
+                                            </form>
+                                        @endcan
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <div class="flex items-center justify-between gap-4 bg-gray-50 px-5 py-4">
+                        <div class="font-extrabold text-gray-950">Total Expenses</div>
+                        <div class="text-xl font-extrabold text-gray-950">{{ $financeMoney($summary['total']) }}</div>
                     </div>
-                @endif
-            </div>
-
-            @can(\App\Models\FinancePermission::CREATE)
-                <div id="add-expense" class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                    <h2 class="text-lg font-extrabold text-gray-950">Add Expense</h2>
-                    <p class="mt-1 text-sm text-gray-600">This expense will be saved to {{ $jobTitle }}.</p>
-
-                    <form method="POST" action="{{ route('finance.jobs.expenses.store', $job) }}" enctype="multipart/form-data" class="mt-5 space-y-4">
-                        @csrf
-
-                        <div>
-                            <label for="finance_expense_category_id" class="block text-sm font-bold text-gray-800">Category</label>
-                            <select id="finance_expense_category_id" name="finance_expense_category_id" required class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                                <option value="">Select category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" @selected((string) old('finance_expense_category_id') === (string) $category->id)>
-                                        {{ $category->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="amount" class="block text-sm font-bold text-gray-800">Amount</label>
-                            <input id="amount" name="amount" value="{{ old('amount') }}" type="number" min="0" step="0.01" required placeholder="0.00" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                        </div>
-
-                        <div>
-                            <label for="description" class="block text-sm font-bold text-gray-800">Description</label>
-                            <input id="description" name="description" value="{{ old('description') }}" type="text" maxlength="255" required placeholder="What was spent?" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                        </div>
-
-                        <div>
-                            <label for="incurred_on" class="block text-sm font-bold text-gray-800">Date</label>
-                            <input id="incurred_on" name="incurred_on" value="{{ old('incurred_on', now()->toDateString()) }}" type="date" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                        </div>
-
-                        <div>
-                            <label for="receipt" class="block text-sm font-bold text-gray-800">Receipt</label>
-                            <input id="receipt" name="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
-                            <p class="mt-1 text-xs text-gray-500">Optional. JPG, PNG, or PDF up to 5MB.</p>
-                        </div>
-
-                        <button type="submit" class="inline-flex w-full min-h-[44px] items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">
-                            Save Expense
-                        </button>
-                    </form>
                 </div>
-            @endcan
-        </div>
+            @endif
+        </section>
     </div>
 </div>
+
+@can(\App\Models\FinancePermission::CREATE)
+    <div id="expense-modal" class="{{ $showExpenseModal ? '' : 'hidden' }} fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
+        <div data-expense-modal-close class="absolute inset-0 bg-gray-950/45"></div>
+        <div class="absolute inset-x-0 bottom-0 max-h-[92vh] overflow-y-auto rounded-t-lg bg-white p-5 shadow-2xl sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[min(92vw,520px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 id="expense-modal-title" class="text-xl font-extrabold text-gray-950">Add Expense</h2>
+                    <p class="mt-1 text-sm text-gray-600">This expense will be saved to {{ $jobTitle }}.</p>
+                </div>
+                <button type="button" data-expense-modal-close class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-300 text-xl font-bold text-gray-700 hover:bg-gray-50" aria-label="Close add expense form">×</button>
+            </div>
+
+            <form method="POST" action="{{ route('finance.jobs.expenses.store', $job) }}" enctype="multipart/form-data" class="mt-5 space-y-4">
+                @csrf
+
+                <div>
+                    <label for="finance_expense_category_id" class="block text-sm font-bold text-gray-800">Expense Type</label>
+                    <select id="finance_expense_category_id" name="finance_expense_category_id" required class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                        <option value="">Select expense type</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" @selected((string) old('finance_expense_category_id') === (string) $category->id)>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="amount" class="block text-sm font-bold text-gray-800">Amount</label>
+                    <input id="amount" name="amount" value="{{ old('amount') }}" type="number" min="0" step="0.01" required placeholder="0.00" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-bold text-gray-800">Description</label>
+                    <input id="description" name="description" value="{{ old('description') }}" type="text" maxlength="255" placeholder="Optional description" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+
+                <div>
+                    <label for="incurred_on" class="block text-sm font-bold text-gray-800">Date</label>
+                    <input id="incurred_on" name="incurred_on" value="{{ old('incurred_on', now()->toDateString()) }}" type="date" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+
+                <div>
+                    <label for="receipt" class="block text-sm font-bold text-gray-800">Receipt</label>
+                    <input id="receipt" name="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+                    <p class="mt-1 text-xs text-gray-500">Optional. JPG, PNG, or PDF up to 5MB.</p>
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                    <button type="button" data-expense-modal-close class="inline-flex min-h-[42px] items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 transition hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="inline-flex min-h-[42px] items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700">
+                        Save Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            (function () {
+                const modal = document.getElementById('expense-modal');
+                if (!modal || modal.dataset.bound === '1') return;
+
+                modal.dataset.bound = '1';
+                const openButtons = document.querySelectorAll('[data-expense-modal-open]');
+                const closeButtons = modal.querySelectorAll('[data-expense-modal-close]');
+                const firstField = modal.querySelector('select, input, button');
+
+                const openModal = () => {
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    setTimeout(() => firstField?.focus(), 0);
+                };
+
+                const closeModal = () => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                };
+
+                openButtons.forEach((button) => button.addEventListener('click', openModal));
+                closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                        closeModal();
+                    }
+                });
+            })();
+        </script>
+    @endpush
+@endcan
 @endsection

@@ -174,6 +174,8 @@ class FinanceController extends Controller
             ->values();
 
         $summary = [
+            'total' => (float) $expenses
+                ->sum(fn (FinancialExpense $expense) => (float) $expense->amount),
             'approved_total' => (float) $expenses
                 ->where('status', FinancialExpense::STATUS_APPROVED)
                 ->sum(fn (FinancialExpense $expense) => (float) $expense->amount),
@@ -209,7 +211,7 @@ class FinanceController extends Controller
                 'original_context_type' => JobRequestItem::class,
                 'original_context_id' => $job->id,
                 'finance_expense_category_id' => $validated['finance_expense_category_id'],
-                'description' => $validated['description'],
+                'description' => $this->expenseDescription($validated),
                 'amount' => $validated['amount'],
                 'incurred_on' => $validated['incurred_on'] ?? null,
                 'status' => FinancialExpense::STATUS_PENDING,
@@ -376,6 +378,7 @@ class FinanceController extends Controller
         $this->ensurePending($expense);
 
         $project = $expense->project;
+        $job = $expense->jobRequestItem;
 
         DB::transaction(function () use ($expense) {
             foreach ($expense->documents as $document) {
@@ -387,7 +390,7 @@ class FinanceController extends Controller
         });
 
         return redirect()
-            ->route($project ? 'finance.projects.show' : 'finance.expenses.index', $project ?: [])
+            ->route($project ? 'finance.projects.show' : ($job ? 'finance.jobs.show' : 'finance.expenses.index'), $project ?: ($job ?: []))
             ->with('success', 'Pending expense deleted.');
     }
 
@@ -494,7 +497,7 @@ class FinanceController extends Controller
                 'original_context_type' => Project::class,
                 'original_context_id' => $project->id,
                 'finance_expense_category_id' => $validated['finance_expense_category_id'],
-                'description' => $validated['description'],
+                'description' => $this->expenseDescription($validated),
                 'amount' => $validated['amount'],
                 'incurred_on' => $validated['incurred_on'] ?? null,
                 'status' => FinancialExpense::STATUS_PENDING,
@@ -862,7 +865,7 @@ class FinanceController extends Controller
             'job_request_item_id' => ['required_if:context_type,job', 'nullable', 'exists:job_request_items,id'],
             'project_id' => ['required_if:context_type,project', 'nullable', 'exists:projects,id'],
             'finance_expense_category_id' => ['required', 'exists:finance_expense_categories,id'],
-            'description' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'incurred_on' => ['nullable', 'date'],
             'status' => ['nullable', Rule::in([
@@ -879,7 +882,7 @@ class FinanceController extends Controller
     {
         return $request->validate([
             'finance_expense_category_id' => ['required', 'exists:finance_expense_categories,id'],
-            'description' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'incurred_on' => ['nullable', 'date'],
             'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
@@ -908,11 +911,24 @@ class FinanceController extends Controller
                 default => $projectId,
             },
             'finance_expense_category_id' => $validated['finance_expense_category_id'],
-            'description' => $validated['description'],
+            'description' => $this->expenseDescription($validated),
             'amount' => $validated['amount'],
             'incurred_on' => $validated['incurred_on'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ];
+    }
+
+    private function expenseDescription(array $validated): string
+    {
+        $description = trim((string) ($validated['description'] ?? ''));
+
+        if ($description !== '') {
+            return $description;
+        }
+
+        return FinanceExpenseCategory::query()
+            ->whereKey($validated['finance_expense_category_id'])
+            ->value('name') ?? 'Expense';
     }
 
     private function validateMaterialCost(Request $request): array
