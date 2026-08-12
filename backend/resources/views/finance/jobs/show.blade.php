@@ -11,12 +11,12 @@
     $showExpenseModal = $errors->any();
 @endphp
 
-<div class="min-h-screen bg-gray-100">
-    <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+<div class="finance-page">
+    <div class="finance-wrap">
         @include('finance.partials.nav')
 
         <div class="mb-5">
-            <a href="{{ route('finance.jobs.index') }}" class="text-sm font-bold text-blue-700 hover:text-blue-900">Back to Jobs</a>
+            <a href="{{ route('finance.jobs.index') }}" class="finance-btn finance-btn-secondary">Back to Jobs</a>
         </div>
 
         @if (session('success'))
@@ -36,11 +36,11 @@
             </div>
         @endif
 
-        <section class="mb-6 rounded-lg border border-gray-200 bg-white px-5 py-5 shadow-sm">
+        <section class="finance-panel mb-5 px-5 py-5">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
-                    <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Job</div>
-                    <h1 class="mt-1 text-2xl font-extrabold leading-tight text-gray-950 sm:text-3xl">{{ $jobTitle }}</h1>
+                    <div class="finance-eyebrow">Job</div>
+                    <h1 class="finance-title !text-3xl">{{ $jobTitle }}</h1>
                     <dl class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                             <dt class="font-bold text-gray-500">Client</dt>
@@ -61,21 +61,21 @@
                     </dl>
                 </div>
 
-                <div class="shrink-0 rounded-lg bg-gray-50 px-5 py-4 lg:min-w-[240px]">
-                    <div class="text-sm font-bold text-gray-500">Total Expenses</div>
-                    <div class="mt-2 text-3xl font-extrabold text-gray-950">{{ $financeMoney($summary['total']) }}</div>
+                <div class="finance-stat shrink-0 lg:min-w-[240px]">
+                    <div class="finance-stat-label">Total Expenses</div>
+                    <div class="finance-stat-value">{{ $financeMoney($summary['total']) }}</div>
                 </div>
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div class="flex flex-col gap-3 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <section class="finance-panel">
+            <div class="finance-section-head">
                 <div>
-                    <h2 class="text-lg font-extrabold text-gray-950">Expenses</h2>
-                    <p class="mt-1 text-sm text-gray-600">{{ $summary['expense_count'] }} {{ Illuminate\Support\Str::plural('expense', $summary['expense_count']) }} recorded for this job</p>
+                    <h2 class="finance-section-title">Job Expenses</h2>
+                    <p class="mt-1 text-sm finance-muted">{{ $summary['expense_count'] }} {{ Illuminate\Support\Str::plural('expense', $summary['expense_count']) }} recorded</p>
                 </div>
                 @can(\App\Models\FinancePermission::CREATE)
-                    <button type="button" data-expense-modal-open class="inline-flex min-h-[42px] items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700">
+                    <button type="button" data-expense-modal-open class="finance-btn finance-btn-primary">
                         + Add Expense
                     </button>
                 @endcan
@@ -84,18 +84,20 @@
             @if($expenses->isEmpty())
                 <div class="px-5 py-12 text-center text-gray-600">No expenses recorded yet.</div>
             @else
-                <div class="divide-y divide-gray-100">
+                <div class="finance-list">
                     @foreach($expenses as $expense)
-                        <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="finance-row">
                             <div class="min-w-0">
-                                <div class="font-extrabold text-gray-950">{{ $expense->category?->name ?? 'Expense' }}</div>
-                                <div class="mt-1 text-sm text-gray-600">{{ $expense->description ?: 'No description' }}</div>
+                                <div class="finance-row-title">{{ $expense->category?->name ?? 'Expense' }}</div>
+                                <div class="finance-row-meta">{{ $expense->description ?: 'No description' }}</div>
                                 <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-gray-500">
                                     <span>{{ $expense->incurred_on?->format('M j, Y') ?? $expense->created_at?->format('M j, Y') ?? '-' }}</span>
                                     <span>{{ $expense->submitter?->name ?? 'Finance' }}</span>
-                                    <span>{{ $financeStatusLabel($expense->status) }}</span>
+                                    <span class="finance-status">{{ $financeStatusLabel($expense->status) }}</span>
                                 </div>
                             </div>
+                            <div></div>
+                            <div></div>
                             <div class="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end">
                                 <div class="text-lg font-extrabold text-gray-950">{{ $financeMoney($expense->amount) }}</div>
                                 @if($expense->status === \App\Models\FinancialExpense::STATUS_PENDING)
