@@ -34,13 +34,33 @@ class FinancialExpense extends Model
         'notes',
         'created_by',
         'updated_by',
+        'is_office_expense',
+        'payment_method',
+        'reference',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'incurred_on' => 'date',
         'approved_at' => 'datetime',
+        'is_office_expense' => 'boolean',
     ];
+
+    /**
+     * Scope: only office / general company expenses.
+     */
+    public function scopeOffice(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('is_office_expense', true);
+    }
+
+    /**
+     * Scope: only job/project/inspection-linked expenses (non-office).
+     */
+    public function scopeOperational(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('is_office_expense', false);
+    }
 
     public function category(): BelongsTo
     {

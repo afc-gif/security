@@ -743,9 +743,245 @@ class FinanceController extends Controller
             ->with('success', 'Pending material cost deleted.');
     }
 
+    public function officeExpenses(Request $request)
+    {
+        $this->authorizeFinance(FinancePermission::VIEW);
+
+        $filters = $request->only(['category', 'status', 'date_from', 'date_to']);
+        $categories = FinanceExpenseCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $expenses = FinancialExpense::query()
+            ->office()
+            ->with(['category', 'submitter', 'approver'])
+            ->when($filters['category'] ?? null, fn (Builder $q, $cat) => $q->where('finance_expense_category_id', $cat))
+            ->when($filters['status'] ?? null, fn (Builder $q, $st) => $q->where('status', $st))
+            ->when($filters['date_from'] ?? null, fn (Builder $q, $d) => $q->whereDate('incurred_on', '>=', $d))
+            ->when($filters['date_to'] ?? null, fn (Builder $q, $d) => $q->whereDate('incurred_on', '<=', $d))
+            ->latest()
+            ->paginate(20);
+
+        $expenses->appends($request->query());
+
+        $summary = [
+            'total_approved' => (float) FinancialExpense::office()
+                ->where('status', FinancialExpense::STATUS_APPROVED)
+                ->sum('amount'),
+            'total_pending' => (float) FinancialExpense::office()
+                ->where('status', FinancialExpense::STATUS_PENDING)
+                ->sum('amount'),
+            'count' => FinancialExpense::office()->count(),
+        ];
+
+        return view('finance.office-expenses.index', array_merge(
+            compact('expenses', 'categories', 'filters', 'summary'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function createOfficeExpense(Request $request)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $categories = FinanceExpenseCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('finance.office-expenses.create', array_merge(
+            compact('categories'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function storeOfficeExpense(Request $request)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $this->validateOfficeExpense($request);
+        $status = $validated['status'] ?? FinancialExpense::STATUS_PENDING;
+
+        if ($status !== FinancialExpense::STATUS_PENDING) {
+            $this->authorizeFinance(FinancePermission::APPROVE);
+        }
+
+        $expense = DB::transaction(function () use ($request, $validated, $status) {
+            $payload = [
+                'is_office_expense' => true,
+                'project_id' => null,
+                'inspection_id' => null,
+                'job_request_item_id' => null,
+                'original_context_type' => 'office',
+                'original_context_id' => null,
+                'finance_expense_category_id' => $validated['finance_expense_category_id'],
+                'description' => $this->expenseDescription($validated),
+                'amount' => $validated['amount'],
+                'incurred_on' => $validated['incurred_on'] ?? null,
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'status' => $status,
+                'submitted_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ];
+
+            if ($status === FinancialExpense::STATUS_APPROVED) {
+                $payload['approved_by'] = $request->user()->id;
+                $payload['approved_at'] = now();
+            }
+
+            $expense = FinancialExpense::create($payload);
+            $this->storeFinancialDocument($request, $expense);
+
+            return $expense;
+        });
+
+        return redirect()
+            ->route('finance.office-expenses.show', $expense)
+            ->with('success', 'Office expense recorded.');
+    }
+
+    public function showOfficeExpense(FinancialExpense $expense)
+    {
+        $this->ensureOfficeExpense($expense);
+        $expense->load(['category', 'submitter', 'approver', 'documents.uploader']);
+
+        return view('finance.office-expenses.show', array_merge(
+            compact('expense'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function editOfficeExpense(FinancialExpense $expense)
+    {
+        $this->authorizeFinance(FinancePermission::EDIT);
+        $this->ensureOfficeExpense($expense);
+        $this->ensurePending($expense);
+
+        $categories = FinanceExpenseCategory::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('finance.office-expenses.edit', array_merge(
+            compact('expense', 'categories'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function updateOfficeExpense(Request $request, FinancialExpense $expense)
+    {
+        $this->authorizeFinance(FinancePermission::EDIT);
+        $this->ensureOfficeExpense($expense);
+        $this->ensurePending($expense);
+
+        $validated = $this->validateOfficeExpense($request);
+        $status = $validated['status'] ?? FinancialExpense::STATUS_PENDING;
+
+        if ($status !== FinancialExpense::STATUS_PENDING) {
+            $this->authorizeFinance(FinancePermission::APPROVE);
+        }
+
+        DB::transaction(function () use ($request, $expense, $validated, $status) {
+            $payload = [
+                'finance_expense_category_id' => $validated['finance_expense_category_id'],
+                'description' => $this->expenseDescription($validated),
+                'amount' => $validated['amount'],
+                'incurred_on' => $validated['incurred_on'] ?? null,
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'status' => $status,
+                'updated_by' => $request->user()->id,
+            ];
+
+            if ($status === FinancialExpense::STATUS_APPROVED) {
+                $payload['approved_by'] = $request->user()->id;
+                $payload['approved_at'] = now();
+            } else {
+                $payload['approved_by'] = null;
+                $payload['approved_at'] = null;
+            }
+
+            $expense->update($payload);
+            $this->storeFinancialDocument($request, $expense);
+        });
+
+        return redirect()
+            ->route('finance.office-expenses.show', $expense)
+            ->with('success', 'Office expense updated.');
+    }
+
+    public function destroyOfficeExpense(Request $request, FinancialExpense $expense)
+    {
+        $this->authorizeFinance(FinancePermission::DELETE);
+        $this->ensureOfficeExpense($expense);
+        $this->ensurePending($expense);
+
+        DB::transaction(function () use ($expense) {
+            foreach ($expense->documents as $document) {
+                Storage::disk('local')->delete($document->file_path);
+                $document->delete();
+            }
+            $expense->delete();
+        });
+
+        return redirect()
+            ->route('finance.office-expenses.index')
+            ->with('success', 'Office expense deleted.');
+    }
+
+    public function approveOfficeExpense(Request $request, FinancialExpense $expense)
+    {
+        $this->authorizeFinance(FinancePermission::APPROVE);
+        $this->ensureOfficeExpense($expense);
+        $this->ensurePending($expense);
+
+        $expense->update([
+            'status' => FinancialExpense::STATUS_APPROVED,
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('finance.office-expenses.show', $expense)
+            ->with('success', 'Office expense approved.');
+    }
+
+    public function rejectOfficeExpense(Request $request, FinancialExpense $expense)
+    {
+        $this->authorizeFinance(FinancePermission::APPROVE);
+        $this->ensureOfficeExpense($expense);
+        $this->ensurePending($expense);
+
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:5000',
+        ]);
+
+        $expense->update([
+            'status' => FinancialExpense::STATUS_REJECTED,
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'notes' => $this->appendReviewNote($expense->notes, $validated['notes'] ?? null, 'Rejection note'),
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('finance.office-expenses.show', $expense)
+            ->with('success', 'Office expense rejected.');
+    }
+
     private function preProjectExpensesQuery(): Builder
     {
         return FinancialExpense::query()
+            ->operational()
             ->whereNull('project_id')
             ->where(function (Builder $query) {
                 $query->whereNotNull('inspection_id')
@@ -780,6 +1016,10 @@ class FinanceController extends Controller
             },
             'financeStatusLabel' => fn ($status) => str_replace('_', ' ', Str::title($status ?? 'pending')),
             'financeContextType' => function (FinancialExpense $expense): string {
+                if ($expense->is_office_expense) {
+                    return 'Office';
+                }
+
                 if ($expense->project_id) {
                     return 'Project';
                 }
@@ -913,6 +1153,25 @@ class FinanceController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'incurred_on' => ['nullable', 'date'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+    }
+
+    private function validateOfficeExpense(Request $request): array
+    {
+        return $request->validate([
+            'finance_expense_category_id' => ['required', 'exists:finance_expense_categories,id'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'incurred_on' => ['nullable', 'date'],
+            'payment_method' => ['nullable', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in([
+                FinancialExpense::STATUS_PENDING,
+                FinancialExpense::STATUS_APPROVED,
+                FinancialExpense::STATUS_REJECTED,
+            ])],
+            'notes' => ['nullable', 'string', 'max:5000'],
             'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
     }
@@ -1102,10 +1361,19 @@ class FinanceController extends Controller
 
     private function ensureFinanceExpense(FinancialExpense $expense): void
     {
+        // Allow office expenses OR expenses with a linked operational context
         abort_unless(
-            $expense->project_id !== null || $expense->inspection_id !== null || $expense->job_request_item_id !== null,
+            $expense->is_office_expense ||
+            $expense->project_id !== null ||
+            $expense->inspection_id !== null ||
+            $expense->job_request_item_id !== null,
             404
         );
+    }
+
+    private function ensureOfficeExpense(FinancialExpense $expense): void
+    {
+        abort_unless($expense->is_office_expense, 404);
     }
 
     private function ensureProjectMaterialCost(FinancialMaterialCost $materialCost): void

@@ -112,4 +112,29 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
         ->name('expenses.destroy');
     Route::get('/documents/{document}/download', [FinanceController::class, 'downloadDocument'])
         ->name('documents.download');
+
+    // Office / General Company Expenses
+    Route::get('/office-expenses', [FinanceController::class, 'officeExpenses'])->name('office-expenses.index');
+    Route::get('/office-expenses/create', [FinanceController::class, 'createOfficeExpense'])
+        ->middleware('finance.permission:finance.create')
+        ->name('office-expenses.create');
+    Route::post('/office-expenses', [FinanceController::class, 'storeOfficeExpense'])
+        ->middleware('finance.permission:finance.create')
+        ->name('office-expenses.store');
+    Route::get('/office-expenses/{expense}', [FinanceController::class, 'showOfficeExpense'])->name('office-expenses.show');
+    Route::get('/office-expenses/{expense}/edit', [FinanceController::class, 'editOfficeExpense'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('office-expenses.edit');
+    Route::put('/office-expenses/{expense}', [FinanceController::class, 'updateOfficeExpense'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('office-expenses.update');
+    Route::post('/office-expenses/{expense}/approve', [FinanceController::class, 'approveOfficeExpense'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('office-expenses.approve');
+    Route::post('/office-expenses/{expense}/reject', [FinanceController::class, 'rejectOfficeExpense'])
+        ->middleware('finance.permission:finance.approve')
+        ->name('office-expenses.reject');
+    Route::delete('/office-expenses/{expense}', [FinanceController::class, 'destroyOfficeExpense'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('office-expenses.destroy');
 });
