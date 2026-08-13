@@ -19,6 +19,7 @@
             ['key' => 'finance-quotations', 'label' => 'Quotations', 'route' => 'finance.quotations.index', 'tab' => null, 'icon' => 'QT'],
             ['key' => 'finance-jobs', 'label' => 'Jobs', 'route' => 'finance.jobs.index', 'tab' => null, 'icon' => 'JB'],
             ['key' => 'finance-projects', 'label' => 'Projects', 'route' => 'finance.projects.index', 'tab' => null, 'icon' => 'PJ'],
+            ['key' => 'finance-office-expenses', 'label' => 'Office Expenses', 'route' => 'finance.office-expenses.index', 'tab' => null, 'icon' => 'OE'],
             ['key' => 'finance-analysis', 'label' => 'Analysis', 'route' => 'finance.analysis', 'tab' => null, 'icon' => 'AN'],
             ['key' => 'finance-reports', 'label' => 'Reports', 'route' => 'finance.reports.index', 'tab' => null, 'icon' => 'RP'],
         ],
@@ -84,6 +85,7 @@
             'finance-jobs' => request()->routeIs('finance.jobs.*'),
             'finance-projects' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*'),
             'finance-analysis' => request()->routeIs('finance.analysis.*') || request()->routeIs('finance.analysis'),
+            'finance-office-expenses' => request()->routeIs('finance.office-expenses.*'),
             'finance-reports' => request()->routeIs('finance.reports.*'),
             default => false,
         };

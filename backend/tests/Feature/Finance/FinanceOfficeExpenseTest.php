@@ -343,4 +343,30 @@ class FinanceOfficeExpenseTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Office electricity bill');
     }
+
+    // -------------------------------------------------------------------------
+    // Navigation visibility
+    // -------------------------------------------------------------------------
+
+    public function test_office_expenses_nav_link_appears_in_finance_sidebar(): void
+    {
+        // The Finance sidebar is rendered inside the admin layout on any finance page.
+        // The easiest surface to assert it on is the Finance dashboard.
+        $response = $this->actingAs($this->financeUser)
+            ->get(route('finance.dashboard'));
+
+        $response->assertOk();
+        // The sidebar must contain the "Office Expenses" label
+        $response->assertSee('Office Expenses');
+        // And the href pointing to the index route
+        $response->assertSee(route('finance.office-expenses.index'));
+    }
+
+    public function test_office_expenses_index_is_reachable_via_named_route(): void
+    {
+        $response = $this->actingAs($this->financeUser)
+            ->get(route('finance.office-expenses.index'));
+
+        $response->assertOk();
+    }
 }
