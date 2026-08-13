@@ -60,7 +60,12 @@ class User extends Model implements AuthenticatableContract
 
     public function isAdmin()
     {
-        return in_array($this->role, ['admin', 'manager'], true);
+        return in_array($this->role, ['admin', 'manager', 'executive', 'super_admin'], true);
+    }
+
+    public function isExecutive(): bool
+    {
+        return in_array($this->role, ['executive', 'super_admin'], true);
     }
 
     public function isPos()
@@ -97,12 +102,16 @@ class User extends Model implements AuthenticatableContract
     {
         $roles = is_array($roles) ? $roles : func_get_args();
 
+        if (in_array($this->role, ['executive', 'super_admin'], true) && in_array('admin', $roles, true)) {
+            return true;
+        }
+
         return in_array($this->role, $roles, true);
     }
 
     public function hasFinancePermission(string $permission): bool
     {
-        return $this->isFinance() || $this->financePermissions()->where('slug', $permission)->exists();
+        return $this->isFinance() || $this->isExecutive() || $this->financePermissions()->where('slug', $permission)->exists();
     }
 
     public function isPending()

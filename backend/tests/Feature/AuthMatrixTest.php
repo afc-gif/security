@@ -28,8 +28,26 @@ class AuthMatrixTest extends TestCase
         // Access admin dashboard
         $this->get(route('admin.dashboard'))->assertOk();
 
+        // Ordinary admin is restricted from finance without grant
+        $this->get(route('finance.dashboard'))->assertStatus(403);
+
         // Forbidden areas
         $this->get(route('field.dashboard'))->assertStatus(403);
+    }
+
+    public function test_executive_and_super_admin_roles_grant_executive_and_finance_access(): void
+    {
+        foreach (['executive', 'super_admin'] as $role) {
+            $user = $this->createUser([
+                'role' => $role,
+                'password' => bcrypt('password123'),
+            ]);
+
+            $this->actingAs($user);
+            $this->get(route('admin.dashboard'))->assertOk();
+            $this->get(route('finance.dashboard'))->assertOk();
+            $this->get(route('field.dashboard'))->assertStatus(403);
+        }
     }
 
     public function test_manager_login_redirects_and_grants_admin_access(): void
