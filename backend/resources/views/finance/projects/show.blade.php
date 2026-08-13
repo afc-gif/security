@@ -275,220 +275,224 @@
 </div>
 
 <!-- Payment Modal -->
+<!-- Payment Modal -->
 @can(\App\Models\FinancePermission::CREATE)
-    <div class="finance-modal-sheet" data-payment-modal>
-        <div class="finance-modal-header">
-            <h2 class="finance-modal-title">Record Payment</h2>
-            <button type="button" class="finance-modal-close-btn" data-payment-modal-close aria-label="Close">×</button>
+    <div id="project-payment-modal" class="hidden fixed inset-0 z-[90]" role="dialog" aria-modal="true">
+        <div data-payment-modal-close class="absolute inset-0 bg-gray-950/45"></div>
+        <div class="finance-modal-sheet">
+            <div class="finance-modal-header">
+                <h2 class="finance-modal-title">Record Payment</h2>
+                <button type="button" class="finance-modal-close-btn" data-payment-modal-close aria-label="Close">×</button>
+            </div>
+
+            <form method="POST" action="{{ route('finance.projects.payments.store', $project) }}" enctype="multipart/form-data" class="finance-modal-form">
+                @csrf
+                <div class="finance-form-group">
+                    <label for="payment_amount" class="finance-form-label">Amount</label>
+                    <input id="payment_amount" type="number" name="amount" min="0" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="finance-form-group">
+                    <label for="payment_date" class="finance-form-label">Payment Date</label>
+                    <input id="payment_date" type="date" name="payment_date" value="{{ now()->toDateString() }}" required>
+                </div>
+                <div class="finance-form-group">
+                    <label for="payment_method" class="finance-form-label">Payment Method</label>
+                    <select id="payment_method" name="payment_method" required>
+                        <option value="">Select method</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="pos">POS</option>
+                        <option value="check">Cheque</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="finance-form-group">
+                    <label for="payment_reference" class="finance-form-label">Reference / Invoice (optional)</label>
+                    <input id="payment_reference" type="text" name="reference" maxlength="255" placeholder="INV-2026-001">
+                </div>
+                <div class="finance-form-group">
+                    <label for="payment_notes" class="finance-form-label">Notes (optional)</label>
+                    <textarea id="payment_notes" name="notes" rows="3" maxlength="5000" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="finance-form-group">
+                    <label for="payment_receipt" class="finance-form-label">Receipt (optional)</label>
+                    <input id="payment_receipt" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
+                    <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
+                </div>
+
+                <div class="finance-modal-actions">
+                    <button type="button" class="finance-btn finance-btn-secondary" data-payment-modal-close>Cancel</button>
+                    <button type="submit" class="finance-btn finance-btn-primary">Record Payment</button>
+                </div>
+            </form>
         </div>
-
-        <form method="POST" action="{{ route('finance.projects.payments.store', $project) }}" enctype="multipart/form-data" class="finance-modal-form">
-            @csrf
-            <div class="finance-form-group">
-                <label for="payment_amount" class="finance-form-label">Amount</label>
-                <input id="payment_amount" type="number" name="amount" min="0" step="0.01" required placeholder="0.00">
-            </div>
-            <div class="finance-form-group">
-                <label for="payment_date" class="finance-form-label">Payment Date</label>
-                <input id="payment_date" type="date" name="payment_date" value="{{ now()->toDateString() }}" required>
-            </div>
-            <div class="finance-form-group">
-                <label for="payment_method" class="finance-form-label">Payment Method</label>
-                <select id="payment_method" name="payment_method" required>
-                    <option value="">Select method</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="cash">Cash</option>
-                    <option value="pos">POS</option>
-                    <option value="check">Cheque</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="finance-form-group">
-                <label for="payment_reference" class="finance-form-label">Reference / Invoice (optional)</label>
-                <input id="payment_reference" type="text" name="reference" maxlength="255" placeholder="INV-2026-001">
-            </div>
-            <div class="finance-form-group">
-                <label for="payment_notes" class="finance-form-label">Notes (optional)</label>
-                <textarea id="payment_notes" name="notes" rows="3" maxlength="5000" placeholder="Additional notes..."></textarea>
-            </div>
-            <div class="finance-form-group">
-                <label for="payment_receipt" class="finance-form-label">Receipt (optional)</label>
-                <input id="payment_receipt" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
-                <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
-            </div>
-
-            <div class="finance-modal-actions">
-                <button type="button" class="finance-btn finance-btn-secondary" data-payment-modal-close>Cancel</button>
-                <button type="submit" class="finance-btn finance-btn-primary">Record Payment</button>
-            </div>
-        </form>
     </div>
 @endcan
 
 <!-- Edit Payment Modals -->
 @can(\App\Models\FinancePermission::EDIT)
     @foreach($project->payments as $payment)
-        <div class="finance-modal-sheet" data-edit-payment-modal="{{ $payment->id }}">
-            <div class="finance-modal-header">
-                <h2 class="finance-modal-title">Edit Payment</h2>
-                <button type="button" class="finance-modal-close-btn" data-edit-payment-modal-close="{{ $payment->id }}" aria-label="Close">×</button>
+        <div id="edit-payment-modal-{{ $payment->id }}" class="hidden fixed inset-0 z-[90]" role="dialog" aria-modal="true">
+            <div data-edit-payment-modal-close="{{ $payment->id }}" class="absolute inset-0 bg-gray-950/45"></div>
+            <div class="finance-modal-sheet">
+                <div class="finance-modal-header">
+                    <h2 class="finance-modal-title">Edit Payment</h2>
+                    <button type="button" class="finance-modal-close-btn" data-edit-payment-modal-close="{{ $payment->id }}" aria-label="Close">×</button>
+                </div>
+
+                <form method="POST" action="{{ route('finance.projects.payments.update', [$project, $payment]) }}" enctype="multipart/form-data" class="finance-modal-form">
+                    @csrf
+                    @method('PUT')
+                    <div class="finance-form-group">
+                        <label for="edit_payment_amount_{{ $payment->id }}" class="finance-form-label">Amount</label>
+                        <input id="edit_payment_amount_{{ $payment->id }}" type="number" name="amount" value="{{ old('amount', $payment->amount) }}" min="0" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="finance-form-group">
+                        <label for="edit_payment_date_{{ $payment->id }}" class="finance-form-label">Payment Date</label>
+                        <input id="edit_payment_date_{{ $payment->id }}" type="date" name="payment_date" value="{{ old('payment_date', $payment->payment_date?->format('Y-m-d')) }}" required>
+                    </div>
+                    <div class="finance-form-group">
+                        <label for="edit_payment_method_{{ $payment->id }}" class="finance-form-label">Payment Method</label>
+                        <select id="edit_payment_method_{{ $payment->id }}" name="payment_method" required>
+                            <option value="bank_transfer" @selected(old('payment_method', $payment->payment_method) === 'bank_transfer')>Bank Transfer</option>
+                            <option value="cash" @selected(old('payment_method', $payment->payment_method) === 'cash')>Cash</option>
+                            <option value="pos" @selected(old('payment_method', $payment->payment_method) === 'pos')>POS</option>
+                            <option value="check" @selected(in_array(old('payment_method', $payment->payment_method), ['check', 'cheque']))>Cheque</option>
+                            <option value="other" @selected(old('payment_method', $payment->payment_method) === 'other')>Other</option>
+                        </select>
+                    </div>
+                    <div class="finance-form-group">
+                        <label for="edit_payment_reference_{{ $payment->id }}" class="finance-form-label">Reference (optional)</label>
+                        <input id="edit_payment_reference_{{ $payment->id }}" type="text" name="reference" value="{{ old('reference', $payment->reference) }}" maxlength="255" placeholder="INV-2026-001">
+                    </div>
+                    <div class="finance-form-group">
+                        <label for="edit_payment_notes_{{ $payment->id }}" class="finance-form-label">Notes (optional)</label>
+                        <textarea id="edit_payment_notes_{{ $payment->id }}" name="notes" rows="3" maxlength="5000" placeholder="Additional notes...">{{ old('notes', $payment->notes) }}</textarea>
+                    </div>
+                    <div class="finance-form-group">
+                        <label for="edit_payment_receipt_{{ $payment->id }}" class="finance-form-label">Receipt (optional - replace current)</label>
+                        <input id="edit_payment_receipt_{{ $payment->id }}" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
+                        <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
+                    </div>
+
+                    <div class="finance-modal-actions">
+                        <button type="button" class="finance-btn finance-btn-secondary" data-edit-payment-modal-close="{{ $payment->id }}">Cancel</button>
+                        <button type="submit" class="finance-btn finance-btn-primary">Update Payment</button>
+                    </div>
+                </form>
             </div>
-
-            <form method="POST" action="{{ route('finance.projects.payments.update', [$project, $payment]) }}" enctype="multipart/form-data" class="finance-modal-form">
-                @csrf
-                @method('PUT')
-                <div class="finance-form-group">
-                    <label for="edit_payment_amount_{{ $payment->id }}" class="finance-form-label">Amount</label>
-                    <input id="edit_payment_amount_{{ $payment->id }}" type="number" name="amount" value="{{ old('amount', $payment->amount) }}" min="0" step="0.01" required placeholder="0.00">
-                </div>
-                <div class="finance-form-group">
-                    <label for="edit_payment_date_{{ $payment->id }}" class="finance-form-label">Payment Date</label>
-                    <input id="edit_payment_date_{{ $payment->id }}" type="date" name="payment_date" value="{{ old('payment_date', $payment->payment_date?->format('Y-m-d')) }}" required>
-                </div>
-                <div class="finance-form-group">
-                    <label for="edit_payment_method_{{ $payment->id }}" class="finance-form-label">Payment Method</label>
-                    <select id="edit_payment_method_{{ $payment->id }}" name="payment_method" required>
-                        <option value="bank_transfer" @selected(old('payment_method', $payment->payment_method) === 'bank_transfer')>Bank Transfer</option>
-                        <option value="cash" @selected(old('payment_method', $payment->payment_method) === 'cash')>Cash</option>
-                        <option value="pos" @selected(old('payment_method', $payment->payment_method) === 'pos')>POS</option>
-                        <option value="check" @selected(in_array(old('payment_method', $payment->payment_method), ['check', 'cheque']))>Cheque</option>
-                        <option value="other" @selected(old('payment_method', $payment->payment_method) === 'other')>Other</option>
-                    </select>
-                </div>
-                <div class="finance-form-group">
-                    <label for="edit_payment_reference_{{ $payment->id }}" class="finance-form-label">Reference (optional)</label>
-                    <input id="edit_payment_reference_{{ $payment->id }}" type="text" name="reference" value="{{ old('reference', $payment->reference) }}" maxlength="255" placeholder="INV-2026-001">
-                </div>
-                <div class="finance-form-group">
-                    <label for="edit_payment_notes_{{ $payment->id }}" class="finance-form-label">Notes (optional)</label>
-                    <textarea id="edit_payment_notes_{{ $payment->id }}" name="notes" rows="3" maxlength="5000" placeholder="Additional notes...">{{ old('notes', $payment->notes) }}</textarea>
-                </div>
-                <div class="finance-form-group">
-                    <label for="edit_payment_receipt_{{ $payment->id }}" class="finance-form-label">Receipt (optional - replace current)</label>
-                    <input id="edit_payment_receipt_{{ $payment->id }}" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
-                    <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
-                </div>
-
-                <div class="finance-modal-actions">
-                    <button type="button" class="finance-btn finance-btn-secondary" data-edit-payment-modal-close="{{ $payment->id }}">Cancel</button>
-                    <button type="submit" class="finance-btn finance-btn-primary">Update Payment</button>
-                </div>
-            </form>
         </div>
     @endforeach
 @endcan
 
 <!-- Expense Modal -->
 @can(\App\Models\FinancePermission::CREATE)
-    <div class="finance-modal-sheet" data-expense-modal>
-        <div class="finance-modal-header">
-            <h2 class="finance-modal-title">Add Expense</h2>
-            <button type="button" class="finance-modal-close-btn" data-expense-modal-close aria-label="Close">×</button>
+    <div id="project-expense-modal" class="hidden fixed inset-0 z-[90]" role="dialog" aria-modal="true">
+        <div data-expense-modal-close class="absolute inset-0 bg-gray-950/45"></div>
+        <div class="finance-modal-sheet">
+            <div class="finance-modal-header">
+                <h2 class="finance-modal-title">Add Expense</h2>
+                <button type="button" class="finance-modal-close-btn" data-expense-modal-close aria-label="Close">×</button>
+            </div>
+
+            <form method="POST" action="{{ route('finance.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="finance-modal-form">
+                @csrf
+                <div class="finance-form-group">
+                    <label for="finance_expense_category_id" class="finance-form-label">Expense Type</label>
+                    <select id="finance_expense_category_id" name="finance_expense_category_id" required>
+                        <option value="">Select type</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="finance-form-group">
+                    <label for="expense_amount" class="finance-form-label">Amount</label>
+                    <input id="expense_amount" type="number" name="amount" min="0" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="finance-form-group">
+                    <label for="expense_description" class="finance-form-label">Description (optional)</label>
+                    <input id="expense_description" type="text" name="description" maxlength="255" placeholder="What was this expense for?">
+                </div>
+                <div class="finance-form-group">
+                    <label for="expense_date" class="finance-form-label">Date</label>
+                    <input id="expense_date" type="date" name="incurred_on" value="{{ now()->toDateString() }}">
+                </div>
+                <div class="finance-form-group">
+                    <label for="expense_receipt" class="finance-form-label">Receipt (optional)</label>
+                    <input id="expense_receipt" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
+                    <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
+                </div>
+
+                <div class="finance-modal-actions">
+                    <button type="button" class="finance-btn finance-btn-secondary" data-expense-modal-close>Cancel</button>
+                    <button type="submit" class="finance-btn finance-btn-primary">Add Expense</button>
+                </div>
+            </form>
         </div>
-
-        <form method="POST" action="{{ route('finance.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="finance-modal-form">
-            @csrf
-            <div class="finance-form-group">
-                <label for="finance_expense_category_id" class="finance-form-label">Expense Type</label>
-                <select id="finance_expense_category_id" name="finance_expense_category_id" required>
-                    <option value="">Select type</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="finance-form-group">
-                <label for="expense_amount" class="finance-form-label">Amount</label>
-                <input id="expense_amount" type="number" name="amount" min="0" step="0.01" required placeholder="0.00">
-            </div>
-            <div class="finance-form-group">
-                <label for="expense_description" class="finance-form-label">Description (optional)</label>
-                <input id="expense_description" type="text" name="description" maxlength="255" placeholder="What was this expense for?">
-            </div>
-            <div class="finance-form-group">
-                <label for="expense_date" class="finance-form-label">Date</label>
-                <input id="expense_date" type="date" name="incurred_on" value="{{ now()->toDateString() }}">
-            </div>
-            <div class="finance-form-group">
-                <label for="expense_receipt" class="finance-form-label">Receipt (optional)</label>
-                <input id="expense_receipt" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
-                <div class="finance-form-help">Max 5MB (JPG, PNG, PDF)</div>
-            </div>
-
-            <div class="finance-modal-actions">
-                <button type="button" class="finance-btn finance-btn-secondary" data-expense-modal-close>Cancel</button>
-                <button type="submit" class="finance-btn finance-btn-primary">Add Expense</button>
-            </div>
-        </form>
     </div>
 @endcan
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    function openModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea, button');
+        setTimeout(() => firstInput?.focus(), 0);
+    }
+
+    function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('#project-payment-modal, #project-expense-modal, [id^="edit-payment-modal-"]').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        document.body.style.overflow = '';
+    }
+
     // Payment Modal
-    const paymentModal = document.querySelector('[data-payment-modal]');
+    const paymentModal = document.getElementById('project-payment-modal');
     const paymentOpenBtn = document.querySelector('[data-payment-modal-open]');
     const paymentCloseBtns = document.querySelectorAll('[data-payment-modal-close]');
 
-    function openPaymentModal() {
-        paymentModal?.showModal?.() || paymentModal?.classList.add('active');
-    }
+    paymentOpenBtn?.addEventListener('click', () => openModal(paymentModal));
+    paymentCloseBtns.forEach(btn => btn.addEventListener('click', () => closeModal(paymentModal)));
 
-    function closePaymentModal() {
-        paymentModal?.close?.() || paymentModal?.classList.remove('active');
-    }
+    // Expense Modal
+    const expenseModal = document.getElementById('project-expense-modal');
+    const expenseOpenBtn = document.querySelector('[data-expense-modal-open]');
+    const expenseCloseBtns = document.querySelectorAll('[data-expense-modal-close]');
 
-    paymentOpenBtn?.addEventListener('click', openPaymentModal);
-    paymentCloseBtns.forEach(btn => btn.addEventListener('click', closePaymentModal));
+    expenseOpenBtn?.addEventListener('click', () => openModal(expenseModal));
+    expenseCloseBtns.forEach(btn => btn.addEventListener('click', () => closeModal(expenseModal)));
 
     // Edit Payment Modals
     document.querySelectorAll('[data-edit-payment-modal-open]').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-edit-payment-modal-open');
-            const modal = document.querySelector(`[data-edit-payment-modal="${id}"]`);
-            modal?.showModal?.() || modal?.classList.add('active');
+            const modal = document.getElementById(`edit-payment-modal-${id}`);
+            openModal(modal);
         });
     });
 
     document.querySelectorAll('[data-edit-payment-modal-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-edit-payment-modal-close');
-            const modal = document.querySelector(`[data-edit-payment-modal="${id}"]`);
-            modal?.close?.() || modal?.classList.remove('active');
+            const modal = document.getElementById(`edit-payment-modal-${id}`);
+            closeModal(modal);
         });
     });
-
-    // Expense Modal
-    const expenseModal = document.querySelector('[data-expense-modal]');
-    const expenseOpenBtn = document.querySelector('[data-expense-modal-open]');
-    const expenseCloseBtns = document.querySelectorAll('[data-expense-modal-close]');
-
-    function openExpenseModal() {
-        expenseModal?.showModal?.() || expenseModal?.classList.add('active');
-    }
-
-    function closeExpenseModal() {
-        expenseModal?.close?.() || expenseModal?.classList.remove('active');
-    }
-
-    expenseOpenBtn?.addEventListener('click', openExpenseModal);
-    expenseCloseBtns.forEach(btn => btn.addEventListener('click', closeExpenseModal));
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closePaymentModal();
-            closeExpenseModal();
-            document.querySelectorAll('[data-edit-payment-modal]').forEach(m => m.close?.() || m.classList.remove('active'));
+            closeAllModals();
         }
-    });
-
-    // Backdrop close for modals
-    document.querySelectorAll('[data-payment-modal], [data-expense-modal], [data-edit-payment-modal]').forEach(modal => {
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.close?.() || modal.classList.remove('active');
-            }
-        });
     });
 });
 </script>
