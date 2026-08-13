@@ -11,24 +11,27 @@ class BarcodeGenerator
     /**
      * Generate barcode in requested format
      */
-    public static function generateImage(string $barcode, string $format = 'png'): string
+    public static function generateImage(string $barcode, string $format = 'png', ?int $width = null, ?int $height = null): string
     {
         return match ($format) {
-            'png' => self::generatePNG($barcode),
-            'svg' => self::generateSVG($barcode),
+            'png' => self::generatePNG($barcode, $width, $height),
+            'svg' => self::generateSVG($barcode, $width, $height),
             'html' => self::generateHTML($barcode),
             'print' => self::generatePrintHTML($barcode),
-            default => self::generatePNG($barcode),
+            default => self::generatePNG($barcode, $width, $height),
         };
     }
 
     /**
      * Generate high-quality PNG barcode for scanning
      */
-    private static function generatePNG(string $barcode): string
+    private static function generatePNG(string $barcode, ?int $width = null, ?int $height = null): string
     {
         try {
             $generator = new BarcodeGeneratorPNG();
+            if ($width !== null && $height !== null) {
+                return $generator->getBarcode($barcode, BarcodeGeneratorPNG::TYPE_CODE_128, $width, $height);
+            }
             return $generator->getBarcode($barcode, BarcodeGeneratorPNG::TYPE_CODE_128);
         } catch (\Exception $e) {
             return self::generateHTML($barcode);
@@ -38,10 +41,13 @@ class BarcodeGenerator
     /**
      * Generate SVG barcode (vector format)
      */
-    private static function generateSVG(string $barcode): string
+    private static function generateSVG(string $barcode, ?int $width = null, ?int $height = null): string
     {
         try {
             $generator = new BarcodeGeneratorSVG();
+            if ($width !== null && $height !== null) {
+                return $generator->getBarcode($barcode, BarcodeGeneratorSVG::TYPE_CODE_128, $width, $height);
+            }
             return $generator->getBarcode($barcode, BarcodeGeneratorSVG::TYPE_CODE_128);
         } catch (\Exception $e) {
             return '<svg></svg>';
