@@ -168,8 +168,7 @@ class JobItemController extends Controller
             $lockedItem->update($updatePayload);
 
             $adminNote = trim((string) ($validated['admin_note'] ?? ''));
-            $userId = $request->user()?->id 
-                ?? (\App\Models\User::query()->whereKey($lockedItem->created_by)->exists() ? $lockedItem->created_by : \App\Models\User::query()->whereIn('role', ['admin', 'manager'])->value('id'));
+            $userId = $request->user()?->id;
 
             if ($userId) {
                 JobItemAttempt::create([

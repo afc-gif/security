@@ -117,6 +117,11 @@ class OperationsStabilizationTest extends TestCase
         $this->assertNull($this->jobItem->claimed_at);
         $this->assertNull($this->jobItem->due_date);
 
+        // Verify attempt actor user_id represents the authenticated admin
+        $latestAttempt = JobItemAttempt::where('job_request_item_id', $this->jobItem->id)->latest('id')->first();
+        $this->assertNotNull($latestAttempt);
+        $this->assertEquals($this->admin->id, $latestAttempt->user_id);
+
         // Verify that loading show view after reopen does not revert it to overdue
         $viewResponse = $this->actingAs($this->admin)
             ->get(route('admin.job-items.show', $this->jobItem));
