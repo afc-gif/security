@@ -116,7 +116,8 @@ class JobRequestItem extends Model
         }
 
         $user = $user ?? auth()->user();
-        if ($user?->isSuperAdmin()) {
+
+        if ($user instanceof User && $user->isSuperAdmin()) {
             return true;
         }
 
