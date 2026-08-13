@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShopController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BarcodeController;
-use App\Http\Controllers\Api\CategoryController as ApiCategoryController;
-use App\Http\Controllers\Api\MenuItemController as ApiMenuItemController;
-use App\Http\Controllers\Api\OrderController as ApiOrderController;
+use App\Http\Controllers\Commerce\ShopController;
+use App\Http\Controllers\Operations\AdminController;
+use App\Http\Controllers\Commerce\BarcodeController;
+use App\Http\Controllers\Commerce\ApiCategoryController;
+use App\Http\Controllers\Commerce\ApiMenuItemController;
+use App\Http\Controllers\Commerce\ApiOrderController;
 use App\Models\User;
 
 // Public E-Commerce Shop
@@ -55,10 +55,10 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::post('/orders/{order}/approve', [ApiOrderController::class, 'approve']);
     Route::delete('/orders/{order}', [ApiOrderController::class, 'destroy']);
 
-    Route::get('/stock-alerts', [App\Http\Controllers\Api\StockAlertController::class, 'getActiveAlerts']);
-    Route::post('/stock-alerts/acknowledge-all', [App\Http\Controllers\Api\StockAlertController::class, 'acknowledgeAll']);
-    Route::post('/stock-alerts/{alert}/acknowledge', [App\Http\Controllers\Api\StockAlertController::class, 'acknowledge']);
-    Route::get('/stock-status/{item}', [App\Http\Controllers\Api\StockAlertController::class, 'getStockStatus']);
+    Route::get('/stock-alerts', [App\Http\Controllers\Commerce\ApiStockAlertController::class, 'getActiveAlerts']);
+    Route::post('/stock-alerts/acknowledge-all', [App\Http\Controllers\Commerce\ApiStockAlertController::class, 'acknowledgeAll']);
+    Route::post('/stock-alerts/{alert}/acknowledge', [App\Http\Controllers\Commerce\ApiStockAlertController::class, 'acknowledge']);
+    Route::get('/stock-status/{item}', [App\Http\Controllers\Commerce\ApiStockAlertController::class, 'getStockStatus']);
 });
 
 // Admin Commerce Web Routes
@@ -83,7 +83,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::patch('/orders/{order}/status', [AdminController::class, 'updateOrderStatus'])->name('admin.orders.update-status');
 
     // Solutions / Product Catalog Management
-    Route::resource('solutions', 'App\Http\Controllers\Admin\SolutionController', ['names' => [
+    Route::resource('solutions', \App\Http\Controllers\Commerce\SolutionController::class, ['names' => [
         'index' => 'admin.solutions.index',
         'show' => 'admin.solutions.show',
         'create' => 'admin.solutions.create',
@@ -92,7 +92,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         'update' => 'admin.solutions.update',
         'destroy' => 'admin.solutions.destroy',
     ]]);
-    Route::resource('solutions.items', 'App\Http\Controllers\Admin\SolutionItemController', [
+    Route::resource('solutions.items', \App\Http\Controllers\Commerce\SolutionItemController::class, [
         'except' => ['index', 'show'],
         'names' => [
             'create' => 'admin.solutions.items.create',
@@ -106,13 +106,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 // POS System API Routes
 Route::prefix('api/pos')->group(function () {
-    Route::get('/products', [App\Http\Controllers\PosController::class, 'getProducts']);
+    Route::get('/products', [App\Http\Controllers\Commerce\PosController::class, 'getProducts']);
 });
 
 Route::middleware('auth')->prefix('api/pos')->group(function () {
-    Route::get('/barcode/{barcode}', [App\Http\Controllers\PosController::class, 'lookupBarcode']);
-    Route::get('/search/{query}', [App\Http\Controllers\PosController::class, 'searchProducts']);
-    Route::post('/complete-sale', [App\Http\Controllers\PosController::class, 'completeSale']);
+    Route::get('/barcode/{barcode}', [App\Http\Controllers\Commerce\PosController::class, 'lookupBarcode']);
+    Route::get('/search/{query}', [App\Http\Controllers\Commerce\PosController::class, 'searchProducts']);
+    Route::post('/complete-sale', [App\Http\Controllers\Commerce\PosController::class, 'completeSale']);
 });
 
 // Barcode Labels Management

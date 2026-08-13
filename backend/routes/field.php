@@ -6,7 +6,7 @@ use App\Http\Controllers\Field\InspectionController as FieldInspectionController
 use App\Http\Controllers\Field\JobController as FieldJobController;
 use App\Http\Controllers\Field\ProjectController as FieldProjectController;
 use App\Http\Controllers\Field\TaskController as FieldTaskController;
-use App\Http\Controllers\FieldCoordinator\JobAssignmentController as CoordinatorJobAssignmentController;
+use App\Http\Controllers\Field\CoordinatorJobAssignmentController;
 
 // Field Staff Routes
 Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field')->group(function () {

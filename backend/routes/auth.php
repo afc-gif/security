@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\Api\UserAdminController as ApiUserAdminController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Operations\AdminController;
+use App\Http\Controllers\Auth\UserAdminController as ApiUserAdminController;
 
 // Authentication routes (Login, Register, Logout)
 Route::middleware('web')->group(function () {

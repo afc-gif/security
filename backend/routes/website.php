@@ -70,7 +70,7 @@ Route::prefix('api')->group(function () {
 
 // Admin Installations Gallery Management
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::resource('installations', \App\Http\Controllers\Admin\InstallationController::class)->names([
+    Route::resource('installations', \App\Http\Controllers\Website\InstallationController::class)->names([
         'index' => 'admin.installations.index',
         'create' => 'admin.installations.create',
         'store' => 'admin.installations.store',
