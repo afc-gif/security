@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Field;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
+use App\Models\InspectionRevision;
+use App\Models\JobChecklistItem;
 use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -25,7 +27,18 @@ class InspectionController extends Controller
     {
         $this->authorizeAssignedInspection($inspection);
 
-        $inspection->load(['client', 'reviewedBy', 'media.uploader']);
+        $inspection->load([
+            'client',
+            'reviewedBy',
+            'returnedBy',
+            'media.uploader',
+            'checklistItems.addedBy',
+            'checklistItems.completedBy',
+            'checklistItems.media',
+            'revisions.user',
+        ]);
+
+        $inspection->ensureChecklistFromCategory();
 
         return view('field.inspections.show', compact('inspection'));
     }
@@ -35,9 +48,9 @@ class InspectionController extends Controller
         $this->authorizeAssignedInspection($inspection);
         abort_if((int) $inspection->assigned_to !== (int) auth()->id(), 403);
 
-        if ($inspection->status === 'completed') {
+        if ($inspection->status === Inspection::STATUS_COMPLETED && $inspection->review_status === Inspection::REVIEW_STATUS_APPROVED) {
             return back()->withErrors([
-                'inspection' => 'This inspection has already been submitted.',
+                'inspection' => 'This inspection has already been approved.',
             ]);
         }
 
@@ -47,6 +60,10 @@ class InspectionController extends Controller
             'recommendations' => 'nullable|string',
             'media' => 'nullable|array',
             'media.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'checklist' => 'nullable|array',
+            'checklist.*.status' => 'nullable|in:pending,done,not_applicable',
+            'checklist.*.response' => 'nullable',
+            'checklist.*.notes' => 'nullable|string',
         ]);
 
         $hasReportText = collect([
@@ -55,9 +72,12 @@ class InspectionController extends Controller
             $validated['recommendations'] ?? null,
         ])->contains(fn ($value) => trim((string) $value) !== '');
 
-        if (!$hasReportText && !$request->hasFile('media')) {
+        $hasChecklistResponses = collect($validated['checklist'] ?? [])
+            ->contains(fn ($input) => !empty($input['response']) || !empty($input['notes']) || ($input['status'] ?? '') === 'done');
+
+        if (!$hasReportText && !$hasChecklistResponses && !$request->hasFile('media')) {
             return back()
-                ->withErrors(['report' => 'Add report text or upload at least one evidence file before submitting.'])
+                ->withErrors(['report' => 'Add report text, complete checklist items, or upload evidence files before submitting.'])
                 ->withInput();
         }
 
@@ -75,13 +95,45 @@ class InspectionController extends Controller
                 ->withInput();
         }
 
+        $inspection->ensureChecklistFromCategory();
+
+        // Process checklist items
+        foreach (($validated['checklist'] ?? []) as $checklistItemId => $checklistInput) {
+            $status = $checklistInput['status'] ?? null;
+            $notes = isset($checklistInput['notes']) && trim((string) $checklistInput['notes']) !== ''
+                ? trim((string) $checklistInput['notes'])
+                : null;
+            $response = $checklistInput['response'] ?? null;
+
+            if (in_array($status, [null, '', JobChecklistItem::STATUS_PENDING], true) && (!empty($response) || !empty($notes))) {
+                $status = JobChecklistItem::STATUS_DONE;
+            }
+
+            if (is_array($response)) {
+                $response = collect($response)
+                    ->filter(fn ($val) => trim((string) $val) !== '')
+                    ->implode(', ');
+            }
+
+            JobChecklistItem::query()
+                ->where('id', $checklistItemId)
+                ->where('inspection_id', $inspection->id)
+                ->update([
+                    'status' => $status ?: JobChecklistItem::STATUS_PENDING,
+                    'response' => trim((string) $response) !== '' ? trim((string) $response) : null,
+                    'notes' => $notes,
+                    'completed_by' => $status === JobChecklistItem::STATUS_DONE ? $request->user()->id : null,
+                    'completed_at' => $status === JobChecklistItem::STATUS_DONE ? now() : null,
+                ]);
+        }
+
         $inspection->update([
-            'findings' => $validated['findings'] ?? null,
-            'risks_identified' => $validated['risks_identified'] ?? null,
-            'recommendations' => $validated['recommendations'] ?? null,
+            'findings' => $validated['findings'] ?? $inspection->findings,
+            'risks_identified' => $validated['risks_identified'] ?? $inspection->risks_identified,
+            'recommendations' => $validated['recommendations'] ?? $inspection->recommendations,
             'submitted_at' => now(),
-            'status' => 'completed',
-            'review_status' => 'pending_review',
+            'status' => Inspection::STATUS_COMPLETED,
+            'review_status' => Inspection::REVIEW_STATUS_PENDING,
             'reviewed_by' => null,
             'reviewed_at' => null,
             'review_notes' => null,
@@ -101,9 +153,27 @@ class InspectionController extends Controller
             ]);
         }
 
+        InspectionRevision::create([
+            'inspection_id' => $inspection->id,
+            'user_id' => $request->user()->id,
+            'action' => InspectionRevision::ACTION_SUBMITTED,
+            'findings' => $inspection->findings,
+            'risks_identified' => $inspection->risks_identified,
+            'recommendations' => $inspection->recommendations,
+            'snapshot_data' => [
+                'checklist_responses' => $inspection->effective_checklist_items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'status' => $item->status,
+                    'response' => $item->response,
+                    'notes' => $item->notes,
+                ])->all(),
+            ],
+        ]);
+
         return redirect()
             ->route('field.inspections.show', $inspection)
-            ->with('success', 'Inspection report submitted successfully.');
+            ->with('success', 'Inspection report resubmitted successfully for Admin review.');
     }
 
     private function authorizeAssignedInspection(Inspection $inspection): void

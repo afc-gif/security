@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\FinanceExpenseCategory;
 use App\Models\FinancialExpense;
 use App\Models\Inspection;
 use App\Models\JobRequest;
@@ -12,6 +13,7 @@ use App\Models\ProjectPayment;
 use App\Models\ServiceCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class FinancePreProjectPaymentTest extends TestCase
@@ -39,6 +41,14 @@ class FinancePreProjectPaymentTest extends TestCase
             'client_name' => 'PreProject Test Client',
             'company_name' => 'Acme Test Corp',
             'status' => 'active',
+        ]);
+    }
+
+    private function createServiceCategory(): ServiceCategory
+    {
+        return ServiceCategory::create([
+            'name' => 'Test Service ' . Str::random(5),
+            'description' => 'Test category description',
         ]);
     }
 
@@ -77,7 +87,7 @@ class FinancePreProjectPaymentTest extends TestCase
 
     public function test_finance_user_can_record_money_received_against_job_request(): void
     {
-        $category = ServiceCategory::factory()->create();
+        $category = $this->createServiceCategory();
         $jobRequest = JobRequest::create([
             'client_id' => $this->client->id,
             'title' => 'Solar Job',
@@ -112,7 +122,7 @@ class FinancePreProjectPaymentTest extends TestCase
 
     public function test_money_received_can_be_recorded_before_project_exists(): void
     {
-        $category = ServiceCategory::factory()->create();
+        $category = $this->createServiceCategory();
         $jobRequest = JobRequest::create([
             'client_id' => $this->client->id,
             'title' => 'CCTV Job',
@@ -174,7 +184,7 @@ class FinancePreProjectPaymentTest extends TestCase
 
     public function test_total_received_calculated_correctly_with_multiple_payments(): void
     {
-        $category = ServiceCategory::factory()->create();
+        $category = $this->createServiceCategory();
         $jobRequest = JobRequest::create([
             'client_id' => $this->client->id,
             'title' => 'Multi-Payment Job',
@@ -218,9 +228,15 @@ class FinancePreProjectPaymentTest extends TestCase
             'created_by' => $this->superAdmin->id,
         ]);
 
+        $expenseCategory = FinanceExpenseCategory::firstOrCreate(
+            ['slug' => 'travel'],
+            ['name' => 'Travel & Logistics']
+        );
+
         // Add expense
         FinancialExpense::create([
             'inspection_id' => $inspection->id,
+            'finance_expense_category_id' => $expenseCategory->id,
             'amount' => 45000,
             'description' => 'Travel fuel',
             'status' => 'approved',
@@ -269,7 +285,7 @@ class FinancePreProjectPaymentTest extends TestCase
 
     public function test_unauthorized_users_cannot_create_or_view_payments(): void
     {
-        $category = ServiceCategory::factory()->create();
+        $category = $this->createServiceCategory();
         $jobRequest = JobRequest::create([
             'client_id' => $this->client->id,
             'title' => 'Restricted Job',
@@ -305,7 +321,7 @@ class FinancePreProjectPaymentTest extends TestCase
 
     public function test_when_job_with_payment_is_converted_to_project_payment_remains_traceable_and_not_duplicated(): void
     {
-        $category = ServiceCategory::factory()->create();
+        $category = $this->createServiceCategory();
         $jobRequest = JobRequest::create([
             'client_id' => $this->client->id,
             'title' => 'Convertible Job',

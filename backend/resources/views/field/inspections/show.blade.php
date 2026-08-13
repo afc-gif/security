@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $inspection->inspection_code }}</title>
+    <title>{{ $inspection->inspection_code }} | Field Console</title>
     @include('field.partials.styles')
 </head>
 <body>
@@ -20,12 +20,24 @@
             <div class="notice success">{{ session('success') }}</div>
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && $errors->any())
             <div class="notice error">
                 @foreach($errors->all() as $error)
                     <div>{{ $error }}</div>
                 @endforeach
             </div>
+        @endif
+
+        @if($inspection->review_status === 'returned' || $inspection->status === 'returned')
+            <section class="panel" style="border: 2px solid #f59e0b; background-color: #fffbeb;">
+                <h2 style="color: #b45309; margin-bottom: 8px;">⚠️ Returned for Additional Details</h2>
+                <div class="notice error" style="background-color: #fef3c7; color: #92400e; border-color: #fcd34d; margin-bottom: 12px;">
+                    <strong>Admin Reason:</strong> {{ $inspection->return_reason ?: $inspection->review_notes }}
+                </div>
+                <p class="muted" style="color: #78350f;">
+                    Returned by {{ $inspection->returnedBy?->name ?? 'Admin' }} on {{ $inspection->returned_at?->format('d M Y H:i') ?? '—' }}. Please update your report/checklist responses below and resubmit.
+                </p>
+            </section>
         @endif
 
         <section class="panel">
@@ -67,20 +79,11 @@
             </div>
         </section>
 
-        @if(($inspection->review_status ?? 'pending_review') === 'rejected')
-            <section class="panel">
-                <h2>Review Notes</h2>
-                <div class="notice error" style="margin-bottom:0;">
-                    {{ $inspection->review_notes ?: 'This report needs correction. Contact an administrator for details.' }}
-                </div>
-            </section>
-        @endif
-
         <section class="panel">
-            <h2>Inspection Report</h2>
-            @if($inspection->status === 'completed')
-                <div class="muted">This inspection has been submitted. Contact an administrator if changes are needed.</div>
-                <div class="form-row" style="margin-top:14px;">
+            <h2>Inspection Report & Checklist</h2>
+            @if($inspection->status === 'completed' && $inspection->review_status === 'approved')
+                <div class="notice success" style="margin-bottom: 16px;">This inspection report has been reviewed and approved by Admin.</div>
+                <div class="form-row">
                     <label>Findings</label>
                     <div>{{ $inspection->findings ?: '-' }}</div>
                 </div>
@@ -95,24 +98,67 @@
             @else
                 <form method="POST" action="{{ route('field.inspections.submit', $inspection) }}" enctype="multipart/form-data">
                     @csrf
+
+                    <!-- Checklist Items -->
+                    @php($checklist = $inspection->effective_checklist_items)
+                    @if($checklist->count() > 0)
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">Inspection Checklist</h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                @foreach($checklist as $item)
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px;">
+                                        <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+                                            {{ $loop->iteration }}. {{ $item->title }}
+                                        </div>
+                                        @if($item->description)
+                                            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">{{ $item->description }}</div>
+                                        @endif
+
+                                        <div class="form-row" style="margin-bottom: 8px;">
+                                            <label style="font-size: 0.8rem;">Status</label>
+                                            <select name="checklist[{{ $item->id }}][status]">
+                                                <option value="pending" {{ $item->status === 'pending' ? 'selected' : '' }}>Pending / Incomplete</option>
+                                                <option value="done" {{ $item->status === 'done' ? 'selected' : '' }}>Completed / Verified</option>
+                                                <option value="not_applicable" {{ $item->status === 'not_applicable' ? 'selected' : '' }}>Not Applicable</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-row" style="margin-bottom: 8px;">
+                                            <label style="font-size: 0.8rem;">Response / Answer</label>
+                                            <input type="text" name="checklist[{{ $item->id }}][response]" value="{{ old("checklist.{$item->id}.response", $item->response) }}" placeholder="Enter answer or findings...">
+                                        </div>
+
+                                        <div class="form-row" style="margin-bottom: 0;">
+                                            <label style="font-size: 0.8rem;">Notes / Remarks</label>
+                                            <textarea name="checklist[{{ $item->id }}][notes]" rows="2" placeholder="Additional details or measurements...">{{ old("checklist.{$item->id}.notes", $item->notes) }}</textarea>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="form-row">
                         <label for="findings">Findings</label>
-                        <textarea id="findings" name="findings" rows="5">{{ old('findings', $inspection->findings) }}</textarea>
+                        <textarea id="findings" name="findings" rows="4" placeholder="Describe main inspection findings...">{{ old('findings', $inspection->findings) }}</textarea>
                     </div>
                     <div class="form-row">
                         <label for="risks_identified">Risks Identified</label>
-                        <textarea id="risks_identified" name="risks_identified" rows="4">{{ old('risks_identified', $inspection->risks_identified) }}</textarea>
+                        <textarea id="risks_identified" name="risks_identified" rows="3" placeholder="Identify hazards or safety risks...">{{ old('risks_identified', $inspection->risks_identified) }}</textarea>
                     </div>
                     <div class="form-row">
                         <label for="recommendations">Recommendations</label>
-                        <textarea id="recommendations" name="recommendations" rows="4">{{ old('recommendations', $inspection->recommendations) }}</textarea>
+                        <textarea id="recommendations" name="recommendations" rows="3" placeholder="Suggested corrective actions...">{{ old('recommendations', $inspection->recommendations) }}</textarea>
                     </div>
                     <div class="form-row">
-                        <label for="media">Evidence Files</label>
+                        <label for="media">Evidence Files / Photos</label>
                         <input id="media" type="file" name="media[]" multiple accept=".jpg,.jpeg,.png,.pdf">
                         <div class="muted">JPG, PNG, or PDF. Maximum 5 MB per file.</div>
                     </div>
-                    <button class="button full" type="submit">Submit Report</button>
+                    
+                    <button class="button full" type="submit">
+                        {{ $inspection->status === 'returned' || $inspection->review_status === 'returned' ? 'Resubmit Report to Admin' : 'Submit Report' }}
+                    </button>
                 </form>
             @endif
         </section>

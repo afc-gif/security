@@ -17,6 +17,7 @@ class JobChecklistItem extends Model
 
     protected $fillable = [
         'job_request_item_id',
+        'inspection_id',
         'category_checklist_template_id',
         'added_by',
         'completed_by',
@@ -43,6 +44,11 @@ class JobChecklistItem extends Model
     public function jobRequestItem(): BelongsTo
     {
         return $this->belongsTo(JobRequestItem::class);
+    }
+
+    public function inspection(): BelongsTo
+    {
+        return $this->belongsTo(Inspection::class);
     }
 
     public function template(): BelongsTo
