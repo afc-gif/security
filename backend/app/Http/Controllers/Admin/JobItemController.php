@@ -88,7 +88,10 @@ class JobItemController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$lockedItem || $lockedItem->status !== JobRequestItem::STATUS_PENDING_ADMIN_REVIEW) {
+            if (!$lockedItem || !in_array($lockedItem->status, [
+                JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
+                JobRequestItem::STATUS_SUBMITTED,
+            ], true)) {
                 return 'This job item is not awaiting review.';
             }
 
@@ -128,6 +131,7 @@ class JobItemController extends Controller
     {
         $validated = $request->validate([
             'admin_note' => 'nullable|string',
+            'due_date' => 'nullable|date',
         ]);
 
         $errorMessage = DB::transaction(function () use ($jobItem, $request, $validated) {
@@ -147,16 +151,25 @@ class JobItemController extends Controller
                 return 'This job item cannot be reopened in its current state.';
             }
 
-            $lockedItem->update([
+            $updatePayload = [
                 'status' => JobRequestItem::STATUS_REOPENED,
                 'claimed_by' => null,
                 'claimed_at' => null,
                 'submitted_at' => null,
                 'reopened_at' => now(),
-            ]);
+            ];
+
+            if (isset($validated['due_date'])) {
+                $updatePayload['due_date'] = $validated['due_date'];
+            } elseif ($lockedItem->due_date && now()->greaterThan($lockedItem->due_date)) {
+                $updatePayload['due_date'] = null;
+            }
+
+            $lockedItem->update($updatePayload);
 
             $adminNote = trim((string) ($validated['admin_note'] ?? ''));
-            $userId = $request->user()?->id ?? $lockedItem->created_by;
+            $userId = $request->user()?->id 
+                ?? (\App\Models\User::query()->whereKey($lockedItem->created_by)->exists() ? $lockedItem->created_by : \App\Models\User::query()->whereIn('role', ['admin', 'manager'])->value('id'));
 
             if ($userId) {
                 JobItemAttempt::create([
