@@ -95,6 +95,36 @@
             </div>
         @endif
 
+        @if (auth()->user()?->isSuperAdmin() || auth()->user()?->isCoordinator() || auth()->user()?->isAdmin())
+            @php
+                $fieldStaffList = \App\Models\User::query()
+                    ->where('status', 'approved')
+                    ->whereIn('role', ['field_staff', 'field_coordinator'])
+                    ->orderBy('name')
+                    ->get();
+            @endphp
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Job Assignment</h2>
+                <form method="POST" action="{{ route('admin.job-items.assign', $jobItem) }}" class="flex flex-col sm:flex-row items-end gap-4">
+                    @csrf
+                    <div class="flex-1 w-full">
+                        <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-1">Assign to Field Staff / Coordinator</label>
+                        <select id="assigned_to" name="assigned_to" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="">Select Field Staff...</option>
+                            @foreach ($fieldStaffList as $staff)
+                                <option value="{{ $staff->id }}" @selected((int)$jobItem->claimed_by === (int)$staff->id)>
+                                    {{ $staff->name }} ({{ str_replace('_', ' ', \Illuminate\Support\Str::title($staff->role)) }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold whitespace-nowrap transition">
+                        Assign Job
+                    </button>
+                </form>
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Project Conversion</h2>
 
@@ -112,7 +142,11 @@
                 <form method="POST" action="{{ route('admin.job-items.convert-to-project', $jobItem) }}">
                     @csrf
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold">
-                        Convert to Project
+                        @if ($jobItem->status !== \App\Models\JobRequestItem::STATUS_APPROVED && auth()->user()?->isSuperAdmin())
+                            ⚡ Direct Convert to Project (Super Admin)
+                        @else
+                            Convert to Project
+                        @endif
                     </button>
                 </form>
             @else

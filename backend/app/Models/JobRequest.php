@@ -68,4 +68,9 @@ class JobRequest extends Model
                 ->where('status', JobItemAttempt::STATUS_REJECTED);
         });
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(ProjectPayment::class, 'job_request_id');
+    }
 }

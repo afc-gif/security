@@ -8,8 +8,12 @@ use App\Models\FinancialMaterialCost;
 use App\Models\JobItemAttempt;
 use App\Models\JobRequestItem;
 use App\Models\Project;
+use App\Models\ProjectPayment;
+use App\Models\User;
+use App\Services\TransportFareNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
@@ -191,8 +195,58 @@ class JobItemController extends Controller
             ->with('success', 'Job reopened successfully.');
     }
 
+    public function assign(Request $request, JobRequestItem $jobItem, TransportFareNotificationService $fareNotifications)
+    {
+        /** @var User|null $authUser */
+        $authUser = auth()->user();
+
+        if (!$authUser || (!$authUser->isSuperAdmin() && !$authUser->isCoordinator() && !$authUser->isAdmin())) {
+            abort(403, 'Unauthorized to assign jobs.');
+        }
+
+        $validated = $request->validate([
+            'assigned_to' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query
+                    ->where('status', 'approved')
+                    ->whereIn('role', ['field_staff', 'field_coordinator'])),
+            ],
+        ]);
+
+        $assignedJob = DB::transaction(function () use ($jobItem, $validated) {
+            $lockedItem = JobRequestItem::query()
+                ->where('id', $jobItem->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedItem->update([
+                'claimed_by' => $validated['assigned_to'],
+                'claimed_at' => now(),
+                'status' => JobRequestItem::STATUS_CLAIMED,
+            ]);
+
+            return $lockedItem->fresh(['jobRequest.client', 'serviceCategory']);
+        });
+
+        $assignedStaff = User::findOrFail($validated['assigned_to']);
+        $whatsappUrl = $fareNotifications->notifyAssignedJob($assignedJob, $assignedStaff);
+
+        Log::info('Job assigned to field staff', [
+            'assigned_by' => $authUser->id,
+            'job_item_id' => $jobItem->id,
+            'assigned_to' => $assignedStaff->id,
+        ]);
+
+        return back()
+            ->with('success', 'Job assigned successfully.')
+            ->with('whatsapp_url', $whatsappUrl);
+    }
+
     public function convertToProject(JobRequestItem $jobItem)
     {
+        /** @var User|null $authUser */
+        $authUser = auth()->user();
+
         $jobItem->load(['jobRequest.client', 'serviceCategory', 'project']);
 
         if ($jobItem->project) {
@@ -201,16 +255,36 @@ class JobItemController extends Controller
                 ->with('success', 'This category item has already been converted to a project.');
         }
 
+        // Non-approved jobs can ONLY be directly converted by Super Admin
         if ($jobItem->status !== JobRequestItem::STATUS_APPROVED) {
-            return back()->withErrors(['conversion' => 'Only approved category items can be converted to a project.']);
+            if ($authUser?->isSuperAdmin()) {
+                // Super Admin direct conversion bypass allowed
+            } elseif ($authUser && in_array($authUser->role, ['field_staff', 'field_coordinator', 'pos', 'finance'], true)) {
+                abort(403, 'Unauthorized to convert jobs.');
+            } else {
+                return back()->withErrors(['conversion' => 'Only approved category items can be converted to a project.']);
+            }
         }
 
-        $project = DB::transaction(function () use ($jobItem) {
+        $project = DB::transaction(function () use ($jobItem, $authUser) {
             $lockedItem = JobRequestItem::query()
                 ->where('id', $jobItem->id)
-                ->where('status', JobRequestItem::STATUS_APPROVED)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($lockedItem->status !== JobRequestItem::STATUS_APPROVED) {
+                if ($authUser?->isSuperAdmin()) {
+                    // Super Admin direct conversion bypass allowed
+                } elseif ($authUser && in_array($authUser->role, ['field_staff', 'field_coordinator', 'pos', 'finance'], true)) {
+                    abort(403, 'Unauthorized to convert jobs.');
+                } else {
+                    return back()->withErrors(['conversion' => 'Only approved category items can be converted to a project.']);
+                }
+            }
+
+            if ($lockedItem->project) {
+                return $lockedItem->project;
+            }
 
             $lockedItem->load([
                 'jobRequest.client',
@@ -222,10 +296,6 @@ class JobItemController extends Controller
                     ->latest('id'),
             ]);
 
-            if ($lockedItem->project) {
-                return $lockedItem->project;
-            }
-
             $projectPayload = [
                 'project_code' => $this->generateProjectCode(),
                 'job_request_item_id' => $lockedItem->id,
@@ -233,9 +303,9 @@ class JobItemController extends Controller
                 'title' => $this->buildProjectTitle($lockedItem),
                 'description' => $this->buildProjectDescription($lockedItem),
                 'status' => 'not_started',
-                'priority' => $lockedItem->priority,
+                'priority' => $lockedItem->priority ?? 'medium',
                 'deadline' => $lockedItem->due_date?->toDateString(),
-                'created_by' => auth()->id(),
+                'created_by' => $authUser?->id,
             ];
 
             if ($lockedItem->claimed_by && Schema::hasColumn('projects', 'assigned_field_staff_id')) {
@@ -243,7 +313,7 @@ class JobItemController extends Controller
             }
 
             $project = Project::create($projectPayload);
-            $this->attachJobItemFinanceToProject($lockedItem, $project, (int) auth()->id());
+            $this->attachJobItemFinanceToProject($lockedItem, $project, (int) $authUser?->id);
 
             $approvedAttempt = $lockedItem->attempts->first();
             foreach (($approvedAttempt?->requirements ?? collect()) as $requirement) {
@@ -255,6 +325,14 @@ class JobItemController extends Controller
                     'sort_order' => $requirement->sort_order,
                 ]);
             }
+
+            Log::info('Job converted to project', [
+                'converted_by' => $authUser?->id,
+                'is_super_admin' => $authUser?->isSuperAdmin(),
+                'job_request_item_id' => $lockedItem->id,
+                'project_id' => $project->id,
+                'original_job_status' => $lockedItem->status,
+            ]);
 
             return $project;
         });
@@ -277,6 +355,18 @@ class JobItemController extends Controller
 
         FinancialMaterialCost::query()
             ->where('job_request_item_id', $jobItem->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
+
+        ProjectPayment::query()
+            ->where(function ($query) use ($jobItem) {
+                $query->where('job_request_item_id', $jobItem->id)
+                    ->orWhere('job_request_id', $jobItem->job_request_id);
+            })
             ->whereNull('project_id')
             ->update([
                 'project_id' => $project->id,

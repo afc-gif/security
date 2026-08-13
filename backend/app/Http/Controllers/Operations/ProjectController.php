@@ -8,6 +8,7 @@ use App\Models\FinancialExpense;
 use App\Models\FinancialMaterialCost;
 use App\Models\Inspection;
 use App\Models\Project;
+use App\Models\ProjectPayment;
 use App\Models\ProjectUpdate;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -214,6 +215,15 @@ class ProjectController extends Controller
             ]);
 
         FinancialMaterialCost::query()
+            ->where('inspection_id', $inspection->id)
+            ->whereNull('project_id')
+            ->update([
+                'project_id' => $project->id,
+                'updated_by' => $userId,
+                'updated_at' => now(),
+            ]);
+
+        ProjectPayment::query()
             ->where('inspection_id', $inspection->id)
             ->whereNull('project_id')
             ->update([

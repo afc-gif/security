@@ -106,11 +106,21 @@ class JobRequestItem extends Model
     }
 
     /**
-     * Determine if this approved item can create a project.
+     * Determine if this item can create a project.
+     * Super Admins can directly convert unassigned/non-approved jobs into projects.
      */
-    public function isConvertibleToProject(): bool
+    public function isConvertibleToProject(?User $user = null): bool
     {
-        return $this->status === self::STATUS_APPROVED && !$this->project()->exists();
+        if ($this->project()->exists()) {
+            return false;
+        }
+
+        $user = $user ?? auth()->user();
+        if ($user?->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->status === self::STATUS_APPROVED;
     }
 
     /**
@@ -301,5 +311,10 @@ class JobRequestItem extends Model
                 'notes' => "Reopened by admin: {$reason}",
             ]);
         }
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(ProjectPayment::class, 'job_request_item_id');
     }
 }

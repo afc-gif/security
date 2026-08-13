@@ -21,6 +21,12 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
     Route::post('/jobs/{job}/expenses', [FinanceController::class, 'storeJobExpense'])
         ->middleware('finance.permission:finance.create')
         ->name('jobs.expenses.store');
+    Route::post('/jobs/{job}/payments', [FinanceController::class, 'storeJobPayment'])
+        ->middleware('finance.permission:finance.create')
+        ->name('jobs.payments.store');
+    Route::post('/inspections/{inspection}/payments', [FinanceController::class, 'storeInspectionPayment'])
+        ->middleware('finance.permission:finance.create')
+        ->name('inspections.payments.store');
     Route::get('/projects', [FinanceController::class, 'projects'])->name('projects.index');
     Route::get('/projects/{project}', [FinanceController::class, 'projectShow'])->name('projects.show');
     Route::post('/projects/{project}/expenses', [FinanceController::class, 'storeProjectExpense'])

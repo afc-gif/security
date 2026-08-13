@@ -80,4 +80,9 @@ class Inspection extends Model
     {
         return $this->hasMany(FinancialMaterialCost::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(ProjectPayment::class, 'inspection_id');
+    }
 }

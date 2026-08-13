@@ -57,20 +57,77 @@
             </div>
         </div>
 
-        <!-- Total Spent Card -->
-        <div class="finance-total-spent-card">
-            <div>
-                <div class="finance-total-label">Total Spent</div>
-                <div class="finance-total-amount">{{ $financeMoney($summary['total']) }}</div>
-                @if($summary['pending_total'] > 0)
-                    <div class="finance-total-pending">{{ $financeMoney($summary['pending_total']) }} pending review</div>
-                @endif
+        <!-- Financial Summary Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Total Received Card -->
+            <div class="finance-total-spent-card" style="border-left: 4px solid #059669;">
+                <div>
+                    <div class="finance-total-label" style="color: #047857;">Money Received</div>
+                    <div class="finance-total-amount" style="color: #065f46;">{{ $financeMoney($summary['total_received'] ?? 0) }}</div>
+                    <div class="finance-total-pending">{{ $summary['payment_count'] ?? 0 }} transaction(s)</div>
+                </div>
+                @can(\App\Models\FinancePermission::CREATE)
+                    <button type="button" data-payment-modal-open class="finance-btn-add-expense" style="background: #059669; color: #fff;">
+                        + Record Money Received
+                    </button>
+                @endcan
             </div>
-            @can(\App\Models\FinancePermission::CREATE)
-                <button type="button" data-expense-modal-open class="finance-btn-add-expense">
-                    + Add Expense
-                </button>
-            @endcan
+
+            <!-- Total Spent Card -->
+            <div class="finance-total-spent-card">
+                <div>
+                    <div class="finance-total-label">Expenses (Spent)</div>
+                    <div class="finance-total-amount">{{ $financeMoney($summary['total']) }}</div>
+                    @if($summary['pending_total'] > 0)
+                        <div class="finance-total-pending">{{ $financeMoney($summary['pending_total']) }} pending review</div>
+                    @endif
+                </div>
+                @can(\App\Models\FinancePermission::CREATE)
+                    <button type="button" data-expense-modal-open class="finance-btn-add-expense">
+                        + Add Expense
+                    </button>
+                @endcan
+            </div>
+        </div>
+
+        <!-- Money Received Section -->
+        <div class="finance-expenses-section mb-6" style="border-top: 2px solid #10b981;">
+            <div class="finance-section-header-simple">
+                <h2 class="finance-section-title-simple" style="color: #065f46;">Money Received</h2>
+                <div class="finance-expense-count">{{ $summary['payment_count'] ?? 0 }} recorded</div>
+            </div>
+
+            @if(!isset($payments) || $payments->isEmpty())
+                <div class="finance-empty-state-inline">
+                    <div class="finance-empty-text">No payments or receipts recorded yet.</div>
+                </div>
+            @else
+                <div class="finance-expense-list-simple">
+                    @foreach($payments as $payment)
+                        <div class="finance-expense-item" style="border-left: 3px solid #10b981;">
+                            <div class="finance-expense-info">
+                                <div class="finance-expense-category">
+                                    <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide">
+                                        {{ str_replace('_', ' ', \Illuminate\Support\Str::title($payment->payment_type ?? 'payment')) }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 ml-2">via {{ str_replace('_', ' ', \Illuminate\Support\Str::title($payment->payment_method ?? 'transfer')) }}</span>
+                                </div>
+                                @if($payment->reference)
+                                    <div class="text-xs font-mono text-gray-600 mt-0.5">Ref: {{ $payment->reference }}</div>
+                                @endif
+                                <div class="finance-expense-description">{{ $payment->notes ?: 'No description' }}</div>
+                                <div class="finance-expense-meta">
+                                    <span class="text-xs text-gray-500">Recorded by {{ $payment->recorder?->name ?? 'Finance' }}</span>
+                                    <span class="finance-expense-date-simple">{{ $payment->payment_date?->format('M j, Y') ?? $payment->created_at?->format('M j, Y') }}</span>
+                                </div>
+                            </div>
+                            <div class="finance-expense-amount-section">
+                                <div class="text-lg font-bold text-emerald-700">{{ $financeMoney($payment->amount) }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
         <!-- Expenses Section -->
@@ -186,33 +243,130 @@
         <script>
             (function () {
                 const modal = document.getElementById('expense-modal');
-                if (!modal || modal.dataset.bound === '1') return;
+                if (modal && modal.dataset.bound !== '1') {
+                    modal.dataset.bound = '1';
+                    const openButtons = document.querySelectorAll('[data-expense-modal-open]');
+                    const closeButtons = modal.querySelectorAll('[data-expense-modal-close]');
+                    const firstField = modal.querySelector('select, input, button');
 
-                modal.dataset.bound = '1';
-                const openButtons = document.querySelectorAll('[data-expense-modal-open]');
-                const closeButtons = modal.querySelectorAll('[data-expense-modal-close]');
-                const firstField = modal.querySelector('select, input, button');
+                    const openModal = () => {
+                        modal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                        setTimeout(() => firstField?.focus(), 0);
+                    };
 
-                const openModal = () => {
-                    modal.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                    setTimeout(() => firstField?.focus(), 0);
-                };
+                    const closeModal = () => {
+                        modal.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    };
 
-                const closeModal = () => {
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                };
+                    openButtons.forEach((button) => button.addEventListener('click', openModal));
+                    closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+                }
 
-                openButtons.forEach((button) => button.addEventListener('click', openModal));
-                closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+                const payModal = document.getElementById('payment-modal');
+                if (payModal && payModal.dataset.bound !== '1') {
+                    payModal.dataset.bound = '1';
+                    const openPayButtons = document.querySelectorAll('[data-payment-modal-open]');
+                    const closePayButtons = payModal.querySelectorAll('[data-payment-modal-close]');
+                    const firstPayField = payModal.querySelector('input, select, button');
+
+                    const openPayModal = () => {
+                        payModal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                        setTimeout(() => firstPayField?.focus(), 0);
+                    };
+
+                    const closePayModal = () => {
+                        payModal.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    };
+
+                    openPayButtons.forEach((button) => button.addEventListener('click', openPayModal));
+                    closePayButtons.forEach((button) => button.addEventListener('click', closePayModal));
+                }
+
                 document.addEventListener('keydown', (event) => {
-                    if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
-                        closeModal();
+                    if (event.key === 'Escape') {
+                        if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
+                        if (payModal && !payModal.classList.contains('hidden')) payModal.classList.add('hidden');
+                        document.body.style.overflow = '';
                     }
                 });
             })();
         </script>
     @endpush
+
+    <div id="payment-modal" class="hidden fixed inset-0 z-[90]" role="dialog" aria-modal="true">
+        <div data-payment-modal-close class="absolute inset-0 bg-gray-950/45"></div>
+        <div class="finance-modal-sheet">
+            <div class="finance-modal-header" style="border-bottom: 2px solid #059669;">
+                <h2 class="finance-modal-title" style="color: #065f46;">Record Money Received</h2>
+                <button type="button" data-payment-modal-close class="finance-modal-close-btn" aria-label="Close">×</button>
+            </div>
+
+            <form method="POST" action="{{ route('finance.jobs.payments.store', $job) }}" enctype="multipart/form-data" class="finance-modal-form">
+                @csrf
+
+                <div class="finance-form-group">
+                    <label for="payment_amount" class="finance-form-label">Amount (₦)</label>
+                    <input id="payment_amount" name="amount" value="{{ old('amount') }}" type="number" min="0.01" step="0.01" required placeholder="1000000" class="finance-form-input">
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="payment_type" class="finance-form-label">Payment Nature / Type</label>
+                    <select id="payment_type" name="payment_type" required class="finance-form-input">
+                        <option value="deposit">Deposit</option>
+                        <option value="part_payment" selected>Part Payment</option>
+                        <option value="full_payment">Full Payment</option>
+                        <option value="advance">Advance</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="payment_method" class="finance-form-label">Payment Method</label>
+                    <select id="payment_method" name="payment_method" required class="finance-form-input">
+                        <option value="bank_transfer" selected>Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="check">Check / Cheque</option>
+                        <option value="pos">POS Terminal</option>
+                        <option value="online">Online / Card</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="payment_date" class="finance-form-label">Date Received</label>
+                    <input id="payment_date" name="payment_date" value="{{ old('payment_date', now()->toDateString()) }}" type="date" required class="finance-form-input">
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="reference" class="finance-form-label">Transaction Reference (Optional)</label>
+                    <input id="reference" name="reference" value="{{ old('reference') }}" type="text" maxlength="255" placeholder="e.g. TXN-9842184" class="finance-form-input">
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="payment_notes" class="finance-form-label">Notes / Description</label>
+                    <input id="payment_notes" name="notes" value="{{ old('notes') }}" type="text" maxlength="500" placeholder="e.g. Initial deposit for solar installation" class="finance-form-input">
+                </div>
+
+                <div class="finance-form-group">
+                    <label for="payment_receipt" class="finance-form-label">Receipt / Evidence (Optional)</label>
+                    <input id="payment_receipt" name="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" class="finance-form-input-file">
+                    <div class="finance-form-help">JPG, PNG, or PDF up to 5MB</div>
+                </div>
+
+                <div class="finance-modal-actions">
+                    <button type="button" data-payment-modal-close class="finance-btn finance-btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" class="finance-btn" style="background: #059669; color: #fff;">
+                        Record Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endcan
 @endsection

@@ -59,6 +59,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.job-items.review');
     Route::post('/job-items/{jobItem}/reopen', [\App\Http\Controllers\Operations\JobItemController::class, 'reopen'])
         ->name('admin.job-items.reopen');
+    Route::post('/job-items/{jobItem}/assign', [\App\Http\Controllers\Operations\JobItemController::class, 'assign'])
+        ->name('admin.job-items.assign');
     Route::post('/job-items/{jobItem}/convert-to-project', [\App\Http\Controllers\Operations\JobItemController::class, 'convertToProject'])
         ->name('admin.job-items.convert-to-project');
 

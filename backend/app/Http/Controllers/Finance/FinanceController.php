@@ -176,10 +176,16 @@ class FinanceController extends Controller
             'financialExpenses.category',
             'financialExpenses.submitter',
             'financialExpenses.documents.uploader',
+            'payments.recorder',
+            'payments.documents.uploader',
         ]);
 
         $expenses = $job->financialExpenses
             ->sortByDesc(fn (FinancialExpense $expense) => $expense->incurred_on?->getTimestamp() ?? $expense->created_at?->getTimestamp() ?? 0)
+            ->values();
+
+        $payments = $job->payments
+            ->sortByDesc(fn (ProjectPayment $payment) => $payment->payment_date?->getTimestamp() ?? $payment->created_at?->getTimestamp() ?? 0)
             ->values();
 
         $summary = [
@@ -192,6 +198,8 @@ class FinanceController extends Controller
                 ->where('status', FinancialExpense::STATUS_PENDING)
                 ->sum(fn (FinancialExpense $expense) => (float) $expense->amount),
             'expense_count' => $expenses->count(),
+            'total_received' => (float) $payments->sum(fn (ProjectPayment $payment) => (float) $payment->amount),
+            'payment_count' => $payments->count(),
         ];
 
         $categories = FinanceExpenseCategory::query()
@@ -201,7 +209,7 @@ class FinanceController extends Controller
             ->get();
 
         return view('finance.jobs.show', array_merge(
-            compact('job', 'expenses', 'summary', 'categories'),
+            compact('job', 'expenses', 'payments', 'summary', 'categories'),
             $this->viewHelpers()
         ));
     }
@@ -1135,22 +1143,132 @@ class FinanceController extends Controller
         return "{$existing}\n\n{$label}: {$note}";
     }
 
-    public function storeProjectPayment(Request $request, Project $project)
+    public function storeJobPayment(Request $request, JobRequestItem $job)
     {
         $this->authorizeFinance(FinancePermission::CREATE);
 
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_date' => ['required', 'date'],
             'payment_method' => ['required', 'string', 'max:50'],
+            'payment_type' => ['nullable', 'string', 'max:50'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
+        if (!empty($validated['reference'])) {
+            $existing = ProjectPayment::where('reference', $validated['reference'])->first();
+            if ($existing) {
+                return back()->withErrors(['reference' => 'A payment with this reference number has already been recorded.'])->withInput();
+            }
+        }
+
+        $job->load(['jobRequest', 'project']);
+
+        DB::transaction(function () use ($request, $job, $validated) {
+            $payment = ProjectPayment::create([
+                'project_id' => $job->project?->id,
+                'inspection_id' => null,
+                'job_request_id' => $job->job_request_id,
+                'job_request_item_id' => $job->id,
+                'client_id' => $job->jobRequest?->client_id,
+                'original_context_type' => JobRequestItem::class,
+                'original_context_id' => $job->id,
+                'payment_type' => $validated['payment_type'] ?? ProjectPayment::TYPE_PART_PAYMENT,
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'recorded_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $this->storeFinancialDocument($request, $payment);
+        });
+
+        return back()->with('success', 'Money received recorded successfully.');
+    }
+
+    public function storeInspectionPayment(Request $request, Inspection $inspection)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_type' => ['nullable', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        if (!empty($validated['reference'])) {
+            $existing = ProjectPayment::where('reference', $validated['reference'])->first();
+            if ($existing) {
+                return back()->withErrors(['reference' => 'A payment with this reference number has already been recorded.'])->withInput();
+            }
+        }
+
+        $inspection->load(['project']);
+
+        DB::transaction(function () use ($request, $inspection, $validated) {
+            $payment = ProjectPayment::create([
+                'project_id' => $inspection->project?->id,
+                'inspection_id' => $inspection->id,
+                'job_request_id' => null,
+                'job_request_item_id' => null,
+                'client_id' => $inspection->client_id,
+                'original_context_type' => Inspection::class,
+                'original_context_id' => $inspection->id,
+                'payment_type' => $validated['payment_type'] ?? ProjectPayment::TYPE_PART_PAYMENT,
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'recorded_by' => $request->user()->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $this->storeFinancialDocument($request, $payment);
+        });
+
+        return back()->with('success', 'Money received recorded successfully.');
+    }
+
+    public function storeProjectPayment(Request $request, Project $project)
+    {
+        $this->authorizeFinance(FinancePermission::CREATE);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_type' => ['nullable', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        if (!empty($validated['reference'])) {
+            $existing = ProjectPayment::where('reference', $validated['reference'])->first();
+            if ($existing) {
+                return back()->withErrors(['reference' => 'A payment with this reference number has already been recorded.'])->withInput();
+            }
+        }
+
         DB::transaction(function () use ($request, $project, $validated) {
             $payment = ProjectPayment::create([
                 'project_id' => $project->id,
+                'client_id' => $project->client_id,
+                'original_context_type' => Project::class,
+                'original_context_id' => $project->id,
+                'payment_type' => $validated['payment_type'] ?? ProjectPayment::TYPE_PART_PAYMENT,
                 'amount' => $validated['amount'],
                 'payment_date' => $validated['payment_date'],
                 'payment_method' => $validated['payment_method'],

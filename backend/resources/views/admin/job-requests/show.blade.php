@@ -152,6 +152,20 @@
                                  <div class="flex flex-wrap items-center gap-2 mt-2">
                                      <button type="button" onclick="document.getElementById('item-modal-{{ $item->id }}').classList.remove('hidden')" class="inline-flex items-center justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md font-semibold text-xs">View Quick Details</button>
                                      <a href="{{ route('admin.job-items.show', $item) }}" class="inline-flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md font-semibold text-xs">Open Full Review Page</a>
+                                     @if($item->project)
+                                         <a href="{{ route('admin.projects.show', $item->project) }}" class="inline-flex items-center justify-center bg-green-100 text-green-800 hover:bg-green-200 px-3 py-1.5 rounded-md font-semibold text-xs">View Project</a>
+                                     @elseif($item->isConvertibleToProject())
+                                         <form method="POST" action="{{ route('admin.job-items.convert-to-project', $item) }}" class="inline-block">
+                                             @csrf
+                                             <button type="submit" class="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md font-semibold text-xs transition">
+                                                 @if ($item->status !== \App\Models\JobRequestItem::STATUS_APPROVED && auth()->user()?->isSuperAdmin())
+                                                     ⚡ Convert to Project
+                                                 @else
+                                                     Convert to Project
+                                                 @endif
+                                             </button>
+                                         </form>
+                                     @endif
                                      @if($item->isOverdue() || in_array($item->status, ['overdue', 'closed', 'rejected'], true))
                                          <form method="POST" action="{{ route('admin.job-items.reopen', $item) }}" class="inline-block" onsubmit="return confirm('Reopen this overdue job?');">
                                              @csrf
