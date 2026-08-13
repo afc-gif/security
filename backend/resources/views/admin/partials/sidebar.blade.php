@@ -59,7 +59,7 @@
         'commerce' => 'Commerce',
         'operations' => 'Operations',
         'system' => 'System',
-        'finance' => 'Private',
+        'finance' => 'Finance',
     ];
 
     $routeActive = function (array $item): bool {

@@ -499,8 +499,30 @@ class AdminController extends Controller
     // Approve user and assign role
     public function approveUser(User $user, string $role)
     {
-        if (!in_array($role, ['admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'], true)) {
+        /** @var User|null $authUser */
+        $authUser = auth()->user();
+
+        $validRoles = ['super_admin', 'executive', 'admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'];
+        if (!in_array($role, $validRoles, true)) {
             return back()->withErrors('Invalid role specified.');
+        }
+
+        // Self-role modification / self-promotion protection
+        if ($authUser && $authUser->id === $user->id && $user->role !== $role) {
+            abort(403, 'You cannot modify your own role.');
+        }
+
+        // Super Admin assignment & target protection
+        if (($role === 'super_admin' || $user->role === 'super_admin') && (!$authUser || !$authUser->isSuperAdmin())) {
+            abort(403, 'Only a Super Admin can assign the Super Admin role or modify a Super Admin user.');
+        }
+
+        // Last Super Admin demotion protection
+        if ($user->role === 'super_admin' && $role !== 'super_admin') {
+            $superAdminCount = User::where('role', 'super_admin')->where('status', 'approved')->count();
+            if ($superAdminCount <= 1) {
+                abort(403, 'The last remaining Super Admin cannot be demoted.');
+            }
         }
 
         $user->update([
@@ -531,6 +553,26 @@ class AdminController extends Controller
 
     public function deleteUser(User $user)
     {
+        /** @var User|null $authUser */
+        $authUser = auth()->user();
+
+        if ($authUser && $authUser->id === $user->id) {
+            abort(403, 'You cannot delete your own account.');
+        }
+
+        // Only Super Admin can delete a Super Admin user
+        if ($user->role === 'super_admin' && (!$authUser || !$authUser->isSuperAdmin())) {
+            abort(403, 'Only a Super Admin can delete a Super Admin user.');
+        }
+
+        // Last Super Admin deletion protection
+        if ($user->role === 'super_admin') {
+            $superAdminCount = User::where('role', 'super_admin')->where('status', 'approved')->count();
+            if ($superAdminCount <= 1) {
+                abort(403, 'The last remaining Super Admin cannot be deleted.');
+            }
+        }
+
         $user->delete();
         return redirect('/admin/users')->with('success', 'User deleted successfully!');
     }

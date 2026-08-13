@@ -96,7 +96,9 @@
             border-top: 1px solid var(--brand-border);
             background: rgba(255,255,255,0.96);
         }
-        .nav-btn {
+        .nav-btn,
+        .nav-item {
+            text-decoration: none;
             border: 1px solid var(--brand-border);
             background: #fff;
             color: var(--brand-dark);
@@ -113,7 +115,8 @@
             gap: 10px;
             transition: background 0.2s ease, color 0.2s ease;
         }
-        .nav-btn.active { background: var(--brand-dark); color: #fff; box-shadow: var(--brand-shadow); }
+        .nav-btn.active,
+        .nav-item.active { background: var(--brand-dark); color: #fff; box-shadow: var(--brand-shadow); }
         .nav-label { white-space: nowrap; }
         .sidebar.collapsed .nav-label { display: none; }
         .nav-icon {
@@ -1037,7 +1040,10 @@
         const statOrders = document.getElementById('statOrders');
         const statRevenue = document.getElementById('statRevenue');
         const healthDetail = document.getElementById('healthDetail');
-        const roles = ['admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'];
+        const roles = [
+            @if(auth()->user()?->isSuperAdmin()) 'super_admin', @endif
+            'admin', 'manager', 'finance', 'field_staff', 'field_coordinator', 'pos', 'user'
+        ];
         const posBarcodeInput = document.getElementById('posBarcodeInput');
         const posLookupResult = document.getElementById('posLookupResult');
         const posScanStatus = document.getElementById('posScanStatus');

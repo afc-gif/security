@@ -57,12 +57,18 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ $user->email }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if ($user->id !== auth()->id())
+                                @if ($user->id !== auth()->id() && (! $user->isSuperAdmin() || auth()->user()?->isSuperAdmin()))
+                                    @php
+                                        $roleOptions = ['admin' => 'Admin', 'manager' => 'Manager', 'finance' => 'Finance', 'field_staff' => 'Field Staff', 'field_coordinator' => 'Field Coordinator', 'pos' => 'POS', 'user' => 'User'];
+                                        if (auth()->user()?->isSuperAdmin()) {
+                                            $roleOptions = ['super_admin' => 'Super Admin'] + $roleOptions;
+                                        }
+                                    @endphp
                                     <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => '__role__']) }}" method="POST" class="flex flex-col gap-2" onsubmit="this.action = this.action.replace('__role__', this.elements.role.value);">
                                         @csrf
                                         @method('PATCH')
                                         <select name="role" class="border border-gray-300 rounded px-2 py-1 text-xs">
-                                            @foreach (['admin' => 'Admin', 'manager' => 'Manager', 'finance' => 'Finance', 'field_staff' => 'Field Staff', 'field_coordinator' => 'Field Coordinator', 'pos' => 'POS', 'user' => 'User'] as $role => $label)
+                                            @foreach ($roleOptions as $role => $label)
                                                 <option value="{{ $role }}" @selected($user->role === $role)>{{ $label }}</option>
                                             @endforeach
                                         </select>
@@ -71,7 +77,9 @@
                                         </button>
                                     </form>
                                 @else
-                                    @if ($user->isAdmin())
+                                    @if ($user->isSuperAdmin())
+                                        <span class="inline-block bg-amber-100 text-amber-900 px-3 py-1 rounded-full text-xs font-semibold">⚡ Super Admin</span>
+                                    @elseif ($user->role === 'admin')
                                         <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">👑 Admin</span>
                                     @elseif ($user->isManager())
                                         <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">Manager</span>

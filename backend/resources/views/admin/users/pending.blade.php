@@ -84,6 +84,17 @@
                                     </button>
                                 </form>
 
+                                @if (auth()->user()?->isSuperAdmin())
+                                    <!-- Approve as Super Admin -->
+                                    <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'super_admin']) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant Super Admin access to {{ $user->name }}?');">
+                                            ⚡ Approve as Super Admin
+                                        </button>
+                                    </form>
+                                @endif
+
                                 <!-- Approve as Admin -->
                                 <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'admin']) }}" method="POST" class="inline">
                                     @csrf

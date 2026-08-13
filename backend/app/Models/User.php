@@ -68,6 +68,11 @@ class User extends Model implements AuthenticatableContract
         return in_array($this->role, ['executive', 'super_admin'], true);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
     public function isPos()
     {
         return $this->role === 'pos';

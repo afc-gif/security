@@ -44,7 +44,9 @@ class AuthMatrixTest extends TestCase
             ]);
 
             $this->actingAs($user);
-            $this->get(route('admin.dashboard'))->assertOk();
+            $this->get(route('admin.dashboard'))
+                ->assertOk()
+                ->assertSee(route('finance.dashboard'));
             $this->get(route('finance.dashboard'))->assertOk();
             $this->get(route('field.dashboard'))->assertStatus(403);
         }
@@ -65,8 +67,10 @@ class AuthMatrixTest extends TestCase
         $response->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($user);
 
-        // Access admin dashboard
-        $this->get(route('admin.dashboard'))->assertOk();
+        // Access admin dashboard & confirm Finance link is NOT visible
+        $this->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee(route('finance.dashboard'));
 
         // Forbidden areas
         $this->get(route('field.dashboard'))->assertStatus(403);
