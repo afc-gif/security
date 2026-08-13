@@ -25,6 +25,7 @@ class ProjectPayment extends Model
         'job_request_id',
         'job_request_item_id',
         'client_id',
+        'quotation_id',
         'payment_type',
         'original_context_type',
         'original_context_id',
@@ -42,6 +43,11 @@ class ProjectPayment extends Model
         'amount' => 'decimal:2',
         'payment_date' => 'date',
     ];
+
+    public function quotation(): BelongsTo
+    {
+        return $this->belongsTo(Quotation::class);
+    }
 
     public function client(): BelongsTo
     {

@@ -13,13 +13,14 @@ use App\Models\ProjectPayment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Models\User;
 
 class FinanceReportController extends Controller
 {
     private function authorizeView(): void
     {
         $user = auth()->user();
-        if (!$user || !($user->isFinance() || $user->hasFinancePermission(FinancePermission::VIEW))) {
+        if (!$user instanceof User || !($user->isFinance() || $user->hasFinancePermission(FinancePermission::VIEW))) {
             abort(403, 'Unauthorized access to Finance Reports.');
         }
     }

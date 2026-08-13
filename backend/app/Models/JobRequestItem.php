@@ -210,6 +210,11 @@ class JobRequestItem extends Model
         return $this->hasMany(FinancialMaterialCost::class);
     }
 
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
     public function ensureChecklistFromCategory(): void
     {
         if (!$this->service_category_id || $this->checklistItems()->exists()) {

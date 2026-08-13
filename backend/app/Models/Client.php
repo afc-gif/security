@@ -21,5 +21,8 @@ class Client extends Model
         'status',
     ];
 
-    // Future relationships for inspections, projects, and tasks can live here.
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class);
+    }
 }

@@ -85,4 +85,9 @@ class Inspection extends Model
     {
         return $this->hasMany(ProjectPayment::class, 'inspection_id');
     }
+
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class, 'inspection_id');
+    }
 }

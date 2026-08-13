@@ -16,6 +16,7 @@
     $items = $isFinanceUser ? [
         'finance_main' => [
             ['key' => 'finance-overview', 'label' => 'Overview', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'OV'],
+            ['key' => 'finance-quotations', 'label' => 'Quotations', 'route' => 'finance.quotations.index', 'tab' => null, 'icon' => 'QT'],
             ['key' => 'finance-jobs', 'label' => 'Jobs', 'route' => 'finance.jobs.index', 'tab' => null, 'icon' => 'JB'],
             ['key' => 'finance-projects', 'label' => 'Projects', 'route' => 'finance.projects.index', 'tab' => null, 'icon' => 'PJ'],
             ['key' => 'finance-analysis', 'label' => 'Analysis', 'route' => 'finance.analysis', 'tab' => null, 'icon' => 'AN'],
@@ -79,6 +80,7 @@
             'users' => request()->routeIs('admin.users.*'),
             'finance' => request()->routeIs('finance.*'),
             'finance-overview' => request()->routeIs('finance.dashboard'),
+            'finance-quotations' => request()->routeIs('finance.quotations.*'),
             'finance-jobs' => request()->routeIs('finance.jobs.*'),
             'finance-projects' => request()->routeIs('finance.projects.*') || request()->routeIs('finance.material-costs.*'),
             'finance-analysis' => request()->routeIs('finance.analysis.*') || request()->routeIs('finance.analysis'),

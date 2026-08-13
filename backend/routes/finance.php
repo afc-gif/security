@@ -2,11 +2,33 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\FinanceQuotationController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceAnalysisController;
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/quotations', [FinanceQuotationController::class, 'index'])->name('quotations.index');
+    Route::get('/quotations/create', [FinanceQuotationController::class, 'create'])
+        ->middleware('finance.permission:finance.create')
+        ->name('quotations.create');
+    Route::post('/quotations', [FinanceQuotationController::class, 'store'])
+        ->middleware('finance.permission:finance.create')
+        ->name('quotations.store');
+    Route::get('/quotations/{quotation}', [FinanceQuotationController::class, 'show'])->name('quotations.show');
+    Route::get('/quotations/{quotation}/download', [FinanceQuotationController::class, 'download'])->name('quotations.download');
+    Route::get('/quotations/{quotation}/edit', [FinanceQuotationController::class, 'edit'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('quotations.edit');
+    Route::put('/quotations/{quotation}', [FinanceQuotationController::class, 'update'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('quotations.update');
+    Route::patch('/quotations/{quotation}/status', [FinanceQuotationController::class, 'updateStatus'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('quotations.status');
+    Route::delete('/quotations/{quotation}', [FinanceQuotationController::class, 'destroy'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('quotations.destroy');
     Route::get('/analysis', [FinanceAnalysisController::class, 'index'])->name('analysis');
     Route::post('/analysis/ask', [FinanceAnalysisController::class, 'ask'])->name('analysis.ask');
     Route::get('/reports', [FinanceReportController::class, 'index'])->name('reports.index');

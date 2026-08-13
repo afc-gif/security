@@ -73,4 +73,9 @@ class JobRequest extends Model
     {
         return $this->hasMany(ProjectPayment::class, 'job_request_id');
     }
+
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class, 'job_request_id');
+    }
 }
