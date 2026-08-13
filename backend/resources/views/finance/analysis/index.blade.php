@@ -13,9 +13,6 @@
                 <div class="text-xs font-bold tracking-wider text-sky-600 uppercase mb-1">Finance Intelligence</div>
                 <h1 class="finance-title">Financial Analysis</h1>
                 <p class="finance-subtitle">Money In, Money Out &amp; Net Position &mdash; {{ $periodLabel }}</p>
-            </div>
-        </div>
-
         {{-- ── PERIOD FILTER BAR ────────────────────────────────────────────────── --}}
         <form id="period-form" method="GET" action="{{ route('finance.analysis') }}" class="mb-6">
             <div class="flex flex-wrap items-center gap-2">
@@ -206,7 +203,7 @@
                         @foreach(array_slice($costBreakdown, 0, 8) as $item)
                             <div>
                                 <div class="flex justify-between text-xs mb-0.5">
-                                    <span class="text-slate-600 truncate max-w-[65%]">
+                                    <span class="text-slate-600 truncate" style="max-width:65%">
                                         {{ $item['category'] }}
                                         @if($item['type'] === 'office')
                                             <span class="text-violet-500 text-[9px] ml-0.5">office</span>
@@ -221,7 +218,7 @@
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full transition-all
                                         {{ $item['type'] === 'office' ? 'bg-violet-400' : ($item['type'] === 'materials' ? 'bg-amber-400' : 'bg-sky-400') }}"
-                                         style="width: {{ $item['percentage'] }}%">
+                                         data-pct="{{ $item['percentage'] }}">
                                     </div>
                                 </div>
                             </div>
@@ -314,7 +311,7 @@
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <h2 class="text-sm font-bold text-slate-900 mb-1">Ask Finance</h2>
             <p class="text-xs text-slate-500 mb-4">Ask about POS revenue, diesel spend, salary costs, outstanding balances, project profitability and more. Add "this week", "this month", or "this year" for period context.</p>
-            <form id="ask-form" class="flex gap-2">
+            <form id="ask-form" class="flex gap-2" data-url="{{ route('finance.analysis.ask') }}">
                 @csrf
                 <input id="ask-question" type="text" name="question"
                        placeholder="e.g. How much did we spend on diesel this month?"
@@ -332,10 +329,18 @@
     </div>
 </div>
 
+
+<script type="application/json" id="trend-data">@json($trendSeries)</script>
+
 @push('scripts')
 <script>
+// ── Progress bars: apply data-pct as width via JS (avoids Blade-in-style parse errors)
+document.querySelectorAll('[data-pct]').forEach(function(el) {
+    el.style.width = el.getAttribute('data-pct') + '%';
+});
+
 // ── Trend Chart ──────────────────────────────────────────────────────────────
-const trendData = @json($trendSeries);
+const trendData = JSON.parse(document.getElementById('trend-data').textContent || '[]');
 
 if (trendData.length > 0 && document.getElementById('trendCanvas')) {
     const labels   = trendData.map(d => d.label);
@@ -463,11 +468,12 @@ document.getElementById('ask-form')?.addEventListener('submit', async function(e
     answerBox.classList.add('hidden');
 
     try {
-        const resp = await fetch('{{ route('finance.analysis.ask') }}', {
+        const askUrl  = document.getElementById('ask-form').dataset.url;
+        const resp = await fetch(askUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') || {}).content || '',
                 'Accept': 'application/json',
             },
             body: JSON.stringify({ question }),
