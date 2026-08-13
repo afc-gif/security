@@ -92,11 +92,10 @@ class FinanceQuotationController extends Controller
         $this->authorizeFinance(FinancePermission::CREATE);
 
         $validated = $request->validate([
-            'client_id' => ['required', 'exists:clients,id'],
+            'job_request_item_id' => ['required', 'exists:job_request_items,id'],
             'title' => ['required', 'string', 'max:255'],
             'quotation_date' => ['required', 'date'],
             'valid_until' => ['nullable', 'date', 'after_or_equal:quotation_date'],
-            'job_request_item_id' => ['nullable', 'exists:job_request_items,id'],
             'inspection_id' => ['nullable', 'exists:inspections,id'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
@@ -109,11 +108,14 @@ class FinanceQuotationController extends Controller
             'items.*.notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $jobItem = !empty($validated['job_request_item_id'])
-            ? JobRequestItem::find($validated['job_request_item_id'])
-            : null;
+        $jobItem = JobRequestItem::with(['jobRequest.client', 'project'])->findOrFail($validated['job_request_item_id']);
+        $clientId = $jobItem->jobRequest?->client_id;
 
-        $quotation = DB::transaction(function () use ($request, $validated, $jobItem) {
+        if (!$clientId) {
+            return back()->withErrors(['job_request_item_id' => 'The selected Job does not have a valid customer attached.'])->withInput();
+        }
+
+        $quotation = DB::transaction(function () use ($request, $validated, $jobItem, $clientId) {
             $subtotal = 0.00;
             $processedItems = [];
 
@@ -141,11 +143,11 @@ class FinanceQuotationController extends Controller
 
             $quotation = Quotation::create([
                 'quotation_number' => Quotation::generateQuotationNumber(),
-                'client_id' => $validated['client_id'],
-                'job_request_id' => $jobItem?->job_request_id,
-                'job_request_item_id' => $jobItem?->id,
+                'client_id' => $clientId,
+                'job_request_id' => $jobItem->job_request_id,
+                'job_request_item_id' => $jobItem->id,
                 'inspection_id' => $validated['inspection_id'] ?? null,
-                'project_id' => $jobItem?->project?->id,
+                'project_id' => $jobItem->project?->id,
                 'title' => $validated['title'],
                 'quotation_date' => $validated['quotation_date'],
                 'valid_until' => $validated['valid_until'] ?? null,
@@ -240,11 +242,10 @@ class FinanceQuotationController extends Controller
         }
 
         $quotation->load('items');
-        $clients = Client::orderBy('company_name')->orderBy('client_name')->get();
         $jobItems = JobRequestItem::with(['jobRequest.client'])->orderByDesc('id')->get();
         $inspections = Inspection::with('client')->orderByDesc('id')->get();
 
-        return view('finance.quotations.edit', compact('quotation', 'clients', 'jobItems', 'inspections'));
+        return view('finance.quotations.edit', compact('quotation', 'jobItems', 'inspections'));
     }
 
     public function update(Request $request, Quotation $quotation)
@@ -258,11 +259,10 @@ class FinanceQuotationController extends Controller
         }
 
         $validated = $request->validate([
-            'client_id' => ['required', 'exists:clients,id'],
+            'job_request_item_id' => ['nullable', 'exists:job_request_items,id'],
             'title' => ['required', 'string', 'max:255'],
             'quotation_date' => ['required', 'date'],
             'valid_until' => ['nullable', 'date', 'after_or_equal:quotation_date'],
-            'job_request_item_id' => ['nullable', 'exists:job_request_items,id'],
             'inspection_id' => ['nullable', 'exists:inspections,id'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
@@ -275,11 +275,11 @@ class FinanceQuotationController extends Controller
             'items.*.notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $jobItem = !empty($validated['job_request_item_id'])
-            ? JobRequestItem::find($validated['job_request_item_id'])
-            : null;
+        $jobItemId = $validated['job_request_item_id'] ?? $quotation->job_request_item_id;
+        $jobItem = $jobItemId ? JobRequestItem::with('jobRequest.client')->find($jobItemId) : null;
+        $clientId = $jobItem?->jobRequest?->client_id ?? $quotation->client_id;
 
-        DB::transaction(function () use ($request, $quotation, $validated, $jobItem) {
+        DB::transaction(function () use ($request, $quotation, $validated, $jobItem, $clientId) {
             $subtotal = 0.00;
             $processedItems = [];
 
@@ -306,7 +306,7 @@ class FinanceQuotationController extends Controller
             $grandTotal = max(0.00, round($subtotal - $discount + $tax, 2));
 
             $quotation->update([
-                'client_id' => $validated['client_id'],
+                'client_id' => $clientId,
                 'job_request_id' => $jobItem?->job_request_id ?? $quotation->job_request_id,
                 'job_request_item_id' => $jobItem?->id ?? $quotation->job_request_item_id,
                 'inspection_id' => $validated['inspection_id'] ?? null,

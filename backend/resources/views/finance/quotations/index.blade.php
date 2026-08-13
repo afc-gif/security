@@ -101,7 +101,8 @@
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
                                 <th class="p-3.5">Quotation #</th>
-                                <th class="p-3.5">Client</th>
+                                <th class="p-3.5">Job</th>
+                                <th class="p-3.5">Customer</th>
                                 <th class="p-3.5">Title</th>
                                 <th class="p-3.5">Date</th>
                                 <th class="p-3.5">Valid Until</th>
@@ -128,6 +129,13 @@
                                         <a href="{{ route('finance.quotations.show', $quotation) }}" class="hover:underline text-sky-700">
                                             {{ $quotation->quotation_number }}
                                         </a>
+                                    </td>
+                                    <td class="p-3.5 font-medium text-slate-800">
+                                        @if($quotation->jobRequestItem)
+                                            #{{ $quotation->jobRequestItem->id }} - {{ $quotation->jobRequestItem->title }}
+                                        @else
+                                            <span class="text-slate-400">Standalone</span>
+                                        @endif
                                     </td>
                                     <td class="p-3.5 font-medium text-slate-800">
                                         {{ $quotation->client?->company_name ?: $quotation->client?->client_name ?: 'N/A' }}

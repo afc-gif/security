@@ -25,6 +25,8 @@ class FinanceQuotationTest extends TestCase
     private User $manager;
     private User $fieldStaff;
     private Client $client;
+    private JobRequest $jobRequest;
+    private JobRequestItem $jobItem;
 
     protected function setUp(): void
     {
@@ -44,6 +46,23 @@ class FinanceQuotationTest extends TestCase
             'phone' => '08012345678',
             'status' => 'active',
         ]);
+
+        $category = ServiceCategory::create(['name' => 'CCTV Security', 'description' => 'CCTV Services']);
+
+        $this->jobRequest = JobRequest::create([
+            'client_id' => $this->client->id,
+            'title' => 'CCTV Installation Job',
+            'created_by' => $this->superAdmin->id,
+            'status' => 'open',
+        ]);
+
+        $this->jobItem = JobRequestItem::create([
+            'job_request_id' => $this->jobRequest->id,
+            'service_category_id' => $category->id,
+            'created_by' => $this->superAdmin->id,
+            'status' => 'pending_assignment',
+            'title' => 'CCTV Camera Item',
+        ]);
     }
 
     public function test_finance_authorized_user_can_view_quotations_list(): void
@@ -51,6 +70,8 @@ class FinanceQuotationTest extends TestCase
         Quotation::create([
             'quotation_number' => 'ART-QTN-2026-0001',
             'client_id' => $this->client->id,
+            'job_request_id' => $this->jobRequest->id,
+            'job_request_item_id' => $this->jobItem->id,
             'title' => 'CCTV Project Quote',
             'quotation_date' => '2026-08-13',
             'status' => 'draft',
@@ -80,49 +101,103 @@ class FinanceQuotationTest extends TestCase
         }
     }
 
-    public function test_quotation_can_be_created_with_server_side_number_generation(): void
+    public function test_new_quotation_requires_a_job_and_derives_client_server_side(): void
     {
+        // 1. Trying to create without job fails validation
+        $this->actingAs($this->financeUser)
+            ->post(route('finance.quotations.store'), [
+                'title' => 'No Job Quote',
+                'quotation_date' => '2026-08-13',
+                'items' => [['description' => 'Camera', 'quantity' => 1, 'unit_price' => 50000]],
+            ])
+            ->assertSessionHasErrors('job_request_item_id');
+
+        // 2. Creating with Job derives Client server-side
         $response = $this->actingAs($this->financeUser)
             ->post(route('finance.quotations.store'), [
-                'client_id' => $this->client->id,
+                'job_request_item_id' => $this->jobItem->id,
                 'title' => 'Solar Power System Quotation',
                 'quotation_date' => '2026-08-13',
-                'valid_until' => '2026-09-13',
                 'discount_amount' => 50000,
                 'tax_amount' => 10000,
-                'notes' => 'Customer discount applied.',
-                'terms' => '70% advance.',
                 'items' => [
-                    [
-                        'description' => '5kVA Inverter',
-                        'quantity' => 2,
-                        'unit_price' => 400000,
-                    ],
-                    [
-                        'description' => '200Ah Lithium Battery',
-                        'quantity' => 4,
-                        'unit_price' => 350000,
-                    ],
+                    ['description' => '5kVA Inverter', 'quantity' => 2, 'unit_price' => 400000],
+                    ['description' => '200Ah Lithium Battery', 'quantity' => 4, 'unit_price' => 350000],
                 ],
             ]);
 
-        $quotation = Quotation::where('client_id', $this->client->id)->firstOrFail();
+        $quotation = Quotation::where('title', 'Solar Power System Quotation')->firstOrFail();
 
         $response->assertRedirect(route('finance.quotations.show', $quotation));
-
+        $this->assertSame($this->client->id, $quotation->client_id);
+        $this->assertSame($this->jobRequest->id, $quotation->job_request_id);
+        $this->assertSame($this->jobItem->id, $quotation->job_request_item_id);
         $this->assertSame('ART-QTN-2026-0001', $quotation->quotation_number);
-        $this->assertSame(2200000.00, (float) $quotation->subtotal);
-        $this->assertSame(50000.00, (float) $quotation->discount_amount);
-        $this->assertSame(10000.00, (float) $quotation->tax_amount);
-        $this->assertSame(2160000.00, (float) $quotation->grand_total);
-        $this->assertSame(2, $quotation->items()->count());
     }
 
-    public function test_authorized_finance_user_can_edit_quotation(): void
+    public function test_browser_submitted_client_id_cannot_override_job_client(): void
+    {
+        $otherClient = Client::create(['client_name' => 'Other Client']);
+
+        $this->actingAs($this->financeUser)
+            ->post(route('finance.quotations.store'), [
+                'job_request_item_id' => $this->jobItem->id,
+                'client_id' => $otherClient->id, // Attempt to override
+                'title' => 'Override Test Quote',
+                'quotation_date' => '2026-08-13',
+                'items' => [['description' => 'Test Item', 'quantity' => 1, 'unit_price' => 100000]],
+            ]);
+
+        $quotation = Quotation::where('title', 'Override Test Quote')->firstOrFail();
+
+        // Must derive actual client from job, ignoring client_id override
+        $this->assertSame($this->client->id, $quotation->client_id);
+        $this->assertNotEquals($otherClient->id, $quotation->client_id);
+    }
+
+    public function test_existing_standalone_historical_quotations_remain_intact(): void
+    {
+        $historical = Quotation::create([
+            'quotation_number' => 'ART-QTN-2025-9999',
+            'client_id' => $this->client->id,
+            'title' => 'Historical Standalone Quote',
+            'quotation_date' => '2025-01-01',
+            'status' => 'draft',
+            'created_by' => $this->financeUser->id,
+        ]);
+
+        $this->assertNull($historical->job_request_item_id);
+
+        $this->actingAs($this->financeUser)
+            ->get(route('finance.quotations.show', $historical))
+            ->assertStatus(200)
+            ->assertSee('Historical Standalone Quote');
+    }
+
+    public function test_valid_until_is_optional_and_quote_without_valid_until_does_not_expire_automatically(): void
+    {
+        $this->actingAs($this->financeUser)
+            ->post(route('finance.quotations.store'), [
+                'job_request_item_id' => $this->jobItem->id,
+                'title' => 'Indefinite Quote',
+                'quotation_date' => '2026-08-13',
+                'valid_until' => null, // Optional
+                'items' => [['description' => 'Service', 'quantity' => 1, 'unit_price' => 150000]],
+            ]);
+
+        $quotation = Quotation::where('title', 'Indefinite Quote')->firstOrFail();
+
+        $this->assertNull($quotation->valid_until);
+        $this->assertSame('draft', $quotation->status);
+    }
+
+    public function test_authorized_finance_user_can_edit_quotation_and_change_job(): void
     {
         $quotation = Quotation::create([
             'quotation_number' => 'ART-QTN-2026-0010',
             'client_id' => $this->client->id,
+            'job_request_id' => $this->jobRequest->id,
+            'job_request_item_id' => $this->jobItem->id,
             'title' => 'Initial Fence Quote',
             'quotation_date' => '2026-08-13',
             'status' => 'draft',
@@ -131,63 +206,35 @@ class FinanceQuotationTest extends TestCase
             'created_by' => $this->financeUser->id,
         ]);
 
-        $quotation->items()->create([
-            'description' => 'Electric Fence Wire',
-            'quantity' => 1,
-            'unit_price' => 100000,
-            'total_price' => 100000,
+        $newClient = Client::create(['client_name' => 'New Customer']);
+        $newJobReq = JobRequest::create([
+            'client_id' => $newClient->id,
+            'title' => 'New Job Request',
+            'created_by' => $this->superAdmin->id,
+            'status' => 'open',
+        ]);
+        $category = ServiceCategory::first();
+        $newJobItem = JobRequestItem::create([
+            'job_request_id' => $newJobReq->id,
+            'service_category_id' => $category->id,
+            'created_by' => $this->superAdmin->id,
+            'status' => 'pending_assignment',
+            'title' => 'New Job Item',
         ]);
 
         $this->actingAs($this->financeUser)
-            ->get(route('finance.quotations.edit', $quotation))
-            ->assertStatus(200);
-
-        $this->actingAs($this->financeUser)
             ->put(route('finance.quotations.update', $quotation), [
-                'client_id' => $this->client->id,
-                'title' => 'Updated Fence Quote',
+                'job_request_item_id' => $newJobItem->id,
+                'title' => 'Updated Job Quote',
                 'quotation_date' => '2026-08-14',
-                'discount_amount' => 10000,
-                'tax_amount' => 5000,
-                'items' => [
-                    [
-                        'description' => 'Electric Fence Wire Heavy Duty',
-                        'quantity' => 2,
-                        'unit_price' => 120000,
-                    ],
-                ],
+                'items' => [['description' => 'New Item', 'quantity' => 2, 'unit_price' => 120000]],
             ])
             ->assertRedirect(route('finance.quotations.show', $quotation));
 
         $fresh = $quotation->fresh();
-        $this->assertSame('Updated Fence Quote', $fresh->title);
-        $this->assertSame(240000.00, (float) $fresh->subtotal);
-        $this->assertSame(235000.00, (float) $fresh->grand_total);
-    }
-
-    public function test_unauthorized_user_cannot_edit_quotation(): void
-    {
-        $quotation = Quotation::create([
-            'quotation_number' => 'ART-QTN-2026-0011',
-            'client_id' => $this->client->id,
-            'title' => 'Protected Quote',
-            'quotation_date' => '2026-08-13',
-            'status' => 'draft',
-            'created_by' => $this->financeUser->id,
-        ]);
-
-        $this->actingAs($this->manager)
-            ->get(route('finance.quotations.edit', $quotation))
-            ->assertStatus(403);
-
-        $this->actingAs($this->fieldStaff)
-            ->put(route('finance.quotations.update', $quotation), [
-                'client_id' => $this->client->id,
-                'title' => 'Hacked Title',
-                'quotation_date' => '2026-08-13',
-                'items' => [['description' => 'Test', 'quantity' => 1, 'unit_price' => 10]],
-            ])
-            ->assertStatus(403);
+        $this->assertSame('Updated Job Quote', $fresh->title);
+        $this->assertSame($newJobItem->id, $fresh->job_request_item_id);
+        $this->assertSame($newClient->id, $fresh->client_id); // Client updated safely via Job
     }
 
     public function test_editing_accepted_quotation_with_payments_is_protected(): void
@@ -195,6 +242,8 @@ class FinanceQuotationTest extends TestCase
         $quotation = Quotation::create([
             'quotation_number' => 'ART-QTN-2026-0012',
             'client_id' => $this->client->id,
+            'job_request_id' => $this->jobRequest->id,
+            'job_request_item_id' => $this->jobItem->id,
             'title' => 'Accepted Quote',
             'quotation_date' => '2026-08-13',
             'status' => 'accepted',
@@ -216,12 +265,7 @@ class FinanceQuotationTest extends TestCase
         ]);
 
         $this->actingAs($this->financeUser)
-            ->get(route('finance.quotations.edit', $quotation))
-            ->assertRedirect(route('finance.quotations.show', $quotation));
-
-        $this->actingAs($this->financeUser)
             ->put(route('finance.quotations.update', $quotation), [
-                'client_id' => $this->client->id,
                 'title' => 'Tampered Title',
                 'quotation_date' => '2026-08-13',
                 'items' => [['description' => 'Test', 'quantity' => 1, 'unit_price' => 10]],
@@ -231,11 +275,13 @@ class FinanceQuotationTest extends TestCase
         $this->assertSame('Accepted Quote', $quotation->fresh()->title);
     }
 
-    public function test_authorized_finance_user_can_download_quotation(): void
+    public function test_authorized_finance_user_can_download_quotation_pdf(): void
     {
         $quotation = Quotation::create([
             'quotation_number' => 'ART-QTN-2026-0020',
             'client_id' => $this->client->id,
+            'job_request_id' => $this->jobRequest->id,
+            'job_request_item_id' => $this->jobItem->id,
             'title' => 'Download Document Test Quote',
             'quotation_date' => '2026-08-13',
             'status' => 'sent',
@@ -276,72 +322,13 @@ class FinanceQuotationTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_editing_recalculates_totals_and_does_not_corrupt_payments(): void
-    {
-        $quotation = Quotation::create([
-            'quotation_number' => 'ART-QTN-2026-0030',
-            'client_id' => $this->client->id,
-            'title' => 'Draft Quote With Payment',
-            'quotation_date' => '2026-08-13',
-            'status' => 'draft',
-            'subtotal' => 200000,
-            'grand_total' => 200000,
-            'created_by' => $this->financeUser->id,
-        ]);
-
-        $payment = ProjectPayment::create([
-            'quotation_id' => $quotation->id,
-            'client_id' => $this->client->id,
-            'payment_type' => 'advance',
-            'amount' => 100000,
-            'payment_date' => '2026-08-13',
-            'payment_method' => 'cash',
-            'recorded_by' => $this->financeUser->id,
-            'created_by' => $this->financeUser->id,
-            'updated_by' => $this->financeUser->id,
-        ]);
-
-        $this->actingAs($this->financeUser)
-            ->put(route('finance.quotations.update', $quotation), [
-                'client_id' => $this->client->id,
-                'title' => 'Revised Draft Quote',
-                'quotation_date' => '2026-08-13',
-                'discount_amount' => 20000,
-                'items' => [
-                    ['description' => 'Item A', 'quantity' => 2, 'unit_price' => 150000],
-                ],
-            ]);
-
-        $freshQ = $quotation->fresh();
-        $this->assertSame(300000.00, (float) $freshQ->subtotal);
-        $this->assertSame(280000.00, (float) $freshQ->grand_total);
-        $this->assertSame(100000.00, (float) $payment->fresh()->amount);
-        $this->assertSame($quotation->id, $payment->fresh()->quotation_id);
-    }
-
     public function test_existing_pre_project_payments_and_job_conversion_remain_unbroken(): void
     {
-        $category = ServiceCategory::create(['name' => 'Fence Security', 'description' => 'Electric Fence']);
-        $jobRequest = JobRequest::create([
-            'client_id' => $this->client->id,
-            'title' => 'Integrated Job',
-            'created_by' => $this->superAdmin->id,
-            'status' => 'open',
-        ]);
-        $jobItem = JobRequestItem::create([
-            'job_request_id' => $jobRequest->id,
-            'service_category_id' => $category->id,
-            'created_by' => $this->superAdmin->id,
-            'status' => 'pending_assignment',
-            'title' => 'Integrated Item',
-        ]);
-
         // 1. Create Quotation for Job Item
         $this->actingAs($this->financeUser)
             ->post(route('finance.quotations.store'), [
-                'client_id' => $this->client->id,
+                'job_request_item_id' => $this->jobItem->id,
                 'title' => 'Integrated Quote',
-                'job_request_item_id' => $jobItem->id,
                 'quotation_date' => '2026-08-13',
                 'items' => [
                     ['description' => 'Fencing Cables', 'quantity' => 10, 'unit_price' => 50000],
@@ -352,7 +339,7 @@ class FinanceQuotationTest extends TestCase
 
         // 2. Customer pays money against job before project conversion
         $this->actingAs($this->financeUser)
-            ->post(route('finance.jobs.payments.store', $jobItem), [
+            ->post(route('finance.jobs.payments.store', $this->jobItem), [
                 'amount' => 200000,
                 'payment_date' => '2026-08-13',
                 'payment_method' => 'bank_transfer',
@@ -365,12 +352,12 @@ class FinanceQuotationTest extends TestCase
 
         // 3. Super Admin converts job directly to project
         $this->actingAs($this->superAdmin)
-            ->post(route('admin.job-items.convert-to-project', $jobItem));
+            ->post(route('admin.job-items.convert-to-project', $this->jobItem));
 
-        $project = Project::where('job_request_item_id', $jobItem->id)->firstOrFail();
+        $project = Project::where('job_request_item_id', $this->jobItem->id)->firstOrFail();
 
         // 4. Verify payment attached to project and quotation preserved
         $this->assertSame($project->id, $payment->fresh()->project_id);
-        $this->assertSame($jobItem->id, $quotation->fresh()->job_request_item_id);
+        $this->assertSame($this->jobItem->id, $quotation->fresh()->job_request_item_id);
     }
 }

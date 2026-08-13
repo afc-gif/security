@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'New Quotation | ARTSCI Finance')
+@section('title', 'Create Quotation | ARTSCI Finance')
 
 @section('content')
 <div class="finance-page">
@@ -11,7 +11,7 @@
 
         <div class="finance-header mb-6">
             <h1 class="finance-title">Create Quotation</h1>
-            <p class="finance-subtitle">Prepare a formal customer quote with itemized costs.</p>
+            <p class="finance-subtitle">Select an existing Job to generate an itemized customer quote.</p>
         </div>
 
         @if ($errors->any())
@@ -30,21 +30,39 @@
 
             <!-- Header Info Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="finance-form-group">
-                    <label for="client_id" class="finance-form-label">Client <span class="text-rose-500">*</span></label>
-                    <select id="client_id" name="client_id" required class="finance-form-input">
-                        <option value="">Select client...</option>
-                        @foreach($clients as $client)
-                            <option value="{{ $client->id }}" @selected((string) old('client_id', $selectedClientId) === (string) $client->id)>
-                                {{ $client->company_name ?: $client->client_name }} ({{ $client->client_name }})
+                <div class="finance-form-group lg:col-span-2">
+                    <label for="job_request_item_id" class="finance-form-label">Job <span class="text-rose-500">*</span></label>
+                    <select id="job_request_item_id" name="job_request_item_id" required class="finance-form-input">
+                        <option value="">Select an existing Job...</option>
+                        @foreach($jobItems as $jobItem)
+                            @php
+                                $c = $jobItem->jobRequest?->client;
+                                $cName = $c?->company_name ?: $c?->client_name ?: 'Client';
+                            @endphp
+                            <option value="{{ $jobItem->id }}"
+                                    data-client-name="{{ $cName }}"
+                                    data-client-contact="{{ $c?->contact_person ?? '' }}"
+                                    data-client-phone="{{ $c?->phone ?? '' }}"
+                                    data-client-email="{{ $c?->email ?? '' }}"
+                                    @selected((string) old('job_request_item_id', $selectedJobItemId) === (string) $jobItem->id)>
+                                #{{ $jobItem->id }} — {{ $jobItem->title }} [Customer: {{ $cName }}]
                             </option>
                         @endforeach
                     </select>
                 </div>
 
+                <!-- Customer Auto-Display Card -->
                 <div class="finance-form-group">
+                    <label class="finance-form-label">Customer (Source of Truth)</label>
+                    <div id="customerPreviewCard" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 h-[42px] flex flex-col justify-center">
+                        <div id="customerNameDisplay" class="font-bold text-slate-900 truncate">Select a job...</div>
+                        <div id="customerContactDisplay" class="text-[11px] text-slate-500 truncate hidden"></div>
+                    </div>
+                </div>
+
+                <div class="finance-form-group lg:col-span-2">
                     <label for="title" class="finance-form-label">Quotation Title / Subject <span class="text-rose-500">*</span></label>
-                    <input id="title" name="title" value="{{ old('title') }}" type="text" required placeholder="e.g. CCTV & Access Control Installation" class="finance-form-input">
+                    <input id="title" name="title" value="{{ old('title') }}" type="text" required placeholder="e.g. CCTV System Supply & Installation" class="finance-form-input">
                 </div>
 
                 <div class="finance-form-group">
@@ -53,32 +71,18 @@
                 </div>
 
                 <div class="finance-form-group">
-                    <label for="valid_until" class="finance-form-label">Valid Until Date</label>
-                    <input id="valid_until" name="valid_until" value="{{ old('valid_until', now()->addDays(30)->toDateString()) }}" type="date" class="finance-form-input">
+                    <label for="valid_until" class="finance-form-label">Valid Until Date (Optional)</label>
+                    <input id="valid_until" name="valid_until" value="{{ old('valid_until') }}" type="date" class="finance-form-input">
+                    <span class="text-[11px] text-slate-400 mt-1 block">Leave empty for indefinite validity.</span>
                 </div>
 
-                <div class="finance-form-group">
-                    <label for="job_request_item_id" class="finance-form-label">Related Job Request (Optional)</label>
-                    <select id="job_request_item_id" name="job_request_item_id" class="finance-form-input">
-                        <option value="">None / Standalone Quote</option>
-                        @foreach($jobItems as $jobItem)
-                            @php
-                                $cName = $jobItem->jobRequest?->client?->company_name ?: $jobItem->jobRequest?->client?->client_name ?: 'Client';
-                            @endphp
-                            <option value="{{ $jobItem->id }}" @selected((string) old('job_request_item_id', $selectedJobItemId) === (string) $jobItem->id)>
-                                #{{ $jobItem->id }} - {{ $jobItem->title }} ({{ $cName }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="finance-form-group">
+                <div class="finance-form-group lg:col-span-2">
                     <label for="inspection_id" class="finance-form-label">Related Inspection (Optional)</label>
                     <select id="inspection_id" name="inspection_id" class="finance-form-input">
-                        <option value="">None / Standalone Quote</option>
+                        <option value="">None</option>
                         @foreach($inspections as $insp)
                             <option value="{{ $insp->id }}" @selected((string) old('inspection_id', $selectedInspectionId) === (string) $insp->id)>
-                                {{ $insp->inspection_code }} - {{ $insp->title }}
+                                {{ $insp->inspection_code }} — {{ $insp->title }}
                             </option>
                         @endforeach
                     </select>
@@ -109,7 +113,6 @@
                             </tr>
                         </thead>
                         <tbody id="itemsContainer" class="divide-y divide-slate-100">
-                            <!-- JS populated or default 1 row -->
                         </tbody>
                     </table>
                 </div>
@@ -170,6 +173,35 @@
 @push('scripts')
 <script>
 (function() {
+    const jobSelect = document.getElementById('job_request_item_id');
+    const custName = document.getElementById('customerNameDisplay');
+    const custContact = document.getElementById('customerContactDisplay');
+
+    function updateCustomerPreview() {
+        const opt = jobSelect.options[jobSelect.selectedIndex];
+        if (opt && opt.value) {
+            const name = opt.getAttribute('data-client-name');
+            const contact = opt.getAttribute('data-client-contact');
+            const phone = opt.getAttribute('data-client-phone');
+            const email = opt.getAttribute('data-client-email');
+
+            custName.textContent = name;
+            let info = [contact, phone, email].filter(Boolean).join(' • ');
+            if (info) {
+                custContact.textContent = info;
+                custContact.classList.remove('hidden');
+            } else {
+                custContact.classList.add('hidden');
+            }
+        } else {
+            custName.textContent = 'Select a job above...';
+            custContact.classList.add('hidden');
+        }
+    }
+
+    jobSelect.addEventListener('change', updateCustomerPreview);
+    updateCustomerPreview();
+
     const container = document.getElementById('itemsContainer');
     const addBtn = document.getElementById('addItemBtn');
     const discountInput = document.getElementById('discount_amount');
@@ -265,7 +297,6 @@
     discountInput.addEventListener('input', recalculateTotals);
     taxInput.addEventListener('input', recalculateTotals);
 
-    // Initialize with 1 default row
     createRow();
 })();
 </script>

@@ -35,7 +35,11 @@ class FinancePreProjectPaymentTest extends TestCase
         $this->manager = $this->createUser(['role' => 'manager', 'status' => 'approved']);
         $this->fieldStaff = $this->createUser(['role' => 'field_staff', 'status' => 'approved']);
 
-        $this->client = Client::factory()->create();
+        $this->client = Client::create([
+            'client_name' => 'PreProject Test Client',
+            'company_name' => 'Acme Test Corp',
+            'status' => 'active',
+        ]);
     }
 
     public function test_finance_user_can_record_money_received_against_inspection(): void

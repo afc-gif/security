@@ -39,8 +39,15 @@ class SuperAdminJobPowersTest extends TestCase
         $this->fieldStaff = $this->createUser(['role' => 'field_staff', 'status' => 'approved']);
         $this->fieldCoordinator = $this->createUser(['role' => 'field_coordinator', 'status' => 'approved']);
 
-        $this->client = Client::factory()->create();
-        $this->serviceCategory = ServiceCategory::factory()->create();
+        $this->client = Client::create([
+            'client_name' => 'SuperAdmin Test Client',
+            'company_name' => 'SuperAdmin Corp',
+            'status' => 'active',
+        ]);
+        $this->serviceCategory = ServiceCategory::create([
+            'name' => 'General Security Services',
+            'description' => 'Security Services Category',
+        ]);
     }
 
     private function createJobItem(array $attributes = []): JobRequestItem
