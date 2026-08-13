@@ -11,7 +11,13 @@
             <div>
                 <div class="text-xs font-bold tracking-wider text-sky-600 uppercase mb-1">ARTSCI Finance</div>
                 <h1 class="finance-title">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()?->name ?? 'Finance User' }}</h1>
-                <p class="finance-subtitle">Financial Overview for Active & Project Operations</p>
+                <p class="finance-subtitle">Financial Overview &mdash; All Sources &middot; All Time</p>
+            </div>
+            <div class="mt-3 sm:mt-0">
+                <a href="{{ route('finance.analysis') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Full Analysis
+                </a>
             </div>
         </div>
 
@@ -21,45 +27,79 @@
             </div>
         @endif
 
-        <!-- Top Financial Snapshot (5 Metrics) -->
+        {{-- ── TOTAL IN / OUT / NET ──────────────────────────────────────────── --}}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4">
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                <div class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase mb-1">Total Money IN</div>
+                <div class="text-2xl font-bold text-emerald-800 tabular-nums">{{ $financeMoney($totalIn) }}</div>
+                <div class="text-[11px] text-emerald-600 mt-1.5 space-y-0.5">
+                    <div>Project payments: {{ $financeMoney($receivedTotal) }}</div>
+                    <div>POS Sales: {{ $financeMoney($posRevenueTotal) }}</div>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
+                <div class="text-[10px] font-bold tracking-widest text-rose-600 uppercase mb-1">Total Money OUT</div>
+                <div class="text-2xl font-bold text-rose-800 tabular-nums">{{ $financeMoney($totalOut) }}</div>
+                <div class="text-[11px] text-rose-600 mt-1.5">
+                    Approved expenses &amp; materials
+                </div>
+            </div>
+
+            <div class="rounded-xl border p-4 shadow-sm {{ $netCashPosition >= 0 ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50' }}">
+                <div class="text-[10px] font-bold tracking-widest uppercase mb-1 {{ $netCashPosition >= 0 ? 'text-sky-600' : 'text-amber-600' }}">Net Position</div>
+                <div class="text-2xl font-bold tabular-nums {{ $netCashPosition >= 0 ? 'text-sky-800' : 'text-amber-800' }}">{{ $financeMoney($netCashPosition) }}</div>
+                <div class="text-[11px] mt-1.5 {{ $netCashPosition >= 0 ? 'text-sky-600' : 'text-amber-600' }}">
+                    Total IN &minus; Total OUT (all-time)
+                </div>
+            </div>
+        </div>
+
+        {{-- ── DETAILED METRICS (5 columns) ────────────────────────────────────── --}}
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
-            <!-- Metric 1: Project Value -->
             <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Project Value</div>
                 <div class="text-xl md:text-2xl font-bold text-slate-900 tabular-nums">{{ $financeMoney($projectValueTotal) }}</div>
                 <div class="text-[11px] text-slate-400 mt-1">Total Contract Value</div>
             </div>
 
-            <!-- Metric 2: Received -->
             <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div class="text-xs font-medium text-emerald-600 uppercase tracking-wider mb-1">Received</div>
+                <div class="text-xs font-medium text-emerald-600 uppercase tracking-wider mb-1">Project Received</div>
                 <div class="text-xl md:text-2xl font-bold text-emerald-700 tabular-nums">{{ $financeMoney($receivedTotal) }}</div>
                 <div class="text-[11px] text-slate-400 mt-1">Client Payments</div>
             </div>
 
-            <!-- Metric 3: Outstanding -->
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="text-xs font-medium text-violet-600 uppercase tracking-wider mb-1">POS Revenue</div>
+                <div class="text-xl md:text-2xl font-bold text-violet-700 tabular-nums">{{ $financeMoney($posRevenueTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                    This month: {{ $financeMoney($posRevenueThisMonth) }}
+                    @if($posOrderCountThisMonth > 0)
+                        ({{ $posOrderCountThisMonth }} sale{{ $posOrderCountThisMonth !== 1 ? 's' : '' }})
+                    @endif
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div class="text-xs font-medium text-amber-600 uppercase tracking-wider mb-1">Outstanding</div>
                 <div class="text-xl md:text-2xl font-bold text-amber-700 tabular-nums">{{ $financeMoney($outstandingTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Balance Due</div>
+                <div class="text-[11px] text-slate-400 mt-1">Project Balance Due</div>
             </div>
 
-            <!-- Metric 4: Approved Costs -->
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1">
                 <div class="text-xs font-medium text-rose-600 uppercase tracking-wider mb-1">Approved Costs</div>
                 <div class="text-xl md:text-2xl font-bold text-rose-700 tabular-nums">{{ $financeMoney($approvedCostsTotal) }}</div>
                 <div class="text-[11px] text-slate-400 mt-1">Expenses + Materials</div>
             </div>
 
-            <!-- Metric 5: Estimated Profit -->
             <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1">
-                <div class="text-xs font-medium text-sky-600 uppercase tracking-wider mb-1">Estimated Profit</div>
-                <div class="text-xl md:text-2xl font-bold text-sky-700 tabular-nums">{{ $financeMoney($estimatedProfitTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Value − Approved Costs</div>
+                <div class="text-xs font-medium text-indigo-600 uppercase tracking-wider mb-1">Est. Project Profit</div>
+                <div class="text-xl md:text-2xl font-bold {{ $estimatedProfitTotal >= 0 ? 'text-indigo-700' : 'text-rose-700' }} tabular-nums">{{ $financeMoney($estimatedProfitTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1">Contract Value &minus; Costs</div>
             </div>
         </div>
 
-        <!-- Attention / Action Area (Conditionally Rendered) -->
+        {{-- ── ATTENTION ITEMS ───────────────────────────────────────────────────── --}}
         @if(!empty($attentionItems))
             <div class="mb-6">
                 <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">Needs Attention</h2>
@@ -82,9 +122,8 @@
             </div>
         @endif
 
-        <!-- Recent Jobs & Recent Projects Section -->
+        {{-- ── RECENT JOBS & PROJECTS ────────────────────────────────────────────── --}}
         <div class="grid lg:grid-cols-2 gap-6 mb-8">
-            <!-- Recent Jobs -->
             <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                     <h2 class="text-base font-bold text-slate-900">Recent Jobs</h2>
@@ -120,7 +159,6 @@
                 @endif
             </div>
 
-            <!-- Recent Projects -->
             <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                     <h2 class="text-base font-bold text-slate-900">Recent Projects</h2>

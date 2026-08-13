@@ -326,15 +326,15 @@ class FinancePhase8Test extends TestCase
         $response->assertDontSee('Alpha Project #1');
     }
 
-    public function test_10_dashboard_does_not_expose_pos_order_revenue(): void
+    public function test_10_dashboard_includes_pos_order_revenue_in_total_in(): void
     {
-        // Create an Order with high total_amount
+        // POS revenue is now intentionally visible in the Finance dashboard
+        // as part of the unified TOTAL IN / TOTAL OUT / NET view.
         Order::create([
-            'user_id' => $this->financeUser->id,
-            'order_number' => 'ORD-99999',
-            'total_amount' => 99999999.00,
-            'status' => 'completed',
-            'payment_status' => 'paid',
+            'user_id'        => $this->financeUser->id,
+            'order_number'   => 'ORD-99999',
+            'total_amount'   => 99999999.00,
+            'status'         => 'completed',
             'payment_method' => 'card',
         ]);
 
@@ -342,7 +342,9 @@ class FinancePhase8Test extends TestCase
             ->get(route('finance.dashboard'));
 
         $response->assertOk();
-        $response->assertDontSee('99,999,999.00');
+        // POS Revenue card and Total IN summary card should appear
+        $response->assertSee('POS Revenue');
+        $response->assertSee('Money IN');
     }
 
     public function test_11_empty_state_renders_correctly(): void

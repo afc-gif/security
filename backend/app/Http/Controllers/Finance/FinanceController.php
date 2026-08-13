@@ -12,6 +12,7 @@ use App\Models\Inspection;
 use App\Models\JobRequestItem;
 use App\Models\Project;
 use App\Models\ProjectFinancial;
+use App\Models\Order;
 use App\Models\ProjectPayment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,10 +29,33 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::VIEW);
 
+        // ── All-time project revenue & value ─────────────────────────────────
         $projectValueTotal = (float) ProjectFinancial::query()->sum('contract_value');
-        $receivedTotal = (float) ProjectPayment::query()->sum('amount');
-        $outstandingTotal = max(0, $projectValueTotal - $receivedTotal);
+        $projectReceivedTotal = (float) ProjectPayment::query()->sum('amount');
+        $outstandingTotal = max(0, $projectValueTotal - $projectReceivedTotal);
 
+        // ── POS revenue (completed orders, all-time) ─────────────────────────
+        $posRevenueTotal = (float) Order::query()
+            ->where('status', 'completed')
+            ->sum('total_amount');
+
+        // POS revenue this month for trend context
+        $posRevenueThisMonth = (float) Order::query()
+            ->where('status', 'completed')
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->sum('total_amount');
+
+        $posOrderCountThisMonth = (int) Order::query()
+            ->where('status', 'completed')
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
+        // ── Total Money IN = project payments + POS ───────────────────────────
+        $totalIn = $projectReceivedTotal + $posRevenueTotal;
+
+        // ── Total Money OUT = approved expenses + materials ───────────────────
         $approvedExpensesTotal = (float) FinancialExpense::query()
             ->where('status', FinancialExpense::STATUS_APPROVED)
             ->sum('amount');
@@ -41,8 +65,14 @@ class FinanceController extends Controller
             ->sum('total_cost');
 
         $approvedCostsTotal = $approvedExpensesTotal + $approvedMaterialsTotal;
+
+        // ── Net cash position ─────────────────────────────────────────────────
+        $netCashPosition = $totalIn - $approvedCostsTotal;
+
+        // Estimated project profit (project-only view)
         $estimatedProfitTotal = $projectValueTotal - $approvedCostsTotal;
 
+        // ── Pending items count ───────────────────────────────────────────────
         $pendingMaterialCostsCount = FinancialMaterialCost::query()
             ->where('status', FinancialMaterialCost::STATUS_PENDING)
             ->count();
@@ -53,6 +83,7 @@ class FinanceController extends Controller
 
         $pendingReviewCount = $pendingExpensesCount + $pendingMaterialCostsCount;
 
+        // ── Recent records ────────────────────────────────────────────────────
         $recentJobs = JobRequestItem::query()
             ->with(['jobRequest.client', 'claimer'])
             ->latest('id')
@@ -65,25 +96,39 @@ class FinanceController extends Controller
             ->limit(3)
             ->get();
 
+        // ── Attention items ───────────────────────────────────────────────────
         $attentionItems = [];
         if ($pendingReviewCount > 0) {
             $attentionItems[] = [
-                'type' => 'warning',
-                'title' => 'Pending Financial Approvals',
-                'count' => $pendingReviewCount,
+                'type'        => 'warning',
+                'title'       => 'Pending Financial Approvals',
+                'count'       => $pendingReviewCount,
                 'description' => "{$pendingReviewCount} pending expense or material cost item(s) awaiting review.",
-                'link' => route('finance.jobs.index'),
-                'link_text' => 'Review Pending',
+                'link'        => route('finance.jobs.index'),
+                'link_text'   => 'Review Pending',
             ];
         }
 
         return view('finance.dashboard', array_merge([
-            'projectValueTotal' => $projectValueTotal,
-            'receivedTotal' => $receivedTotal,
-            'outstandingTotal' => $outstandingTotal,
-            'approvedCostsTotal' => $approvedCostsTotal,
+            // All-time project figures
+            'projectValueTotal'    => $projectValueTotal,
+            'receivedTotal'        => $projectReceivedTotal,
+            'outstandingTotal'     => $outstandingTotal,
+            'approvedCostsTotal'   => $approvedCostsTotal,
             'estimatedProfitTotal' => $estimatedProfitTotal,
-            'recentJobs' => $recentJobs,
+
+            // POS revenue
+            'posRevenueTotal'         => $posRevenueTotal,
+            'posRevenueThisMonth'     => $posRevenueThisMonth,
+            'posOrderCountThisMonth'  => $posOrderCountThisMonth,
+
+            // Unified IN / OUT / NET
+            'totalIn'         => $totalIn,
+            'totalOut'        => $approvedCostsTotal,
+            'netCashPosition' => $netCashPosition,
+
+            // Other
+            'recentJobs'     => $recentJobs,
             'recentProjects' => $recentProjects,
             'attentionItems' => $attentionItems,
         ], $this->viewHelpers()));
