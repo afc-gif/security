@@ -495,22 +495,49 @@
         modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
     });
 
-    /* ── Toast helper ──────────────────────────────────────────── */
-    function showToast(container, message, isError = false) {
-        let toast = container.querySelector('.ajax-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.className = 'ajax-toast';
-            toast.style.cssText = 'margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:0.875rem;font-weight:600;transition:opacity .3s;';
-            container.prepend(toast);
-        }
+    /* ── Fixed-position snackbar toast ────────────────────────── */
+    const snackbar = document.createElement('div');
+    snackbar.style.cssText = [
+        'position:fixed',
+        'bottom:24px',
+        'right:24px',
+        'z-index:99999',
+        'display:flex',
+        'flex-direction:column',
+        'gap:8px',
+        'pointer-events:none',
+        'max-width:320px',
+    ].join(';');
+    document.body.appendChild(snackbar);
+
+    function showToast(message, isError) {
+        const toast = document.createElement('div');
+        toast.style.cssText = [
+            'padding:12px 18px',
+            'border-radius:10px',
+            'font-size:0.875rem',
+            'font-weight:600',
+            'box-shadow:0 4px 16px rgba(0,0,0,0.14)',
+            'opacity:0',
+            'transform:translateY(10px)',
+            'transition:opacity .25s ease,transform .25s ease',
+            isError
+                ? 'background:#fef2f2;color:#991b1b;border:1px solid #fecaca;'
+                : 'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;',
+        ].join(';');
         toast.textContent = message;
-        toast.style.opacity = '1';
-        toast.style.background = isError ? '#fef2f2' : '#f0fdf4';
-        toast.style.color     = isError ? '#991b1b'  : '#166534';
-        toast.style.border    = isError ? '1px solid #fecaca' : '1px solid #bbf7d0';
-        clearTimeout(toast._timer);
-        toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        snackbar.appendChild(toast);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            toast.style.opacity   = '1';
+            toast.style.transform = 'translateY(0)';
+        }));
+
+        setTimeout(() => {
+            toast.style.opacity   = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     /* ── AJAX form submission (modal forms only) ───────────────── */
@@ -524,40 +551,30 @@
         const isDelete = method === 'DELETE';
         if (isDelete) btn.textContent = 'Deleting…';
 
-        // Laravel needs _method spoofing in FormData; fetch uses POST
         fetch(form.action, {
-            method: 'POST',
+            method : 'POST',
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            body: data,
+            body   : data,
         })
         .then(async res => {
             const json = await res.json().catch(() => ({}));
-            const modal = form.closest('dialog');
-            const panel = form.closest('[data-tab-panel]');
-            const toastContainer = panel || modal || form.parentElement;
 
             if (res.ok && json.success !== false) {
-                showToast(toastContainer, json.message || 'Saved successfully.');
-
-                // If it was a delete, remove the <details> row from the DOM
+                showToast(json.message || 'Saved successfully.');
                 if (isDelete) {
                     const row = form.closest('details');
                     if (row) row.remove();
-                } else {
-                    // Reset "add" forms; leave "edit" forms open with values intact
-                    if (form.dataset.resetAfter === 'true') form.reset();
+                } else if (form.dataset.resetAfter === 'true') {
+                    form.reset();
                 }
             } else {
                 const msg = json.message
                     || (json.errors ? Object.values(json.errors).flat().join(' ') : null)
                     || 'Something went wrong. Please try again.';
-                showToast(toastContainer, msg, true);
+                showToast(msg, true);
             }
         })
-        .catch(() => {
-            const modal = form.closest('dialog');
-            showToast(modal || form.parentElement, 'Network error. Please try again.', true);
-        })
+        .catch(() => showToast('Network error. Please try again.', true))
         .finally(() => {
             btn.disabled    = false;
             btn.textContent = originalText;
@@ -566,11 +583,9 @@
 
     /* Attach to every form inside a dialog */
     document.querySelectorAll('dialog form').forEach(form => {
-        // Mark "add" forms so they reset after success
         if (form.closest('[data-tab-panel="edit"]') && !form.querySelector('[name="_method"]')) {
             form.dataset.resetAfter = 'true';
         }
-
         form.addEventListener('submit', e => {
             e.preventDefault();
             const btn = e.submitter || form.querySelector('[type="submit"]');
