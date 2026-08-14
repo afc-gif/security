@@ -43,7 +43,12 @@ class OperationsOverviewController extends Controller
                 JobRequestItem::STATUS_OVERDUE,
                 JobRequestItem::STATUS_RETURNED,
             ])
-            ->orderByRaw("FIELD(status, 'pending_admin_review', 'overdue', 'returned')")
+            ->orderByRaw("CASE status
+                WHEN 'pending_admin_review' THEN 1
+                WHEN 'overdue'              THEN 2
+                WHEN 'returned'             THEN 3
+                ELSE 4
+            END")
             ->latest('submitted_at')
             ->latest('id')
             ->limit(15)
