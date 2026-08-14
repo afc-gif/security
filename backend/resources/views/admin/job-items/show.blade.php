@@ -172,7 +172,7 @@
             @if($generalMedia->count())
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($generalMedia as $media)
-                        @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                        @php $mediaUrl = \App\Support\ImageUrl::url($media->file_path); @endphp
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
                             @if($mediaUrl)
                                 <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
@@ -198,7 +198,7 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Checklist Report</h2>
                 <div class="space-y-3">
                     @foreach($jobItem->checklistItems as $checklistItem)
-                        @php($itemMedia = $mediaByChecklist->get($checklistItem->id, collect()))
+                        @php $itemMedia = $mediaByChecklist->get($checklistItem->id, collect()); @endphp
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
@@ -231,7 +231,7 @@
                             @if($itemMedia->count())
                                 <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     @foreach($itemMedia as $media)
-                                        @php($mediaUrl = \App\Support\ImageUrl::url($media->file_path))
+                                        @php $mediaUrl = \App\Support\ImageUrl::url($media->file_path); @endphp
                                         <div class="rounded-lg border border-gray-200 bg-white p-3">
                                             @if($mediaUrl)
                                                 <a href="{{ $mediaUrl }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:text-blue-900">
@@ -254,7 +254,7 @@
             </div>
         @endif
 
-        @if($jobItem->status === \App\Models\JobRequestItem::STATUS_PENDING_ADMIN_REVIEW && $latestAttempt)
+        @if(in_array($jobItem->status, [\App\Models\JobRequestItem::STATUS_PENDING_ADMIN_REVIEW, \App\Models\JobRequestItem::STATUS_SUBMITTED]) && $latestAttempt)
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Admin Final Review</h2>
                 <form method="POST" action="{{ route('admin.job-items.review', $jobItem) }}" class="space-y-4">
