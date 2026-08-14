@@ -29,6 +29,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->except(['show'])
         ->names('admin.clients');
 
+    // Operations Overview
+    Route::get('/operations', [\App\Http\Controllers\Operations\OperationsOverviewController::class, 'index'])
+        ->name('admin.operations.overview');
+
     // Job Requests Management
     Route::get('/job-inbox', [\App\Http\Controllers\Operations\JobInboxController::class, 'index'])
         ->name('admin.job-inbox.index');

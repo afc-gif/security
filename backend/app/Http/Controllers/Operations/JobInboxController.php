@@ -5,88 +5,210 @@ namespace App\Http\Controllers\Operations;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\JobRequestItem;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class JobInboxController extends Controller
 {
+    /**
+     * Statuses that appear in the Admin Job Inbox.
+     *
+     * STATUS_SUBMITTED is excluded — that stage belongs to the Coordinator.
+     * Admins only act on STATUS_PENDING_ADMIN_REVIEW and later.
+     */
+    private const ADMIN_VISIBLE_STATUSES = [
+        JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+        JobRequestItem::STATUS_OPEN,
+        JobRequestItem::STATUS_CLAIMED,
+        JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
+        JobRequestItem::STATUS_APPROVED,
+        JobRequestItem::STATUS_RETURNED,
+        JobRequestItem::STATUS_REJECTED,
+        JobRequestItem::STATUS_REOPENED,
+        JobRequestItem::STATUS_OVERDUE,
+        JobRequestItem::STATUS_CLOSED,
+    ];
+
+    /**
+     * Summary strip counts — admin-actionable statuses only.
+     */
+    private const SUMMARY_STATUSES = [
+        'pending_review'   => JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
+        'overdue'          => JobRequestItem::STATUS_OVERDUE,
+        'needs_assignment' => JobRequestItem::STATUS_PENDING_ASSIGNMENT,
+        'returned'         => JobRequestItem::STATUS_RETURNED,
+    ];
+
     public function index(Request $request)
     {
-        $statuses = [
-            JobRequestItem::STATUS_PENDING_ASSIGNMENT,
-            JobRequestItem::STATUS_OPEN,
-            JobRequestItem::STATUS_CLAIMED,
-            JobRequestItem::STATUS_SUBMITTED,
-            JobRequestItem::STATUS_PENDING_ADMIN_REVIEW,
-            JobRequestItem::STATUS_APPROVED,
-            JobRequestItem::STATUS_RETURNED,
-            JobRequestItem::STATUS_REJECTED,
-            JobRequestItem::STATUS_REOPENED,
-            JobRequestItem::STATUS_OVERDUE,
-            JobRequestItem::STATUS_CLOSED,
-        ];
+        $filters = $this->resolveFilters($request);
 
-        $filters = [
-            'client_id' => $request->input('client_id'),
-            'status' => in_array($request->input('status'), $statuses, true) ? $request->input('status') : null,
-            'converted' => in_array($request->input('converted'), ['converted', 'not_converted'], true) ? $request->input('converted') : 'all',
-            'due_today' => $request->boolean('due_today'),
-            'search' => trim((string) $request->input('search', '')),
-        ];
+        $baseQuery = $this->buildQuery($filters);
 
-        $baseQuery = JobRequestItem::query()
-            ->with(['jobRequest.client', 'serviceCategory', 'claimer', 'project'])
-            ->when($filters['client_id'], function (Builder $query, string $clientId) {
-                $query->whereHas('jobRequest', fn (Builder $jobRequestQuery) => $jobRequestQuery->where('client_id', $clientId));
-            })
-            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status))
-            ->when($filters['converted'] === 'converted', fn (Builder $query) => $query->whereHas('project'))
-            ->when($filters['converted'] === 'not_converted', fn (Builder $query) => $query->whereDoesntHave('project'))
-            ->when($filters['due_today'], fn (Builder $query) => $query->whereDate('due_date', today()))
-            ->when($filters['search'] !== '', function (Builder $query) use ($filters) {
-                $search = $filters['search'];
+        $summary = $this->buildSummary();
 
-                $query->where(function (Builder $searchQuery) use ($search) {
-                    $searchQuery
-                        ->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereHas('serviceCategory', fn (Builder $categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('jobRequest', fn (Builder $jobRequestQuery) => $jobRequestQuery->where('title', 'like', "%{$search}%"))
-                        ->orWhereHas('jobRequest.client', function (Builder $clientQuery) use ($search) {
-                            $clientQuery->where('client_name', 'like', "%{$search}%")
-                                ->orWhere('company_name', 'like', "%{$search}%");
-                        });
-                });
-            });
-
-        $summary = [
-            'pending_review' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)->count(),
-            'overdue' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_OVERDUE)->count(),
-            'returned_reopened' => (clone $baseQuery)->whereIn('status', [JobRequestItem::STATUS_RETURNED, JobRequestItem::STATUS_REOPENED])->count(),
-            'converted' => (clone $baseQuery)->whereHas('project')->count(),
-        ];
-
-        $sections = [
-            'pendingReview' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)->latest('submitted_at')->latest('id')->limit(10)->get(),
-            'overdue' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_OVERDUE)->latest('updated_at')->latest('id')->limit(10)->get(),
-            'returnedReopened' => (clone $baseQuery)->whereIn('status', [JobRequestItem::STATUS_RETURNED, JobRequestItem::STATUS_REOPENED])->latest('updated_at')->latest('id')->limit(10)->get(),
-            'approved' => (clone $baseQuery)->where('status', JobRequestItem::STATUS_APPROVED)->latest('updated_at')->latest('id')->limit(10)->get(),
-            'converted' => (clone $baseQuery)->whereHas('project')->latest('updated_at')->latest('id')->limit(10)->get(),
-            'recentlyActive' => (clone $baseQuery)->latest('updated_at')->latest('submitted_at')->latest('id')->limit(10)->get(),
-        ];
-
-        $groupedItems = (clone $baseQuery)
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $items */
+        $items = (clone $baseQuery)
             ->latest('updated_at')
             ->latest('id')
-            ->limit(100)
-            ->get()
-            ->groupBy(fn (JobRequestItem $item) => $item->jobRequest?->client?->client_name ?? 'Client unavailable')
-            ->map(fn ($clientItems) => $clientItems->groupBy(fn (JobRequestItem $item) => $item->jobRequest?->title ?? 'Job request unavailable'));
+            ->paginate(25);
+
+        $items->withQueryString();
 
         $clients = Client::query()
             ->orderBy('client_name')
             ->get(['id', 'client_name']);
 
-        return view('admin.job-inbox.index', compact('clients', 'filters', 'groupedItems', 'sections', 'statuses', 'summary'));
+        $filterableStatuses = self::ADMIN_VISIBLE_STATUSES;
+
+        // Presentational mappings for the view
+        $statusLabels = [
+            'pending_assignment'   => 'Needs Assignment',
+            'open'                 => 'Available to Claim',
+            'claimed'              => 'In Progress',
+            'submitted'            => 'With Coordinator',
+            'pending_admin_review' => 'Ready for Review',
+            'returned'             => 'Returned to Field',
+            'approved'             => 'Approved',
+            'rejected'             => 'Rejected',
+            'reopened'             => 'Reopened',
+            'overdue'              => 'Overdue',
+            'closed'               => 'Closed',
+        ];
+
+        $statusBadgeClasses = [
+            'pending_assignment'   => 'badge-purple',
+            'open'                 => 'badge-blue',
+            'claimed'              => 'badge-blue',
+            'submitted'            => 'badge-yellow',
+            'pending_admin_review' => 'badge-amber',
+            'returned'             => 'badge-orange',
+            'approved'             => 'badge-green',
+            'rejected'             => 'badge-red',
+            'reopened'             => 'badge-blue',
+            'overdue'              => 'badge-red',
+            'closed'               => 'badge-gray',
+        ];
+
+        $sortOptions = [
+            'updated_at'   => 'Last Updated',
+            'submitted_at' => 'Submitted Date',
+            'due_date'     => 'Due Date',
+        ];
+
+        $activeStatus = $filters['status'];
+
+        return view('admin.job-inbox.index', compact(
+            'clients',
+            'filters',
+            'filterableStatuses',
+            'items',
+            'summary',
+            'statusLabels',
+            'statusBadgeClasses',
+            'sortOptions',
+            'activeStatus',
+        ));
+    }
+
+    private function resolveFilters(Request $request): array
+    {
+        $requestedStatus = $request->input('status');
+        $status = in_array($requestedStatus, self::ADMIN_VISIBLE_STATUSES, true)
+            ? $requestedStatus
+            : null;
+
+        return [
+            'status'      => $status,
+            'client_id'   => $request->input('client_id'),
+            'assigned'    => in_array($request->input('assigned'), ['assigned', 'unassigned'], true)
+                ? $request->input('assigned')
+                : null,
+            'overdue_only'=> $request->boolean('overdue_only'),
+            'due_today'   => $request->boolean('due_today'),
+            'search'      => trim((string) $request->input('search', '')),
+            'sort'        => in_array($request->input('sort'), ['updated_at', 'submitted_at', 'due_date'], true)
+                ? $request->input('sort')
+                : 'updated_at',
+        ];
+    }
+
+    private function buildQuery(array $filters): Builder
+    {
+        $query = JobRequestItem::query()
+            ->with(['jobRequest.client', 'serviceCategory', 'claimer', 'project'])
+            ->whereIn('status', self::ADMIN_VISIBLE_STATUSES);
+
+        // Status filter
+        if ($filters['status']) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Client filter
+        if ($filters['client_id']) {
+            $query->whereHas('jobRequest', fn (Builder $q) =>
+                $q->where('client_id', $filters['client_id'])
+            );
+        }
+
+        // Assignment filter
+        if ($filters['assigned'] === 'assigned') {
+            $query->whereNotNull('claimed_by');
+        } elseif ($filters['assigned'] === 'unassigned') {
+            $query->whereNull('claimed_by');
+        }
+
+        // Overdue filter
+        if ($filters['overdue_only']) {
+            $query->where('status', JobRequestItem::STATUS_OVERDUE);
+        }
+
+        // Due today filter
+        if ($filters['due_today']) {
+            $query->whereDate('due_date', today());
+        }
+
+        // Search
+        if ($filters['search'] !== '') {
+            $search = $filters['search'];
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('serviceCategory', fn (Builder $cq) =>
+                      $cq->where('name', 'like', "%{$search}%")
+                  )
+                  ->orWhereHas('jobRequest', fn (Builder $jq) =>
+                      $jq->where('title', 'like', "%{$search}%")
+                  )
+                  ->orWhereHas('jobRequest.client', fn (Builder $clq) =>
+                      $clq->where('client_name', 'like', "%{$search}%")
+                          ->orWhere('company_name', 'like', "%{$search}%")
+                  );
+            });
+        }
+
+        // Sorting
+        $sort = $filters['sort'];
+        if ($sort === 'submitted_at') {
+            $query->orderByRaw('submitted_at IS NULL ASC')->orderBy('submitted_at', 'desc');
+        } elseif ($sort === 'due_date') {
+            $query->orderByRaw('due_date IS NULL ASC')->orderBy('due_date', 'asc');
+        } else {
+            $query->latest('updated_at');
+        }
+
+        return $query;
+    }
+
+    private function buildSummary(): array
+    {
+        // These counts are always global (unfiltered) to give the admin accurate totals
+        return [
+            'pending_review'   => JobRequestItem::where('status', JobRequestItem::STATUS_PENDING_ADMIN_REVIEW)->count(),
+            'overdue'          => JobRequestItem::where('status', JobRequestItem::STATUS_OVERDUE)->count(),
+            'needs_assignment' => JobRequestItem::where('status', JobRequestItem::STATUS_PENDING_ASSIGNMENT)->count(),
+            'returned'         => JobRequestItem::where('status', JobRequestItem::STATUS_RETURNED)->count(),
+        ];
     }
 }

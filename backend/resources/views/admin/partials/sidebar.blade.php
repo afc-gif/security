@@ -36,6 +36,7 @@
             ['key' => 'pos', 'label' => 'POS', 'route' => 'pos.index', 'tab' => 'pos', 'icon' => 'PS'],
         ],
         'operations' => [
+            ['key' => 'operations-overview', 'label' => 'Overview', 'route' => 'admin.operations.overview', 'tab' => null, 'icon' => 'OV'],
             ['key' => 'clients', 'label' => 'Clients', 'route' => 'admin.clients.index', 'tab' => 'clients', 'icon' => 'CL'],
             ['key' => 'job-requests', 'label' => 'Job Requests', 'route' => 'admin.job-requests.index', 'tab' => 'job-requests', 'icon' => 'JR'],
             ['key' => 'field-categories', 'label' => 'Job Categories', 'route' => 'admin.service-categories.index', 'tab' => null, 'icon' => 'JC'],
@@ -75,6 +76,7 @@
             'clients' => request()->routeIs('admin.clients.*'),
             'job-requests' => request()->routeIs('admin.job-requests.*'),
             'field-categories' => request()->routeIs('admin.service-categories.*'),
+            'operations-overview' => request()->routeIs('admin.operations.overview'),
             'job-inbox' => request()->routeIs('admin.job-inbox.*'),
             'projects' => request()->routeIs('admin.projects.*'),
             'tasks' => request()->routeIs('admin.tasks.*'),
