@@ -52,9 +52,24 @@
     ];
 
     if ($canViewFinance && !$isFinanceUser) {
-        $items['finance'] = [
-            ['key' => 'finance', 'label' => 'Finance', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'FN'],
-        ];
+        if ($currentUser->isSuperAdmin()) {
+            // Super admin sees all Finance tabs expanded — same as finance users
+            $items['finance'] = [
+                ['key' => 'finance-overview',         'label' => 'Overview',         'route' => 'finance.dashboard',             'tab' => null, 'icon' => 'OV'],
+                ['key' => 'finance-quotations',        'label' => 'Quotations',       'route' => 'finance.quotations.index',      'tab' => null, 'icon' => 'QT'],
+                ['key' => 'finance-jobs',              'label' => 'Jobs',             'route' => 'finance.jobs.index',            'tab' => null, 'icon' => 'JB'],
+                ['key' => 'finance-projects',          'label' => 'Projects',         'route' => 'finance.projects.index',        'tab' => null, 'icon' => 'PJ'],
+                ['key' => 'finance-pos-sales',         'label' => 'POS Sales',        'route' => 'finance.pos-sales.index',       'tab' => null, 'icon' => 'PS'],
+                ['key' => 'finance-office-expenses',   'label' => 'Office Expenses',  'route' => 'finance.office-expenses.index', 'tab' => null, 'icon' => 'OE'],
+                ['key' => 'finance-analysis',          'label' => 'Analysis',         'route' => 'finance.analysis',              'tab' => null, 'icon' => 'AN'],
+                ['key' => 'finance-reports',           'label' => 'Reports',          'route' => 'finance.reports.index',         'tab' => null, 'icon' => 'RP'],
+            ];
+        } else {
+            // Other admins with finance view permission get a single entry point
+            $items['finance'] = [
+                ['key' => 'finance', 'label' => 'Finance', 'route' => 'finance.dashboard', 'tab' => null, 'icon' => 'FN'],
+            ];
+        }
     }
 
     $sectionLabels = [
