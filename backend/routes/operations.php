@@ -85,8 +85,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.projects.complete');
     Route::post('/projects/{project}/reopen-work', [\App\Http\Controllers\Operations\ProjectController::class, 'reopenWork'])
         ->name('admin.projects.reopen-work');
+    Route::delete('/projects/{project}', [\App\Http\Controllers\Operations\ProjectController::class, 'destroy'])
+        ->name('admin.projects.destroy');
     Route::post('/project-updates/{update}/review', [\App\Http\Controllers\Operations\ProjectController::class, 'reviewUpdate'])
         ->name('admin.project-updates.review');
+
 
     // Tasks Management
     Route::resource('tasks', \App\Http\Controllers\Operations\TaskController::class)

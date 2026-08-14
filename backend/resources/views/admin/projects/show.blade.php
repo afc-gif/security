@@ -10,9 +10,24 @@
                 <h1 class="text-3xl font-bold text-gray-900">{{ $project->project_code }}</h1>
                 <p class="text-sm text-gray-600 mt-1">{{ $project->title }}</p>
             </div>
-            <a href="{{ route('admin.projects.index') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition">
-                Back to Projects
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.projects.index') }}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition">
+                    Back to Projects
+                </a>
+                @if(auth()->user()->isSuperAdmin())
+                    <form method="POST"
+                          action="{{ route('admin.projects.destroy', $project) }}"
+                          id="delete-project-form">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button"
+                                onclick="confirmDeleteProject()"
+                                class="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                            Delete Project
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         @if (session('success'))
@@ -78,7 +93,7 @@
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Progress</div>
                     <div class="flex items-center gap-3">
                         <div class="h-2 flex-1 rounded-full bg-gray-200 overflow-hidden">
-                            <div class="h-full bg-blue-600" style="width: {{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}%;"></div>
+                            <div class="h-full bg-blue-600" data-width="{{ min(100, max(0, (int) ($project->progress_percentage ?? 0))) }}"></div>
                         </div>
                         <div class="text-gray-900 font-semibold whitespace-nowrap">{{ $project->progress_percentage ?? 0 }}%</div>
                     </div>
@@ -315,7 +330,7 @@
                                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Reported Progress</div>
                                     <div class="flex items-center gap-3">
                                         <div class="h-2 flex-1 rounded-full bg-gray-200 overflow-hidden">
-                                            <div class="h-full bg-blue-600" style="width: {{ min(100, max(0, (int) $update->progress_percentage)) }}%;"></div>
+                                            <div class="h-full bg-blue-600" data-width="{{ min(100, max(0, (int) $update->progress_percentage)) }}"></div>
                                         </div>
                                         <div class="text-gray-900 font-semibold whitespace-nowrap">{{ $update->progress_percentage }}%</div>
                                     </div>
@@ -385,4 +400,32 @@
         </div>
     </div>
 </div>
+
+        <script>
+            // Apply widths for progress bars defined via data-width to avoid Blade inlining CSS
+            document.querySelectorAll('[data-width]').forEach(function(el) {
+                var w = el.getAttribute('data-width');
+                if (w !== null) {
+                    el.style.width = (w === '' ? '' : (w + '%'));
+                }
+            });
+        </script>
+
+        @if(auth()->user()->isSuperAdmin())
+<script>
+    function confirmDeleteProject() {
+        const code = '{{ addslashes($project->project_code) }}';
+        const entered = window.prompt(
+            'This will permanently delete project "' + code + '" and all its payments, updates, and financial records.\n\nType the project code to confirm:'
+        );
+        if (entered === null) return; // cancelled
+        if (entered.trim() === code) {
+            document.getElementById('delete-project-form').submit();
+        } else {
+            alert('Project code did not match. Deletion cancelled.');
+        }
+    }
+</script>
+@endif
+
 @endsection

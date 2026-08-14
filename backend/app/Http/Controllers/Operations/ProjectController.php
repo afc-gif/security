@@ -150,14 +150,38 @@ class ProjectController extends Controller
         }
 
         $project->update([
-            'status' => 'ongoing',
-            'active_editor_id' => null,
+            'status'             => 'ongoing',
+            'active_editor_id'   => null,
             'editing_started_at' => null,
         ]);
 
         return redirect()
             ->route('admin.projects.show', $project)
             ->with('success', 'Project reopened for field work.');
+    }
+
+    public function destroy(Request $request, Project $project)
+    {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only super admins can delete projects.');
+        }
+
+        DB::transaction(function () use ($project) {
+            // Delete child financial records first
+            FinancialExpense::where('project_id', $project->id)->delete();
+            FinancialMaterialCost::where('project_id', $project->id)->delete();
+            ProjectPayment::where('project_id', $project->id)->delete();
+
+            // Delete project updates
+            ProjectUpdate::where('project_id', $project->id)->delete();
+
+            // Remove the project
+            $project->delete();
+        });
+
+        return redirect()
+            ->route('admin.projects.index')
+            ->with('success', "Project \"{$project->project_code}\" has been permanently deleted.");
     }
 
     public function convertFromInspection(Request $request, Inspection $inspection)
