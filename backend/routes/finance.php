@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\FinancePosController;
 use App\Http\Controllers\Finance\FinanceQuotationController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceAnalysisController;
@@ -31,6 +32,8 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
         ->name('quotations.destroy');
     Route::get('/analysis', [FinanceAnalysisController::class, 'index'])->name('analysis');
     Route::post('/analysis/ask', [FinanceAnalysisController::class, 'ask'])->name('analysis.ask');
+    // Finance POS Sales — read-only view of completed POS orders
+    Route::get('/pos-sales', [FinancePosController::class, 'index'])->name('pos-sales.index');
     Route::get('/reports', [FinanceReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/projects', [FinanceReportController::class, 'projects'])->name('reports.projects');
     Route::get('/reports/projects/export', [FinanceReportController::class, 'exportProjects'])->name('reports.projects.export');

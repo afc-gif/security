@@ -146,13 +146,33 @@ class FinanceAnalysisController extends Controller
             ->sum('amount');
     }
 
-    /** Approved material costs within a date range. */
+    /** Approved material costs within a date range (uses incurred_on, excludes NULL incurred_on). */
     private function totalApprovedMaterials(Carbon $from, Carbon $to): float
     {
         return (float) FinancialMaterialCost::query()
             ->where('status', FinancialMaterialCost::STATUS_APPROVED)
-            ->whereBetween('created_at', [$from, $to])
+            ->whereNotNull('incurred_on')
+            ->whereBetween('incurred_on', [$from->toDateString(), $to->toDateString()])
             ->sum('total_cost');
+    }
+
+    /**
+     * Project/job/inspection payments within a date range, broken down by payment_type.
+     * Returns ['deposit' => float, 'part_payment' => float, 'full_payment' => float].
+     */
+    private function projectRevenueByType(Carbon $from, Carbon $to): array
+    {
+        $rows = ProjectPayment::query()
+            ->selectRaw('payment_type, SUM(amount) as total')
+            ->whereBetween('payment_date', [$from->toDateString(), $to->toDateString()])
+            ->groupBy('payment_type')
+            ->pluck('total', 'payment_type');
+
+        return [
+            ProjectPayment::TYPE_DEPOSIT       => (float) ($rows[ProjectPayment::TYPE_DEPOSIT] ?? 0),
+            ProjectPayment::TYPE_PART_PAYMENT  => (float) ($rows[ProjectPayment::TYPE_PART_PAYMENT] ?? 0),
+            ProjectPayment::TYPE_FULL_PAYMENT  => (float) ($rows[ProjectPayment::TYPE_FULL_PAYMENT] ?? 0),
+        ];
     }
 
     // -------------------------------------------------------------------------
@@ -167,10 +187,11 @@ class FinanceAnalysisController extends Controller
         [$from, $to, $periodLabel, $period] = $this->resolvePeriod($request);
 
         // ── MONEY IN ────────────────────────────────────────────────────────
-        $posRevenuePeriod      = $this->posRevenue($from, $to);
-        $posOrderCountPeriod   = $this->posOrderCount($from, $to);
-        $projectRevenuePeriod  = $this->projectRevenue($from, $to);
-        $totalIn               = $posRevenuePeriod + $projectRevenuePeriod;
+        $posRevenuePeriod         = $this->posRevenue($from, $to);
+        $posOrderCountPeriod      = $this->posOrderCount($from, $to);
+        $projectRevenuePeriod     = $this->projectRevenue($from, $to);
+        $projectRevenueByType     = $this->projectRevenueByType($from, $to);
+        $totalIn                  = $posRevenuePeriod + $projectRevenuePeriod;
 
         // ── MONEY OUT ───────────────────────────────────────────────────────
         $expensesPeriod  = $this->totalApprovedExpenses($from, $to);
@@ -362,48 +383,49 @@ class FinanceAnalysisController extends Controller
 
         return view('finance.analysis.index', array_merge([
             // Period
-            'period'                  => $period,
-            'periodLabel'             => $periodLabel,
-            'metric'                  => $performanceMetricKey,
-            'dateFrom'                => $request->input('date_from', ''),
-            'dateTo'                  => $request->input('date_to', ''),
+            'period'                    => $period,
+            'periodLabel'               => $periodLabel,
+            'metric'                    => $performanceMetricKey,
+            'dateFrom'                  => $request->input('date_from', ''),
+            'dateTo'                    => $request->input('date_to', ''),
 
             // MONEY IN / OUT / NET (period)
-            'totalIn'                 => $totalIn,
-            'totalOut'                => $totalOut,
-            'netCashFlow'             => $netCashFlow,
+            'totalIn'                   => $totalIn,
+            'totalOut'                  => $totalOut,
+            'netCashFlow'               => $netCashFlow,
 
             // Income sources (period)
-            'posRevenuePeriod'        => $posRevenuePeriod,
-            'posOrderCountPeriod'     => $posOrderCountPeriod,
-            'projectRevenuePeriod'    => $projectRevenuePeriod,
+            'posRevenuePeriod'          => $posRevenuePeriod,
+            'posOrderCountPeriod'       => $posOrderCountPeriod,
+            'projectRevenuePeriod'      => $projectRevenuePeriod,
+            'projectRevenueByType'      => $projectRevenueByType,  // ['deposit'=>, 'part_payment'=>, 'full_payment'=>]
 
             // Expense sections (period)
-            'officeExpensesTotal'     => $officeExpensesTotal,
-            'operationalExpensesTotal' => $operationalExpensesTotal,
-            'materialsPeriod'         => $materialsPeriod,
+            'officeExpensesTotal'       => $officeExpensesTotal,
+            'operationalExpensesTotal'  => $operationalExpensesTotal,
+            'materialsPeriod'           => $materialsPeriod,
 
             // All-time project intelligence
-            'projectValueTotal'       => $projectValueTotal,
-            'receivedTotal'           => $receivedTotal,
-            'outstandingTotal'        => $outstandingTotal,
-            'approvedCostsTotal'      => $approvedCostsTotal,
-            'estimatedProfitTotal'    => $estimatedProfitTotal,
-            'profitMarginPercent'     => $profitMarginPercent,
+            'projectValueTotal'         => $projectValueTotal,
+            'receivedTotal'             => $receivedTotal,
+            'outstandingTotal'          => $outstandingTotal,
+            'approvedCostsTotal'        => $approvedCostsTotal,
+            'estimatedProfitTotal'      => $estimatedProfitTotal,
+            'profitMarginPercent'       => $profitMarginPercent,
 
             // Health
-            'healthStatus'            => $healthStatus,
-            'healthLabel'             => $healthLabel,
-            'healthSummary'           => $healthSummary,
+            'healthStatus'              => $healthStatus,
+            'healthLabel'               => $healthLabel,
+            'healthSummary'             => $healthSummary,
 
             // Charts / breakdowns
-            'trendSeries'             => $trendSeries,
-            'costBreakdown'           => $costBreakdown,
-            'topProjects'             => $topProjects,
+            'trendSeries'               => $trendSeries,
+            'costBreakdown'             => $costBreakdown,
+            'topProjects'               => $topProjects,
 
             // Insights
-            'insights'                => $insights,
-            'attentionItems'          => $attentionItems,
+            'insights'                  => $insights,
+            'attentionItems'            => $attentionItems,
         ], $this->viewHelpers()));
     }
 

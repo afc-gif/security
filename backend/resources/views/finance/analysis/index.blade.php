@@ -62,12 +62,41 @@
                 </div>
                 <div class="text-3xl font-bold text-emerald-800 tabular-nums mb-3">{{ $financeMoney($totalIn) }}</div>
                 <div class="space-y-1 pt-2 border-t border-emerald-200">
+                    {{-- Project Payments row with sub-breakdown --}}
                     <div class="flex justify-between text-xs">
-                        <span class="text-emerald-700">Project Payments</span>
+                        <a href="{{ route('finance.projects.index') }}" class="text-emerald-700 hover:text-emerald-900 hover:underline font-medium">Project Payments &rarr;</a>
                         <span class="font-semibold text-emerald-800">{{ $financeMoney($projectRevenuePeriod) }}</span>
                     </div>
-                    <div class="flex justify-between text-xs">
-                        <span class="text-emerald-700">POS Sales
+                    @if($projectRevenuePeriod > 0)
+                        @php
+                            $depositAmt     = $projectRevenueByType['deposit'] ?? 0;
+                            $partAmt        = $projectRevenueByType['part_payment'] ?? 0;
+                            $fullAmt        = $projectRevenueByType['full_payment'] ?? 0;
+                        @endphp
+                        @if($depositAmt > 0)
+                        <div class="flex justify-between text-[10px] pl-3 text-emerald-600">
+                            <span>Deposits</span>
+                            <span>{{ $financeMoney($depositAmt) }}</span>
+                        </div>
+                        @endif
+                        @if($partAmt > 0)
+                        <div class="flex justify-between text-[10px] pl-3 text-emerald-600">
+                            <span>Part Payments</span>
+                            <span>{{ $financeMoney($partAmt) }}</span>
+                        </div>
+                        @endif
+                        @if($fullAmt > 0)
+                        <div class="flex justify-between text-[10px] pl-3 text-emerald-600">
+                            <span>Full Payments</span>
+                            <span>{{ $financeMoney($fullAmt) }}</span>
+                        </div>
+                        @endif
+                    @endif
+                    {{-- POS Sales row with link --}}
+                    <div class="flex justify-between text-xs pt-1">
+                        <span class="text-emerald-700">
+                            <a href="{{ route('finance.pos-sales.index', ['period' => $period] + ($period === 'custom' ? ['date_from' => request('date_from'), 'date_to' => request('date_to')] : [])) }}"
+                               class="hover:text-emerald-900 hover:underline font-medium">POS Sales &rarr;</a>
                             @if($posOrderCountPeriod > 0)
                                 <span class="text-emerald-500">({{ $posOrderCountPeriod }})</span>
                             @endif
@@ -89,11 +118,11 @@
                 <div class="text-3xl font-bold text-rose-800 tabular-nums mb-3">{{ $financeMoney($totalOut) }}</div>
                 <div class="space-y-1 pt-2 border-t border-rose-200">
                     <div class="flex justify-between text-xs">
-                        <span class="text-rose-700">Office Expenses</span>
+                        <a href="{{ route('finance.office-expenses.index') }}" class="text-rose-700 hover:text-rose-900 hover:underline font-medium">Office Expenses &rarr;</a>
                         <span class="font-semibold text-rose-800">{{ $financeMoney($officeExpensesTotal) }}</span>
                     </div>
                     <div class="flex justify-between text-xs">
-                        <span class="text-rose-700">Operational Expenses</span>
+                        <a href="{{ route('finance.expenses.index') }}" class="text-rose-700 hover:text-rose-900 hover:underline font-medium">Operational Expenses &rarr;</a>
                         <span class="font-semibold text-rose-800">{{ $financeMoney($operationalExpensesTotal) }}</span>
                     </div>
                     <div class="flex justify-between text-xs">
