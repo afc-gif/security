@@ -95,20 +95,18 @@ class Quotation extends Model
 
     public static function generateQuotationNumber(): string
     {
-        $year = date('Y');
+        $year   = date('Y');
         $prefix = "ART-QTN-{$year}-";
 
-        $lastQuotation = static::query()
+        // Pull all quotation numbers for this year and find the highest
+        // sequence number in PHP — avoids MySQL-specific CAST/UNSIGNED syntax.
+        $maxSequence = static::query()
             ->where('quotation_number', 'like', "{$prefix}%")
-            ->orderByRaw('CAST(SUBSTRING(quotation_number, 14) AS UNSIGNED) DESC')
-            ->first();
+            ->pluck('quotation_number')
+            ->map(fn ($n) => (int) substr($n, strlen($prefix)))
+            ->max() ?? 0;
 
-        if ($lastQuotation) {
-            $lastNumber = (int) substr($lastQuotation->quotation_number, 13);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
+        $nextNumber = $maxSequence + 1;
 
         return $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
     }
