@@ -147,8 +147,7 @@
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-slate-200 pb-6">
                 <div>
-                    <div class="text-2xl font-black text-slate-900 tracking-tight">ARTSCI</div>
-                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-0.5">Bringing Designing Science</div>
+                    <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI" style="max-height: 64px; width: auto; display: block; margin-bottom: 8px;">
                     <div class="text-xs text-slate-500 mt-2">
                         Port Harcourt, Nigeria<br>
                         Email: support@artsci.com.ng | Web: www.artsci.com.ng

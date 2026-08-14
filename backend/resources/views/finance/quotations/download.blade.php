@@ -250,9 +250,7 @@
         <!-- Header -->
         <div class="header-flex">
             <div class="logo-area">
-                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo">
-                <div class="company-name">ARTSCI</div>
-                <div class="company-tagline">Bringing Designing Science</div>
+                <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI Logo" style="max-height: 72px; width: auto; display: block; margin-bottom: 6px;">
                 <div class="company-contact">
                     Port Harcourt, Nigeria<br>
                     Email: support@artsci.com.ng | Web: www.artsci.com.ng

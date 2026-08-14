@@ -208,10 +208,8 @@
         <tr>
             <td style="width: 55%;">
                 @if($logoBase64)
-                    <img src="{{ $logoBase64 }}" style="max-height: 48px; width: auto; margin-bottom: 6px;" alt="ARTSCI Logo">
+                    <img src="{{ $logoBase64 }}" style="max-height: 72px; width: auto; display: block; margin-bottom: 8px;" alt="ARTSCI Logo">
                 @endif
-                <div class="company-name">ARTSCI</div>
-                <div class="company-tagline">Bringing Designing Science</div>
                 <div class="company-contact">
                     Port Harcourt, Nigeria<br>
                     Email: support@artsci.com.ng | Web: www.artsci.com.ng
