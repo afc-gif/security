@@ -148,10 +148,10 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-slate-200 pb-6">
                 <div>
                     <div class="text-2xl font-black text-slate-900 tracking-tight">ARTSCI</div>
-                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-0.5">Security & Technical Systems</div>
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-0.5">Bringing Designing Science</div>
                     <div class="text-xs text-slate-500 mt-2">
-                        Lagos, Nigeria<br>
-                        Email: info@artsci.ng | Web: www.artsci.ng
+                        Port Harcourt, Nigeria<br>
+                        Email: support@artsci.com.ng | Web: www.artsci.com.ng
                     </div>
                 </div>
 

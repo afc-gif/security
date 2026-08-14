@@ -211,10 +211,10 @@
                     <img src="{{ $logoBase64 }}" style="max-height: 48px; width: auto; margin-bottom: 6px;" alt="ARTSCI Logo">
                 @endif
                 <div class="company-name">ARTSCI</div>
-                <div class="company-tagline">Security & Technical Systems</div>
+                <div class="company-tagline">Bringing Designing Science</div>
                 <div class="company-contact">
-                    Lagos, Nigeria<br>
-                    Email: info@artsci.ng | Web: www.artsci.ng
+                    Port Harcourt, Nigeria<br>
+                    Email: support@artsci.com.ng | Web: www.artsci.com.ng
                 </div>
             </td>
             <td style="width: 45%; text-align: right;">
