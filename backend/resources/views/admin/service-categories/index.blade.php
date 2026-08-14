@@ -456,53 +456,127 @@
 
 @push('scripts')
 <script>
-    (function () {
-        const setActiveTab = (modal, tabName) => {
-            modal.querySelectorAll('[data-tab-panel]').forEach((panel) => {
-                panel.hidden = panel.dataset.tabPanel !== tabName;
-            });
+(function () {
+    /* ── Tab switching ─────────────────────────────────────────── */
+    const setActiveTab = (modal, tabName) => {
+        modal.querySelectorAll('[data-tab-panel]').forEach(panel => {
+            panel.hidden = panel.dataset.tabPanel !== tabName;
+        });
+        modal.querySelectorAll('[data-tab-button]').forEach(btn => {
+            const on = btn.dataset.tabButton === tabName;
+            btn.classList.toggle('bg-gray-900', on);
+            btn.classList.toggle('text-white',  on);
+            btn.classList.toggle('bg-gray-100', !on);
+            btn.classList.toggle('text-gray-700', !on);
+        });
+    };
 
-            modal.querySelectorAll('[data-tab-button]').forEach((button) => {
-                const isActive = button.dataset.tabButton === tabName;
-                button.classList.toggle('bg-gray-900', isActive);
-                button.classList.toggle('text-white', isActive);
-                button.classList.toggle('bg-gray-100', !isActive);
-                button.classList.toggle('text-gray-700', !isActive);
-            });
-        };
+    document.querySelectorAll('[data-modal-open]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.getElementById(btn.dataset.modalOpen);
+            if (!modal) return;
+            setActiveTab(modal, btn.dataset.modalTab || 'preview');
+            modal.showModal ? modal.showModal() : modal.setAttribute('open','open');
+        });
+    });
 
-        document.querySelectorAll('[data-modal-open]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const modal = document.getElementById(button.dataset.modalOpen);
-                if (!modal) return;
+    document.querySelectorAll('[data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => btn.closest('dialog')?.close());
+    });
 
-                setActiveTab(modal, button.dataset.modalTab || 'preview');
-                if (typeof modal.showModal === 'function') {
-                    modal.showModal();
+    document.querySelectorAll('[data-tab-button]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.getElementById(btn.dataset.modalTarget);
+            if (modal) setActiveTab(modal, btn.dataset.tabButton);
+        });
+    });
+
+    document.querySelectorAll('.category-modal').forEach(modal => {
+        modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+    });
+
+    /* ── Toast helper ──────────────────────────────────────────── */
+    function showToast(container, message, isError = false) {
+        let toast = container.querySelector('.ajax-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'ajax-toast';
+            toast.style.cssText = 'margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:0.875rem;font-weight:600;transition:opacity .3s;';
+            container.prepend(toast);
+        }
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.background = isError ? '#fef2f2' : '#f0fdf4';
+        toast.style.color     = isError ? '#991b1b'  : '#166534';
+        toast.style.border    = isError ? '1px solid #fecaca' : '1px solid #bbf7d0';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+
+    /* ── AJAX form submission (modal forms only) ───────────────── */
+    function submitFormAjax(form, btn) {
+        const originalText = btn.textContent;
+        btn.disabled    = true;
+        btn.textContent = 'Saving…';
+
+        const data     = new FormData(form);
+        const method   = (data.get('_method') || form.method || 'POST').toUpperCase();
+        const isDelete = method === 'DELETE';
+        if (isDelete) btn.textContent = 'Deleting…';
+
+        // Laravel needs _method spoofing in FormData; fetch uses POST
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: data,
+        })
+        .then(async res => {
+            const json = await res.json().catch(() => ({}));
+            const modal = form.closest('dialog');
+            const panel = form.closest('[data-tab-panel]');
+            const toastContainer = panel || modal || form.parentElement;
+
+            if (res.ok && json.success !== false) {
+                showToast(toastContainer, json.message || 'Saved successfully.');
+
+                // If it was a delete, remove the <details> row from the DOM
+                if (isDelete) {
+                    const row = form.closest('details');
+                    if (row) row.remove();
                 } else {
-                    modal.setAttribute('open', 'open');
+                    // Reset "add" forms; leave "edit" forms open with values intact
+                    if (form.dataset.resetAfter === 'true') form.reset();
                 }
-            });
+            } else {
+                const msg = json.message
+                    || (json.errors ? Object.values(json.errors).flat().join(' ') : null)
+                    || 'Something went wrong. Please try again.';
+                showToast(toastContainer, msg, true);
+            }
+        })
+        .catch(() => {
+            const modal = form.closest('dialog');
+            showToast(modal || form.parentElement, 'Network error. Please try again.', true);
+        })
+        .finally(() => {
+            btn.disabled    = false;
+            btn.textContent = originalText;
         });
+    }
 
-        document.querySelectorAll('[data-modal-close]').forEach((button) => {
-            button.addEventListener('click', () => {
-                button.closest('dialog')?.close();
-            });
-        });
+    /* Attach to every form inside a dialog */
+    document.querySelectorAll('dialog form').forEach(form => {
+        // Mark "add" forms so they reset after success
+        if (form.closest('[data-tab-panel="edit"]') && !form.querySelector('[name="_method"]')) {
+            form.dataset.resetAfter = 'true';
+        }
 
-        document.querySelectorAll('[data-tab-button]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const modal = document.getElementById(button.dataset.modalTarget);
-                if (modal) setActiveTab(modal, button.dataset.tabButton);
-            });
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const btn = e.submitter || form.querySelector('[type="submit"]');
+            submitFormAjax(form, btn);
         });
-
-        document.querySelectorAll('.category-modal').forEach((modal) => {
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) modal.close();
-            });
-        });
-    })();
+    });
+})();
 </script>
 @endpush

@@ -34,6 +34,10 @@ class ServiceCategoryController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Service category created.']);
+        }
+
         return redirect()
             ->route('admin.service-categories.index')
             ->with('success', 'Service category created.');
@@ -53,20 +57,35 @@ class ServiceCategoryController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Category updated.',
+                'name'    => $serviceCategory->name,
+            ]);
+        }
+
         return redirect()
             ->route('admin.service-categories.index')
             ->with('success', 'Service category updated.');
     }
 
-    public function destroy(ServiceCategory $serviceCategory)
+    public function destroy(Request $request, ServiceCategory $serviceCategory)
     {
         if ($serviceCategory->jobRequestItems()->exists()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'This category is already used by jobs. Deactivate it instead of deleting it.'], 422);
+            }
             return redirect()
                 ->route('admin.service-categories.index')
                 ->withErrors(['category' => 'This category is already used by jobs. Deactivate it instead of deleting it.']);
         }
 
         $serviceCategory->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Category deleted.']);
+        }
 
         return redirect()
             ->route('admin.service-categories.index')
@@ -92,6 +111,10 @@ class ServiceCategoryController extends Controller
             'is_active' => true,
             'sort_order' => ((int) $serviceCategory->checklistTemplates()->max('sort_order')) + 1,
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Checklist item added.']);
+        }
 
         return redirect()
             ->route('admin.service-categories.index')
@@ -120,14 +143,22 @@ class ServiceCategoryController extends Controller
             'sort_order' => $validated['sort_order'] ?? $template->sort_order,
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Checklist item updated.']);
+        }
+
         return redirect()
             ->route('admin.service-categories.index')
             ->with('success', 'Checklist template item updated.');
     }
 
-    public function destroyTemplate(CategoryChecklistTemplate $template)
+    public function destroyTemplate(Request $request, CategoryChecklistTemplate $template)
     {
         $template->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Checklist item deleted.']);
+        }
 
         return redirect()
             ->route('admin.service-categories.index')
