@@ -158,6 +158,15 @@
                                 Edit Approved Expense
                             </a>
                         @endcan
+                        @can(\App\Models\FinancePermission::DELETE)
+                            <form method="POST" action="{{ route('finance.office-expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this approved office expense? This cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                                    Delete Expense
+                                </button>
+                            </form>
+                        @endcan
                     @else
                         <div class="text-gray-600">Approved and rejected records are preserved and cannot be edited.</div>
                     @endif

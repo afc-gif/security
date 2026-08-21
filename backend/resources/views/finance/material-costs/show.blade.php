@@ -151,6 +151,15 @@
                                 Edit Approved Material Cost
                             </a>
                         @endcan
+                        @can(\App\Models\FinancePermission::DELETE)
+                            <form method="POST" action="{{ route('finance.material-costs.destroy', $materialCost) }}" onsubmit="return confirm('Delete this approved material cost? This cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold">
+                                    Delete Material Cost
+                                </button>
+                            </form>
+                        @endcan
                     @else
                         <div class="text-gray-600">Approved and rejected material costs are preserved and cannot be edited.</div>
                     @endif

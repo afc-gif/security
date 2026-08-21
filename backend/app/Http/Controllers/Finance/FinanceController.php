@@ -440,7 +440,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::DELETE);
         $this->ensureFinanceExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         $project = $expense->project;
         $job = $expense->jobRequestItem;
@@ -456,7 +456,7 @@ class FinanceController extends Controller
 
         return redirect()
             ->route($project ? 'finance.projects.show' : ($job ? 'finance.jobs.show' : 'finance.expenses.index'), $project ?: ($job ?: []))
-            ->with('success', 'Pending expense deleted.');
+            ->with('success', 'Expense deleted.');
     }
 
     public function downloadDocument(FinancialDocument $document)
@@ -773,7 +773,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::DELETE);
         $this->ensureProjectMaterialCost($materialCost);
-        $this->ensurePendingMaterialCost($materialCost);
+        $this->ensureEditableMaterialCost($materialCost);
 
         $project = $materialCost->project;
 
@@ -788,7 +788,7 @@ class FinanceController extends Controller
 
         return redirect()
             ->route('finance.projects.show', $project)
-            ->with('success', 'Pending material cost deleted.');
+            ->with('success', 'Material cost deleted.');
     }
 
     public function officeExpenses(Request $request)
@@ -970,7 +970,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::DELETE);
         $this->ensureOfficeExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         DB::transaction(function () use ($expense) {
             foreach ($expense->documents as $document) {
@@ -1691,6 +1691,14 @@ class FinanceController extends Controller
     public function destroyProjectPayment(Request $request, Project $project, ProjectPayment $payment)
     {
         $this->authorizeFinance(FinancePermission::DELETE);
+
+        /** @var User|null $user */
+        $user = auth()->user();
+        abort_unless(
+            $user instanceof User && $user->isSuperAdmin(),
+            403,
+            'Recorded payments can only be deleted by a super admin.'
+        );
 
         abort_unless($payment->project_id === $project->id, 404);
 

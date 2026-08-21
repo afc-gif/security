@@ -131,14 +131,14 @@
                                                 @can(\App\Models\FinancePermission::EDIT)
                                                     <button type="button" class="text-xs text-sky-700 hover:text-sky-900 font-semibold" data-edit-payment-modal-open="{{ $payment->id }}">Edit</button>
                                                 @endcan
+                                                @can(\App\Models\FinancePermission::DELETE)
+                                                    <form method="POST" action="{{ route('finance.projects.payments.destroy', [$project, $payment]) }}" style="display: inline;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="finance-btn-delete-expense" onclick="return confirm('Delete this payment?')">Delete</button>
+                                                    </form>
+                                                @endcan
                                             @endif
-                                            @can(\App\Models\FinancePermission::DELETE)
-                                                <form method="POST" action="{{ route('finance.projects.payments.destroy', [$project, $payment]) }}" style="display: inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="finance-btn-delete-expense" onclick="return confirm('Delete this payment?')">Delete</button>
-                                                </form>
-                                            @endcan
                                         </div>
                                     </div>
                                 </div>
