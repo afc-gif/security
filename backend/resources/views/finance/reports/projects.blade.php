@@ -29,25 +29,26 @@
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Value</div>
-                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['project_value']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['project_value']) }}">{{ $financeMoney($totals['project_value']) }}</div>
             </div>
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-emerald-600 uppercase tracking-wider">Total Received</div>
-                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['received']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['received']) }}">{{ $financeMoney($totals['received']) }}</div>
             </div>
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-amber-600 uppercase tracking-wider">Total Outstanding</div>
-                <div class="text-lg md:text-xl font-bold text-amber-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['outstanding']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-amber-700 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['outstanding']) }}">{{ $financeMoney($totals['outstanding']) }}</div>
             </div>
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-rose-600 uppercase tracking-wider">Approved Costs</div>
-                <div class="text-lg md:text-xl font-bold text-rose-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['approved_costs']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-rose-700 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['approved_costs']) }}">{{ $financeMoney($totals['approved_costs']) }}</div>
             </div>
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-sky-600 uppercase tracking-wider">Estimated Profit</div>
-                <div class="text-lg md:text-xl font-bold text-sky-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['estimated_profit']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-sky-700 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['estimated_profit']) }}">{{ $financeMoney($totals['estimated_profit']) }}</div>
             </div>
         </div>
+
 
 
         <!-- Filter Bar -->

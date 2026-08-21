@@ -60,8 +60,8 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-emerald-800 tabular-nums mb-3 break-all">{{ $financeMoney($totalIn) }}</div>
-                <div class="space-y-1 pt-2 border-t border-emerald-200 break-all">
+                <div class="text-xl sm:text-2xl lg:text-xl xl:text-3xl font-bold text-emerald-800 tabular-nums mb-3 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totalIn) }}">{{ $financeMoney($totalIn) }}</div>
+                <div class="space-y-1 pt-2 border-t border-emerald-200 whitespace-nowrap overflow-hidden text-ellipsis">
                     {{-- Project Payments row with sub-breakdown --}}
                     <div class="flex justify-between text-xs">
                         <a href="{{ route('finance.projects.index') }}" class="text-emerald-700 hover:text-emerald-900 hover:underline font-medium">Project Payments &rarr;</a>
@@ -115,8 +115,8 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-rose-800 tabular-nums mb-3 break-all">{{ $financeMoney($totalOut) }}</div>
-                <div class="space-y-1 pt-2 border-t border-rose-200 break-all">
+                <div class="text-xl sm:text-2xl lg:text-xl xl:text-3xl font-bold text-rose-800 tabular-nums mb-3 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totalOut) }}">{{ $financeMoney($totalOut) }}</div>
+                <div class="space-y-1 pt-2 border-t border-rose-200 whitespace-nowrap overflow-hidden text-ellipsis">
                     <div class="flex justify-between text-xs">
                         <a href="{{ route('finance.office-expenses.index') }}" class="text-rose-700 hover:text-rose-900 hover:underline font-medium">Office Expenses &rarr;</a>
                         <span class="font-semibold text-rose-800">{{ $financeMoney($officeExpensesTotal) }}</span>
@@ -141,10 +141,10 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold tabular-nums mb-3 break-all {{ $netCashFlow >= 0 ? 'text-sky-800' : 'text-amber-800' }}">
+                <div class="text-xl sm:text-2xl lg:text-xl xl:text-3xl font-bold tabular-nums mb-3 whitespace-nowrap overflow-hidden text-ellipsis {{ $netCashFlow >= 0 ? 'text-sky-800' : 'text-amber-800' }}" title="{{ $netCashFlow >= 0 ? '' : '−' }}{{ $financeMoney(abs($netCashFlow)) }}">
                     {{ $netCashFlow >= 0 ? '' : '−' }}{{ $financeMoney(abs($netCashFlow)) }}
                 </div>
-                <div class="pt-2 border-t break-all {{ $netCashFlow >= 0 ? 'border-sky-200' : 'border-amber-200' }}">
+                <div class="pt-2 border-t whitespace-nowrap overflow-hidden text-ellipsis {{ $netCashFlow >= 0 ? 'border-sky-200' : 'border-amber-200' }}">
                     <div class="text-xs {{ $netCashFlow >= 0 ? 'text-sky-700' : 'text-amber-700' }}">
                         {{ $periodLabel }}: IN − OUT
                     </div>
@@ -155,6 +155,7 @@
                 </div>
             </div>
         </div>
+
 
 
         {{-- ── HEALTH BADGE ─────────────────────────────────────────────────────── --}}
