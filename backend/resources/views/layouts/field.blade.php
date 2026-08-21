@@ -416,6 +416,18 @@
                 }
             });
         });
+
+        // iOS PWA Link Interceptor to force in-app standalone navigation
+        if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                // Intercept same-origin local links that do not have targets like _blank
+                if (link && link.href && link.href.startsWith(window.location.origin) && !link.target && !link.hasAttribute('download')) {
+                    e.preventDefault();
+                    window.location.href = link.href;
+                }
+            }, false);
+        }
     </script>
 </body>
 </html>
