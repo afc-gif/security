@@ -43,6 +43,12 @@
         body {
             -webkit-tap-highlight-color: transparent;
         }
+        .safe-top {
+            padding-top: calc(0.75rem + env(safe-area-inset-top));
+        }
+        .safe-bottom {
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        }
         @keyframes splash-loading {
             0% { width: 0%; }
             100% { width: 100%; }
