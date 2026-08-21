@@ -45,11 +45,9 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
+            if ((int) $lockedProject->progress_percentage === 100 || in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => $lockedProject->status === 'completed'
-                        ? 'Project completed.'
-                        : 'Project is awaiting admin review.',
+                    'project' => 'This project is 100% complete and locked.',
                 ]);
             }
 
@@ -74,11 +72,9 @@ class ProjectController extends Controller
 
     public function submitUpdate(Request $request, Project $project, CloudinaryImageService $cloudinary)
     {
-        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
+        if ((int) $project->progress_percentage === 100 || in_array($project->status, ['completed', 'ready_for_review'], true)) {
             return back()
-                ->withErrors(['project' => $project->status === 'completed'
-                    ? 'Project completed.'
-                    : 'Project is awaiting admin review.'])
+                ->withErrors(['project' => 'This project is 100% complete and locked.'])
                 ->withInput();
         }
 
@@ -144,11 +140,9 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
+            if ((int) $lockedProject->progress_percentage === 100 || in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => $lockedProject->status === 'completed'
-                        ? 'Project completed.'
-                        : 'Project is awaiting admin review.',
+                    'project' => 'This project is 100% complete and locked.',
                 ]);
             }
 
@@ -240,10 +234,8 @@ class ProjectController extends Controller
             abort(404);
         }
 
-        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
-            return back()->withErrors(['project' => $project->status === 'completed'
-                ? 'Project completed.'
-                : 'Project is awaiting admin review.']);
+        if ((int) $project->progress_percentage === 100 || in_array($project->status, ['completed', 'ready_for_review'], true)) {
+            return back()->withErrors(['project' => 'This project is 100% complete and locked.']);
         }
 
         $validated = $request->validate([

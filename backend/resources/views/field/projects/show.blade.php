@@ -8,8 +8,8 @@
         $isLocked = $project->isBeingEdited();
         $lockExpired = $project->editingLockExpired();
         $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
-        $isCompleted = $project->status === 'completed';
-        $isReadyForReview = $project->status === 'ready_for_review';
+        $isCompleted = $project->status === 'completed' || (int) $project->progress_percentage === 100;
+        $isReadyForReview = $project->status === 'ready_for_review' && (int) $project->progress_percentage !== 100;
         $latestProjectUpdate = $project->updates->first();
         $progress = min(100, max(0, (int) ($project->progress_percentage ?? 0)));
     @endphp
@@ -20,7 +20,7 @@
             <span class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">{{ $project->project_code }}</span>
             <span class="px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase
                 {{ $isCompleted ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50' : 'bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50' }}">
-                {{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}
+                {{ str_replace('_', ' ', \Illuminate\Support\Str::title($isCompleted ? 'completed' : $project->status)) }}
             </span>
         </div>
         <h1 class="text-xl font-extrabold text-slate-900 dark:text-white mt-2">{{ $project->title }}</h1>

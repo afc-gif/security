@@ -26,8 +26,8 @@
                         $isLocked = $project->isBeingEdited();
                         $lockExpired = $project->editingLockExpired();
                         $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
-                        $isCompleted = $project->status === 'completed';
-                        $isReadyForReview = $project->status === 'ready_for_review';
+                        $isCompleted = $project->status === 'completed' || (int) $project->progress_percentage === 100;
+                        $isReadyForReview = $project->status === 'ready_for_review' && (int) $project->progress_percentage !== 100;
                         $progress = min(100, max(0, (int) ($project->progress_percentage ?? 0)));
                     @endphp
                     <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
@@ -41,7 +41,7 @@
                             </div>
                             <span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase whitespace-nowrap
                                 {{ $isCompleted ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50' : 'bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50' }}">
-                                {{ str_replace('_', ' ', \Illuminate\Support\Str::title($project->status)) }}
+                                {{ str_replace('_', ' ', \Illuminate\Support\Str::title($isCompleted ? 'completed' : $project->status)) }}
                             </span>
                         </div>
 
