@@ -20,7 +20,7 @@
     @endif
 
     @if ($pendingUsers->count() > 0)
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-blue-600 text-white">
                     <tr>
@@ -40,84 +40,45 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $user->created_at->format('M d, Y H:i') }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                <!-- Approve as POS -->
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'pos']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
-                                        ✓ Approve as POS
-                                    </button>
-                                </form>
-
-                                <!-- Approve as Field Staff -->
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'field_staff']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
-                                        Approve as Field Staff
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'field_coordinator']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
-                                        Approve as Coordinator
-                                    </button>
-                                </form>
-
-                                <!-- Approve as Manager -->
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'manager']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant manager access to {{ $user->name }}?');">
-                                        Approve as Manager
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'finance']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant Finance panel access to {{ $user->name }}?');">
-                                        Approve as Finance
-                                    </button>
-                                </form>
-
-                                @if (auth()->user()?->isSuperAdmin())
-                                    <!-- Approve as Super Admin -->
-                                    <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'super_admin']) }}" method="POST" class="inline">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <div class="flex items-center gap-2">
+                                    <!-- Approve Form with Role Selector -->
+                                    <form method="POST" class="inline-flex items-center gap-1.5" onsubmit="if (!this.role.value) { alert('Please select a role first.'); return false; } this.action = '{{ route('admin.users.approve', ['user' => $user, 'role' => 'PLACEHOLDER']) }}'.replace('PLACEHOLDER', this.role.value); return confirm('Approve ' + '{{ $user->name }}' + ' as ' + this.role.options[this.role.selectedIndex].text + '?');">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant Super Admin access to {{ $user->name }}?');">
-                                            ⚡ Approve as Super Admin
+                                        <select name="role" class="rounded border border-gray-300 px-2 py-1 text-xs bg-white text-gray-700 focus:border-blue-500 focus:outline-none" required>
+                                            <option value="" disabled selected>Assign Role...</option>
+                                            <option value="pos">POS</option>
+                                            <option value="field_staff">Field Staff</option>
+                                            <option value="field_coordinator">Coordinator</option>
+                                            <option value="manager">Manager</option>
+                                            <option value="finance">Finance</option>
+                                            @if (auth()->user()?->isSuperAdmin())
+                                                <option value="super_admin">Super Admin</option>
+                                            @endif
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+                                            ✓ Approve
                                         </button>
                                     </form>
-                                @endif
 
-                                <!-- Approve as Admin -->
-                                <form action="{{ route('admin.users.approve', ['user' => $user, 'role' => 'admin']) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Grant admin access to {{ $user->name }}?');">
-                                        👑 Approve as Admin
-                                    </button>
-                                </form>
-
-                                <!-- Reject -->
-                                <form action="{{ route('admin.users.reject', $user) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Reject and delete {{ $user->name }}?');">
-                                        ✕ Reject
-                                    </button>
-                                </form>
+                                    <!-- Reject -->
+                                    <form action="{{ route('admin.users.reject', $user) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold transition" onclick="return confirm('Reject and delete {{ $user->name }}?');">
+                                            ✕ Reject
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
+
 
         <div class="mt-6">
             {{ $pendingUsers->links() }}
