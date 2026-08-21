@@ -313,7 +313,44 @@
                                         </div>
                                     @endforeach
                                     @if($job->checklistItems->count() > 4)
-                                        <span class="block text-[10px] text-slate-400 dark:text-slate-500 font-bold">+{{ $job->checklistItems->count() - 4 }} more checklist items</span>
+                                        <button type="button" 
+                                                onclick="toggleChecklistModal('checklist-modal-{{ $job->id }}', true)"
+                                                class="w-full text-center py-2 bg-slate-50 dark:bg-slate-950/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-650 dark:text-indigo-400 font-bold text-[10px] uppercase rounded-xl border border-dashed border-slate-200 dark:border-slate-800 transition-colors focus:outline-none">
+                                            +{{ $job->checklistItems->count() - 4 }} more checklist items (Manage)
+                                        </button>
+
+                                        <!-- Checklist Overlay Modal -->
+                                        <div id="checklist-modal-{{ $job->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+                                            <div class="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+                                                <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-850 flex items-center justify-between">
+                                                    <div class="min-w-0 pr-4">
+                                                        <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">All Checklist Items</h3>
+                                                        <span class="text-xs font-extrabold text-slate-900 dark:text-white mt-0.5 block truncate">{{ $job->jobRequest?->title ?? 'Job Request' }}</span>
+                                                    </div>
+                                                    <button type="button" onclick="toggleChecklistModal('checklist-modal-{{ $job->id }}', false)" class="text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 font-bold text-lg focus:outline-none shrink-0">&times;</button>
+                                                </div>
+                                                <div class="flex-1 overflow-y-auto p-5 space-y-2">
+                                                    @foreach($job->checklistItems as $checklistItem)
+                                                        <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl text-xs flex items-center justify-between gap-3 shadow-xs">
+                                                            <div class="min-w-0 flex-1">
+                                                                <strong class="text-slate-800 dark:text-slate-200 block truncate">{{ $checklistItem->title }}</strong>
+                                                                @if($checklistItem->description)
+                                                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate block mt-0.5">{{ $checklistItem->description }}</span>
+                                                                @endif
+                                                            </div>
+                                                            <form method="POST" action="{{ route('coordinator.jobs.checklist.destroy', [$job, $checklistItem]) }}">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button class="text-[10px] text-rose-600 hover:text-rose-800 font-extrabold uppercase focus:outline-none shrink-0" type="submit" onclick="return confirm('Remove this checklist item from this job?')">Remove</button>
+                                                            </form>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                                <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/20 text-center">
+                                                    <button type="button" onclick="toggleChecklistModal('checklist-modal-{{ $job->id }}', false)" class="w-full inline-flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs py-2.5 px-4 rounded-xl focus:outline-none">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
@@ -395,6 +432,19 @@
         const chevron = btn.querySelector('.chevron');
         if (chevron) {
             chevron.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+    }
+
+    function toggleChecklistModal(id, show) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            if (show) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent main page scrolling when modal is open
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore main page scrolling
+            }
         }
     }
 
