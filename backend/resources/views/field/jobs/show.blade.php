@@ -1,5 +1,39 @@
 @extends('layouts.field')
 
+@php
+    $latestOwnAttempt = $jobItem->attempts->first();
+    $isOverdue = $jobItem->isOverdue();
+    $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
+        ? \App\Models\JobItemAttempt::STATUS_REJECTED
+        : ($isOverdue ? \App\Models\JobRequestItem::STATUS_OVERDUE : $jobItem->status);
+    $reviewNote = null;
+
+    if (in_array($latestOwnAttempt?->status, [\App\Models\JobItemAttempt::STATUS_RETURNED, \App\Models\JobItemAttempt::STATUS_REJECTED], true)) {
+        $notes = (string) $latestOwnAttempt->notes;
+        $reviewNote = str_contains($notes, 'Admin note:')
+            ? trim(\Illuminate\Support\Str::afterLast($notes, 'Admin note:'))
+            : (str_contains($notes, 'Coordinator note:')
+                ? trim(\Illuminate\Support\Str::afterLast($notes, 'Coordinator note:'))
+                : trim($notes));
+    }
+
+    $submittedRequirements = $latestOwnAttempt?->requirements ?? collect();
+    $submittedMedia = $latestOwnAttempt?->media ?? collect();
+    $submittedMediaByChecklist = $submittedMedia->whereNotNull('job_checklist_item_id')->groupBy('job_checklist_item_id');
+    $generalSubmittedMedia = $submittedMedia->whereNull('job_checklist_item_id');
+    $checklistItems = $jobItem->checklistItems ?? collect();
+    $requirementRows = old('requirements', $submittedRequirements->count()
+        ? $submittedRequirements->map(fn ($requirement) => [
+            'type' => $requirement->type,
+            'name' => $requirement->name,
+            'quantity' => $requirement->quantity,
+            'notes' => $requirement->notes,
+        ])->values()->all()
+        : [['type' => 'material', 'name' => '', 'quantity' => '', 'notes' => '']]
+    );
+    $customChecklistRows = old('custom_checklist', [['title' => '', 'status' => 'pending', 'notes' => '']]);
+@endphp
+
 @section('title', 'Job Details | ARTSCI')
 
 @section('content')

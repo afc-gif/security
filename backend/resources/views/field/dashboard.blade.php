@@ -1,5 +1,18 @@
 @extends('layouts.field')
 
+@php
+    $fieldUser = auth()->user();
+    $isCoordinator = $fieldUser?->isFieldCoordinator() ?? false;
+    $formatStatus = fn ($status) => str_replace('_', ' ', \Illuminate\Support\Str::title($status ?? 'Unknown'));
+    $statusClass = fn ($status) => str_replace('_', '-', strtolower((string) ($status ?? 'unknown')));
+    $isUrgentJob = function ($job): bool {
+        $status = strtolower((string) ($job->status ?? ''));
+        return in_array($status, ['returned', 'overdue'], true)
+            || ($job->due_date && now()->greaterThan($job->due_date) && in_array($status, ['claimed', 'submitted'], true));
+    };
+    $priorityJobs = $recentJobs->filter($isUrgentJob)->take(3);
+@endphp
+
 @section('title', 'Field Dashboard | ARTSCI')
 
 @section('content')
@@ -185,7 +198,7 @@
                                     <span class="text-slate-800">{{ $progress }}%</span>
                                 </div>
                                 <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                    <div class="bg-indigo-600 h-full rounded-full" style="width: {{ $progress }}%"></div>
+                                    <div class="bg-indigo-600 h-full rounded-full" @style(['width: ' . $progress . '%'])></div>
                                 </div>
                             </div>
 
