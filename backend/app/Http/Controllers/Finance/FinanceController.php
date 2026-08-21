@@ -265,9 +265,12 @@ class FinanceController extends Controller
 
         $validated = $this->validateJobExpense($request);
 
+        // If this job has already been converted to a project, link the expense to it too
+        $job->loadMissing(['project']);
+
         $expense = DB::transaction(function () use ($request, $job, $validated) {
             $payload = [
-                'project_id' => null,
+                'project_id' => $job->project?->id,
                 'inspection_id' => null,
                 'job_request_item_id' => $job->id,
                 'original_context_type' => JobRequestItem::class,
@@ -1227,6 +1230,16 @@ class FinanceController extends Controller
         $inspectionId = $contextType === 'inspection' ? (int) $validated['inspection_id'] : null;
         $jobItemId = $contextType === 'job' ? (int) $validated['job_request_item_id'] : null;
         $projectId = $contextType === 'project' ? (int) $validated['project_id'] : null;
+
+        // If the inspection or job has already been converted to a project, inherit that project_id
+        // so the expense appears in the project's finance view automatically
+        if ($projectId === null) {
+            if ($inspectionId) {
+                $projectId = Project::where('inspection_id', $inspectionId)->value('id');
+            } elseif ($jobItemId) {
+                $projectId = Project::where('job_request_item_id', $jobItemId)->value('id');
+            }
+        }
 
         return [
             'project_id' => $projectId,
