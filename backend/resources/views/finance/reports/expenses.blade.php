@@ -27,19 +27,20 @@
 
         <!-- Filter-Aware Totals Summary -->
         <div class="grid grid-cols-3 gap-3 mb-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Expenses</div>
-                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5">{{ $financeMoney($totals['total']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['total']) }}</div>
             </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-emerald-600 uppercase tracking-wider">Approved</div>
-                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5">{{ $financeMoney($totals['approved']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['approved']) }}</div>
             </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-amber-600 uppercase tracking-wider">Pending Review</div>
-                <div class="text-lg md:text-xl font-bold text-amber-700 tabular-nums mt-0.5">{{ $financeMoney($totals['pending']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-amber-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['pending']) }}</div>
             </div>
         </div>
+
 
         <!-- Filter Bar -->
         <form method="GET" action="{{ route('finance.reports.expenses') }}" class="bg-white rounded-xl border border-slate-200 p-4 mb-6 shadow-sm no-print">

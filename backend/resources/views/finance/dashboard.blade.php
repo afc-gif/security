@@ -29,27 +29,27 @@
 
         {{-- ── TOTAL IN / OUT / NET ──────────────────────────────────────────── --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4">
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase mb-1">Total Money IN</div>
-                <div class="text-2xl font-bold text-emerald-800 tabular-nums">{{ $financeMoney($totalIn) }}</div>
-                <div class="text-[11px] text-emerald-600 mt-1.5 space-y-0.5">
+                <div class="text-xl sm:text-2xl font-bold text-emerald-800 tabular-nums break-all">{{ $financeMoney($totalIn) }}</div>
+                <div class="text-[11px] text-emerald-600 mt-1.5 space-y-0.5 break-all">
                     <div>Project payments: {{ $financeMoney($receivedTotal) }}</div>
                     <div>POS Sales: {{ $financeMoney($posRevenueTotal) }}</div>
                 </div>
             </div>
 
-            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
+            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[10px] font-bold tracking-widest text-rose-600 uppercase mb-1">Total Money OUT</div>
-                <div class="text-2xl font-bold text-rose-800 tabular-nums">{{ $financeMoney($totalOut) }}</div>
-                <div class="text-[11px] text-rose-600 mt-1.5">
+                <div class="text-xl sm:text-2xl font-bold text-rose-800 tabular-nums break-all">{{ $financeMoney($totalOut) }}</div>
+                <div class="text-[11px] text-rose-600 mt-1.5 break-all">
                     Approved expenses &amp; materials
                 </div>
             </div>
 
-            <div class="rounded-xl border p-4 shadow-sm {{ $netCashPosition >= 0 ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50' }}">
+            <div class="rounded-xl border p-4 shadow-sm min-w-0 overflow-hidden {{ $netCashPosition >= 0 ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50' }}">
                 <div class="text-[10px] font-bold tracking-widest uppercase mb-1 {{ $netCashPosition >= 0 ? 'text-sky-600' : 'text-amber-600' }}">Net Position</div>
-                <div class="text-2xl font-bold tabular-nums {{ $netCashPosition >= 0 ? 'text-sky-800' : 'text-amber-800' }}">{{ $financeMoney($netCashPosition) }}</div>
-                <div class="text-[11px] mt-1.5 {{ $netCashPosition >= 0 ? 'text-sky-600' : 'text-amber-600' }}">
+                <div class="text-xl sm:text-2xl font-bold tabular-nums break-all {{ $netCashPosition >= 0 ? 'text-sky-800' : 'text-amber-800' }}">{{ $financeMoney($netCashPosition) }}</div>
+                <div class="text-[11px] mt-1.5 break-all {{ $netCashPosition >= 0 ? 'text-sky-600' : 'text-amber-600' }}">
                     Total IN &minus; Total OUT (all-time)
                 </div>
             </div>
@@ -57,22 +57,22 @@
 
         {{-- ── DETAILED METRICS (5 columns) ────────────────────────────────────── --}}
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Project Value</div>
-                <div class="text-xl md:text-2xl font-bold text-slate-900 tabular-nums">{{ $financeMoney($projectValueTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Total Contract Value</div>
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold text-slate-900 tabular-nums break-all">{{ $financeMoney($projectValueTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">Total Contract Value</div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-emerald-600 uppercase tracking-wider mb-1">Project Received</div>
-                <div class="text-xl md:text-2xl font-bold text-emerald-700 tabular-nums">{{ $financeMoney($receivedTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Client Payments</div>
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold text-emerald-700 tabular-nums break-all">{{ $financeMoney($receivedTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">Client Payments</div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-violet-600 uppercase tracking-wider mb-1">POS Revenue</div>
-                <div class="text-xl md:text-2xl font-bold text-violet-700 tabular-nums">{{ $financeMoney($posRevenueTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold text-violet-700 tabular-nums break-all">{{ $financeMoney($posRevenueTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">
                     This month: {{ $financeMoney($posRevenueThisMonth) }}
                     @if($posOrderCountThisMonth > 0)
                         ({{ $posOrderCountThisMonth }} sale{{ $posOrderCountThisMonth !== 1 ? 's' : '' }})
@@ -80,24 +80,25 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-amber-600 uppercase tracking-wider mb-1">Outstanding</div>
-                <div class="text-xl md:text-2xl font-bold text-amber-700 tabular-nums">{{ $financeMoney($outstandingTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Project Balance Due</div>
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold text-amber-700 tabular-nums break-all">{{ $financeMoney($outstandingTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">Project Balance Due</div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-rose-600 uppercase tracking-wider mb-1">Approved Costs</div>
-                <div class="text-xl md:text-2xl font-bold text-rose-700 tabular-nums">{{ $financeMoney($approvedCostsTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Expenses + Materials</div>
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold text-rose-700 tabular-nums break-all">{{ $financeMoney($approvedCostsTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">Expenses + Materials</div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-indigo-600 uppercase tracking-wider mb-1">Est. Project Profit</div>
-                <div class="text-xl md:text-2xl font-bold {{ $estimatedProfitTotal >= 0 ? 'text-indigo-700' : 'text-rose-700' }} tabular-nums">{{ $financeMoney($estimatedProfitTotal) }}</div>
-                <div class="text-[11px] text-slate-400 mt-1">Contract Value &minus; Costs</div>
+                <div class="text-lg sm:text-xl lg:text-lg xl:text-2xl font-bold {{ $estimatedProfitTotal >= 0 ? 'text-indigo-700' : 'text-rose-700' }} tabular-nums break-all">{{ $financeMoney($estimatedProfitTotal) }}</div>
+                <div class="text-[11px] text-slate-400 mt-1 break-all">Contract Value &minus; Costs</div>
             </div>
         </div>
+
 
         {{-- ── ATTENTION ITEMS ───────────────────────────────────────────────────── --}}
         @if(!empty($attentionItems))

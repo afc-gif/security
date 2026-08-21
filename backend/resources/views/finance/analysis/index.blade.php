@@ -51,7 +51,7 @@
 
         {{-- ── MONEY IN / OUT / NET (period) ───────────────────────────────────── --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div id="card-total-in" class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+            <div id="card-total-in" class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm min-w-0 overflow-hidden">
                 <div class="flex items-center justify-between mb-3">
                     <div class="text-[10px] font-bold tracking-widest text-emerald-600 uppercase">Money IN</div>
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -60,8 +60,8 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-3xl font-bold text-emerald-800 tabular-nums mb-3">{{ $financeMoney($totalIn) }}</div>
-                <div class="space-y-1 pt-2 border-t border-emerald-200">
+                <div class="text-2xl sm:text-3xl font-bold text-emerald-800 tabular-nums mb-3 break-all">{{ $financeMoney($totalIn) }}</div>
+                <div class="space-y-1 pt-2 border-t border-emerald-200 break-all">
                     {{-- Project Payments row with sub-breakdown --}}
                     <div class="flex justify-between text-xs">
                         <a href="{{ route('finance.projects.index') }}" class="text-emerald-700 hover:text-emerald-900 hover:underline font-medium">Project Payments &rarr;</a>
@@ -106,7 +106,7 @@
                 </div>
             </div>
 
-            <div id="card-total-out" class="rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+            <div id="card-total-out" class="rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-sm min-w-0 overflow-hidden">
                 <div class="flex items-center justify-between mb-3">
                     <div class="text-[10px] font-bold tracking-widest text-rose-600 uppercase">Money OUT</div>
                     <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
@@ -115,8 +115,8 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-3xl font-bold text-rose-800 tabular-nums mb-3">{{ $financeMoney($totalOut) }}</div>
-                <div class="space-y-1 pt-2 border-t border-rose-200">
+                <div class="text-2xl sm:text-3xl font-bold text-rose-800 tabular-nums mb-3 break-all">{{ $financeMoney($totalOut) }}</div>
+                <div class="space-y-1 pt-2 border-t border-rose-200 break-all">
                     <div class="flex justify-between text-xs">
                         <a href="{{ route('finance.office-expenses.index') }}" class="text-rose-700 hover:text-rose-900 hover:underline font-medium">Office Expenses &rarr;</a>
                         <span class="font-semibold text-rose-800">{{ $financeMoney($officeExpensesTotal) }}</span>
@@ -132,7 +132,7 @@
                 </div>
             </div>
 
-            <div id="card-net" class="rounded-xl border p-5 shadow-sm {{ $netCashFlow >= 0 ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50' }}">
+            <div id="card-net" class="rounded-xl border p-5 shadow-sm min-w-0 overflow-hidden {{ $netCashFlow >= 0 ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50' }}">
                 <div class="flex items-center justify-between mb-3">
                     <div class="text-[10px] font-bold tracking-widest uppercase {{ $netCashFlow >= 0 ? 'text-sky-600' : 'text-amber-600' }}">Net Position</div>
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $netCashFlow >= 0 ? 'bg-sky-100' : 'bg-amber-100' }}">
@@ -141,10 +141,10 @@
                         </svg>
                     </div>
                 </div>
-                <div class="text-3xl font-bold tabular-nums mb-3 {{ $netCashFlow >= 0 ? 'text-sky-800' : 'text-amber-800' }}">
+                <div class="text-2xl sm:text-3xl font-bold tabular-nums mb-3 break-all {{ $netCashFlow >= 0 ? 'text-sky-800' : 'text-amber-800' }}">
                     {{ $netCashFlow >= 0 ? '' : '−' }}{{ $financeMoney(abs($netCashFlow)) }}
                 </div>
-                <div class="pt-2 border-t {{ $netCashFlow >= 0 ? 'border-sky-200' : 'border-amber-200' }}">
+                <div class="pt-2 border-t break-all {{ $netCashFlow >= 0 ? 'border-sky-200' : 'border-amber-200' }}">
                     <div class="text-xs {{ $netCashFlow >= 0 ? 'text-sky-700' : 'text-amber-700' }}">
                         {{ $periodLabel }}: IN − OUT
                     </div>
@@ -155,6 +155,7 @@
                 </div>
             </div>
         </div>
+
 
         {{-- ── HEALTH BADGE ─────────────────────────────────────────────────────── --}}
         <div class="mb-6 p-4 rounded-xl border flex items-start gap-3

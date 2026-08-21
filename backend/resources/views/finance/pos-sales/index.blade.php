@@ -55,27 +55,28 @@
         {{-- ── SUMMARY CARDS ──────────────────────────────────────────────────────── --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm col-span-2 md:col-span-2">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm col-span-2 md:col-span-2 min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-violet-600 uppercase tracking-wider mb-1">
                     POS Revenue &mdash; {{ $periodLabel }}
                 </div>
-                <div class="text-2xl md:text-3xl font-bold text-violet-700 tabular-nums">
+                <div class="text-xl sm:text-2xl md:text-3xl font-bold text-violet-700 tabular-nums break-all">
                     {{ $financeMoney($periodTotal) }}
                 </div>
-                <div class="text-[11px] text-slate-400 mt-1">
+                <div class="text-[11px] text-slate-400 mt-1 break-all">
                     {{ $periodCount }} completed sale{{ $periodCount !== 1 ? 's' : '' }}
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm col-span-2 md:col-span-2">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm col-span-2 md:col-span-2 min-w-0 overflow-hidden">
                 <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">All-Time POS Revenue</div>
-                <div class="text-2xl md:text-3xl font-bold text-slate-700 tabular-nums">
+                <div class="text-xl sm:text-2xl md:text-3xl font-bold text-slate-700 tabular-nums break-all">
                     {{ $financeMoney($allTimeTotal) }}
                 </div>
-                <div class="text-[11px] text-slate-400 mt-1">
+                <div class="text-[11px] text-slate-400 mt-1 break-all">
                     {{ $allTimeCount }} total completed sale{{ $allTimeCount !== 1 ? 's' : '' }}
                 </div>
             </div>
+
 
         </div>
 

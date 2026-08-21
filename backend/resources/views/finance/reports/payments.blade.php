@@ -27,15 +27,16 @@
 
         <!-- Filter-Aware Totals Summary -->
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-emerald-600 uppercase tracking-wider">Total Received</div>
-                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5">{{ $financeMoney($totals['total_received']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-emerald-700 tabular-nums mt-0.5 break-all">{{ $financeMoney($totals['total_received']) }}</div>
             </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Number of Payments</div>
-                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5">{{ number_format($totals['payment_count']) }}</div>
+                <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5 break-all">{{ number_format($totals['payment_count']) }}</div>
             </div>
         </div>
+
 
         <!-- Filter Bar -->
         <form method="GET" action="{{ route('finance.reports.payments') }}" class="bg-white rounded-xl border border-slate-200 p-4 mb-6 shadow-sm no-print">
