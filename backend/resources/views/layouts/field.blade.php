@@ -131,7 +131,7 @@
                 <span>Projects</span>
             </a>
 
-            <button onclick="requestPushPermission()" class="flex flex-col items-center gap-0.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-all focus:outline-none">
+            <button id="alerts-bell-btn" onclick="requestPushPermission()" class="flex flex-col items-center gap-0.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-all focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
@@ -142,21 +142,26 @@
 
     <!-- Service Worker, Offline Monitoring & Push Subscription Logic -->
     <script>
-        const VAPID_PUBLIC_KEY = "{{ env('VAPID_PUBLIC_KEY') }}";
+        const VAPID_PUBLIC_KEY = "{{ config('webpush.vapid.public_key') }}";
 
-        // Service Worker registration
+        // Service Worker registration — stored as a Promise so subscribers can wait for it
+        window.swRegPromise = null;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
+            window.swRegPromise = navigator.serviceWorker.register('/sw.js')
                 .then(reg => {
-                    console.log('Service Worker Registered!');
-                    window.swReg = reg;
+                    console.log('Service Worker registered:', reg.scope);
+                    return reg;
                 })
-                .catch(err => console.error('Service Worker registration failed:', err));
+                .catch(err => {
+                    console.error('Service Worker registration failed:', err);
+                    return null;
+                });
         }
 
         // Network connectivity monitoring
         function updateNetworkStatus() {
             const dot = document.getElementById('network-dot');
+            if (!dot) return;
             if (navigator.onLine) {
                 dot.className = "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white";
                 dot.title = "Connected";
@@ -170,84 +175,116 @@
         updateNetworkStatus();
 
         // iOS install prompt detection
-        const isIos = () => {
-            const userAgent = window.navigator.userAgent.toLowerCase();
-            return /iphone|ipad|ipod/.test(userAgent);
-        };
+        const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
         const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
 
         if (isIos() && !isInStandaloneMode()) {
-            document.getElementById('ios-install-prompt').classList.remove('hidden');
+            const prompt = document.getElementById('ios-install-prompt');
+            if (prompt) prompt.classList.remove('hidden');
         }
 
-        // Push Notifications Permission & Subscription
-        function requestPushPermission() {
-            if (!('Notification' in window)) {
-                alert('Browser does not support notifications.');
-                return;
-            }
-
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    subscribeUser();
-                } else {
-                    alert('Notifications permission denied.');
-                }
-            });
-        }
-
-        function subscribeUser() {
-            if (!window.swReg) {
-                console.warn('Service worker is not active yet.');
-                return;
-            }
-
-            const options = {
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-            };
-
-            window.swReg.pushManager.subscribe(options)
-                .then(subscription => {
-                    sendSubscriptionToServer(subscription);
-                })
-                .catch(err => {
-                    console.error('Failed to subscribe user:', err);
-                    alert('Notification subscription setup failed.');
-                });
-        }
-
-        function sendSubscriptionToServer(subscription) {
-            fetch("{{ route('field.push-subscriptions.store') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                },
-                body: JSON.stringify(subscription)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('System notifications enabled successfully!');
-                }
-            })
-            .catch(err => console.error('Subscription sync error:', err));
-        }
-
+        // Decode VAPID base64 key to Uint8Array
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding)
-                .replace(/\-/g, '+')
-                .replace(/_/g, '/');
-
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
             const rawData = window.atob(base64);
             const outputArray = new Uint8Array(rawData.length);
-
             for (let i = 0; i < rawData.length; ++i) {
                 outputArray[i] = rawData.charCodeAt(i);
             }
             return outputArray;
+        }
+
+        // Push Notifications Permission & Subscription
+        async function requestPushPermission() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                alert('Push notifications are not supported in this browser.');
+                return;
+            }
+
+            // First get permission
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                alert('Notifications permission was denied. Please allow it in your browser settings.');
+                return;
+            }
+
+            await subscribeUser();
+        }
+
+        async function subscribeUser() {
+            try {
+                // Wait for the service worker to be ready (up to 10 seconds)
+                const reg = await navigator.serviceWorker.ready;
+
+                if (!reg || !reg.pushManager) {
+                    alert('Push notifications are not ready yet. Please try again in a moment.');
+                    return;
+                }
+
+                // Check if already subscribed
+                const existingSubscription = await reg.pushManager.getSubscription();
+                if (existingSubscription) {
+                    // Already subscribed — re-sync with server
+                    await sendSubscriptionToServer(existingSubscription);
+                    return;
+                }
+
+                const subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+
+                await sendSubscriptionToServer(subscription);
+
+            } catch (err) {
+                console.error('Push subscription error:', err);
+                if (err.name === 'NotAllowedError') {
+                    alert('Notification permission was blocked. Please enable it in browser settings.');
+                } else {
+                    alert('Could not set up notifications: ' + err.message);
+                }
+            }
+        }
+
+        async function sendSubscriptionToServer(subscription) {
+            const subJson = subscription.toJSON();
+            const payload = {
+                endpoint: subJson.endpoint,
+                keys: {
+                    p256dh: subJson.keys.p256dh,
+                    auth: subJson.keys.auth,
+                },
+            };
+
+            try {
+                const res = await fetch("{{ route('field.push-subscriptions.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    console.log('Push subscription saved to server.');
+                    // Show brief visual feedback on the bell button
+                    const bellBtn = document.getElementById('alerts-bell-btn');
+                    if (bellBtn) {
+                        bellBtn.classList.add('text-indigo-600');
+                        bellBtn.querySelector('span').textContent = 'Active';
+                    }
+                } else {
+                    console.error('Server rejected subscription:', data);
+                    alert('Could not activate notifications. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error sending subscription to server:', err);
+                alert('Network error while activating notifications.');
+            }
         }
     </script>
 </body>
