@@ -21,15 +21,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Instant CSS background injection to prevent white screen flash before Tailwind CDN loads -->
+    <style id="instant-theme-style">
+        html, body {
+            background-color: #020617 !important; /* Default dark mode slate-950 background */
+        }
+        html.theme-light, html.theme-light body {
+            background-color: #f8fafc !important; /* Light mode background */
+        }
+    </style>
+    
     <script>
         // Immediate theme initialization to prevent flash
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const isDarkTheme = localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDarkTheme) {
             document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('theme-light');
             document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('theme-color-meta')?.setAttribute('content', '#020617');
             });
         } else {
             document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('theme-light');
             document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('theme-color-meta')?.setAttribute('content', '#f8fafc');
             });

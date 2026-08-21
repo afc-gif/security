@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artsci-field-v8';
+const CACHE_NAME = 'artsci-field-v9';
 const ASSETS = [
     '/Artsci Logo REAL 1.webp',
     '/manifest.json'
