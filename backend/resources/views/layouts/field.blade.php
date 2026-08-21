@@ -35,9 +35,36 @@
         body {
             -webkit-tap-highlight-color: transparent;
         }
+        @keyframes splash-loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .animate-splash-loading {
+            animation: splash-loading 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
     </style>
 </head>
 <body class="h-full font-sans antialiased text-slate-900 flex flex-col pb-24">
+
+    <!-- PWA App Boot/Splash Screen Overlay -->
+    <div id="pwa-splash-screen" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-500 ease-out">
+        <div class="flex flex-col items-center space-y-4">
+            <div class="relative">
+                <img src="/Artsci Logo REAL 1.webp" class="w-24 h-24 rounded-3xl shadow-2xl border border-slate-800 object-cover animate-pulse" alt="ARTSCI Logo">
+                <div class="absolute -inset-1 rounded-3xl bg-indigo-500/20 blur-md animate-pulse"></div>
+            </div>
+            <div class="text-center">
+                <h1 class="text-lg font-extrabold text-white tracking-widest uppercase">ARTSCI</h1>
+                <p class="text-[10px] font-bold text-indigo-400 tracking-wider uppercase mt-1">Field Console</p>
+            </div>
+        </div>
+        <div class="absolute bottom-20 left-0 right-0 flex flex-col items-center space-y-2.5">
+            <div class="w-32 bg-slate-850 h-1 rounded-full overflow-hidden border border-slate-800">
+                <div class="bg-indigo-500 h-full w-0 animate-splash-loading"></div>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Loading security environment</span>
+        </div>
+    </div>
 
     <!-- Global App Header -->
     <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-100 px-4 py-3 safe-top">
@@ -286,6 +313,28 @@
                 alert('Network error while activating notifications.');
             }
         }
+
+        // PWA App Boot/Splash Screen logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            const splashScreen = document.getElementById('pwa-splash-screen');
+            
+            if (isStandalone && splashScreen) {
+                // Only show the splash screen once per session to maintain quick subsequent page loads
+                if (!sessionStorage.getItem('pwa_splash_shown')) {
+                    splashScreen.classList.remove('hidden');
+                    sessionStorage.setItem('pwa_splash_shown', 'true');
+                    
+                    // Show boot screen for 1.8 seconds, then fade out
+                    setTimeout(() => {
+                        splashScreen.classList.add('opacity-0');
+                        setTimeout(() => {
+                            splashScreen.classList.add('hidden');
+                        }, 500); // Wait for transition opacity-0 (duration-500)
+                    }, 1800);
+                }
+            }
+        });
     </script>
 </body>
 </html>
