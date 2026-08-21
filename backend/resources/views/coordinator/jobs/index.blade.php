@@ -285,7 +285,32 @@
                                                         @endif
                                                     </div>
                                                     @if($checklistItem->response)
-                                                        <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                                        @if($checklistItem->input_type === 'load_table' && str_starts_with(trim($checklistItem->response), '{') && is_array($tbl = json_decode($checklistItem->response, true)))
+                                                            <div class="muted" style="margin-top:6px; overflow-x:auto;">
+                                                                <table style="border-collapse:collapse; font-size:12px; width:100%;">
+                                                                    <thead><tr style="background:#f1f5f9;">
+                                                                        <th style="border:1px solid #d1d5db;padding:4px 6px;text-align:left;">Appliance</th>
+                                                                        <th style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">Qty</th>
+                                                                        <th style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">Power (W)</th>
+                                                                        <th style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">Hrs/Day</th>
+                                                                    </tr></thead>
+                                                                    <tbody>
+                                                                        @foreach($tbl as $appliance => $row)
+                                                                            @if(!empty($row['qty']) || !empty($row['power']) || !empty($row['hours']))
+                                                                                <tr>
+                                                                                    <td style="border:1px solid #d1d5db;padding:4px 6px;font-weight:700;">{{ $appliance }}</td>
+                                                                                    <td style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">{{ $row['qty'] ?? '—' }}</td>
+                                                                                    <td style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">{{ $row['power'] ?? '—' }}</td>
+                                                                                    <td style="border:1px solid #d1d5db;padding:4px 6px;text-align:center;">{{ $row['hours'] ?? '—' }}</td>
+                                                                                </tr>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        @else
+                                                            <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                                        @endif
                                                     @endif
                                                     @if($checklistItem->notes)
                                                         <div class="muted">Note: {{ $checklistItem->notes }}</div>

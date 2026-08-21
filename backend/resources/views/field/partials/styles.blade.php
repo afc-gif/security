@@ -754,4 +754,52 @@
             width: 100%;
         }
     }
+
+    /* ── Load Assessment Table ──────────────────────────── */
+    .load-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .load-table th,
+    .load-table td {
+        border: 1px solid var(--border);
+        padding: 6px 8px;
+        text-align: left;
+    }
+
+    .load-table thead th {
+        background: #f0f4fa;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+    }
+
+    .load-table tbody tr:nth-child(even) td {
+        background: #fafbfc;
+    }
+
+    .load-table td:first-child {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .load-table td input[type="number"] {
+        width: 72px;
+        padding: 5px 6px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 13px;
+        text-align: center;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+
+    .load-table td input[type="number"]::-webkit-inner-spin-button,
+    .load-table td input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+    }
 </style>

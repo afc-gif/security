@@ -229,6 +229,9 @@ class JobController extends Controller
 
             $lockedItem->ensureChecklistFromCategory();
 
+            // Pre-load item types so we can handle load_table without extra queries in the loop
+            $checklistItemTypes = $lockedItem->checklistItems()->pluck('input_type', 'id');
+
             foreach (($validated['checklist'] ?? []) as $checklistItemId => $checklistInput) {
                 $status = $checklistInput['status'] ?? null;
                 $notes = isset($checklistInput['notes']) && trim((string) $checklistInput['notes']) !== ''
@@ -241,9 +244,14 @@ class JobController extends Controller
                 }
 
                 if (is_array($response)) {
-                    $response = collect($response)
-                        ->filter(fn ($value) => trim((string) $value) !== '')
-                        ->implode(', ');
+                    if (($checklistItemTypes[$checklistItemId] ?? null) === 'load_table') {
+                        // Store as JSON to preserve the structured table data
+                        $response = json_encode($response);
+                    } else {
+                        $response = collect($response)
+                            ->filter(fn ($value) => trim((string) $value) !== '')
+                            ->implode(', ');
+                    }
                 }
 
                 JobChecklistItem::query()

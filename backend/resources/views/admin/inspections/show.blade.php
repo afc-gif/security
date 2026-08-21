@@ -182,7 +182,34 @@
                                     @if($item->response)
                                         <div>
                                             <div class="font-bold text-gray-500 uppercase tracking-wide text-[10px]">Field Staff Answer</div>
-                                            <div class="text-gray-900 font-semibold mt-0.5">{{ $item->response }}</div>
+                                            @if($item->input_type === 'load_table' && str_starts_with(trim($item->response), '{') && is_array($tbl = json_decode($item->response, true)))
+                                                <div class="mt-1 overflow-x-auto">
+                                                    <table class="w-full border-collapse text-xs">
+                                                        <thead>
+                                                            <tr class="bg-gray-100">
+                                                                <th class="border border-gray-200 px-2 py-1 text-left font-bold uppercase text-gray-500">Appliance</th>
+                                                                <th class="border border-gray-200 px-2 py-1 text-center font-bold uppercase text-gray-500">Qty</th>
+                                                                <th class="border border-gray-200 px-2 py-1 text-center font-bold uppercase text-gray-500">Power (W)</th>
+                                                                <th class="border border-gray-200 px-2 py-1 text-center font-bold uppercase text-gray-500">Hrs/Day</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($tbl as $appliance => $row)
+                                                                @if(!empty($row['qty']) || !empty($row['power']) || !empty($row['hours']))
+                                                                    <tr class="even:bg-gray-50">
+                                                                        <td class="border border-gray-200 px-2 py-1 font-semibold text-gray-800">{{ $appliance }}</td>
+                                                                        <td class="border border-gray-200 px-2 py-1 text-center text-gray-700">{{ $row['qty'] ?? '—' }}</td>
+                                                                        <td class="border border-gray-200 px-2 py-1 text-center text-gray-700">{{ $row['power'] ?? '—' }}</td>
+                                                                        <td class="border border-gray-200 px-2 py-1 text-center text-gray-700">{{ $row['hours'] ?? '—' }}</td>
+                                                                    </tr>
+                                                                @endif
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <div class="text-gray-900 font-semibold mt-0.5">{{ $item->response }}</div>
+                                            @endif
                                         </div>
                                     @endif
                                     @if($item->notes)

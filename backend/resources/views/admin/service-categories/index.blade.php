@@ -61,12 +61,13 @@
 @section('content')
 @php
     $typeLabels = [
-        'textarea' => 'Long Text',
-        'text' => 'Short Text',
-        'number' => 'Number',
+        'textarea'    => 'Long Text',
+        'text'        => 'Short Text',
+        'number'      => 'Number',
         'single_choice' => 'Single Choice',
-        'multi_choice' => 'Multiple Choice',
-        'photo' => 'Photo Upload',
+        'multi_choice'  => 'Multiple Choice',
+        'photo'       => 'Photo Upload',
+        'load_table'  => 'Load Assessment Table',
     ];
 @endphp
 
@@ -268,6 +269,32 @@
                                                             @elseif($inputType === 'photo')
                                                                 <div class="rounded-lg border border-dashed border-gray-300 bg-gray-100 px-3 py-4 text-sm font-semibold text-gray-600">
                                                                     Upload photo or open camera
+                                                                </div>
+                                                            @elseif($inputType === 'load_table')
+                                                                @php
+                                                                    $previewRows = $options->isNotEmpty() ? $options : collect(['Lights','Fans','TV','Refrigerator','Freezer','AC','Water Pump','Computer','Router','Microwave','Washing Machine','Others']);
+                                                                @endphp
+                                                                <div style="overflow-x:auto;">
+                                                                    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                                                                        <thead>
+                                                                            <tr style="background:#f1f5f9;">
+                                                                                <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">Appliance</th>
+                                                                                <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:center;">Qty</th>
+                                                                                <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:center;">Power (W)</th>
+                                                                                <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:center;">Hrs/Day</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach($previewRows as $row)
+                                                                                <tr>
+                                                                                    <td style="border:1px solid #cbd5e1;padding:5px 8px;font-weight:600;">{{ $row }}</td>
+                                                                                    <td style="border:1px solid #cbd5e1;padding:5px 8px;background:#f8fafc;">—</td>
+                                                                                    <td style="border:1px solid #cbd5e1;padding:5px 8px;background:#f8fafc;">—</td>
+                                                                                    <td style="border:1px solid #cbd5e1;padding:5px 8px;background:#f8fafc;">—</td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
                                                                 </div>
                                                             @elseif($inputType === 'number')
                                                                 <input type="number" disabled class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" placeholder="Number response">

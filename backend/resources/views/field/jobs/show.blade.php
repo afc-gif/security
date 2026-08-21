@@ -175,6 +175,42 @@
                                                 <input type="number" name="checklist[{{ $checklistItem->id }}][response]" value="{{ $oldResponse }}">
                                             @elseif($inputType === 'text')
                                                 <input type="text" name="checklist[{{ $checklistItem->id }}][response]" value="{{ $oldResponse }}">
+                                            @elseif($inputType === 'load_table')
+                                                @php
+                                                    $appliances = $options->isNotEmpty()
+                                                        ? $options->all()
+                                                        : ['Lights','Fans','TV','Refrigerator','Freezer','AC','Water Pump','Computer','Router','Microwave','Washing Machine','Others'];
+                                                    $savedTable = [];
+                                                    if (is_string($oldResponse) && str_starts_with(trim($oldResponse), '{')) {
+                                                        $decoded = json_decode($oldResponse, true);
+                                                        if (is_array($decoded)) $savedTable = $decoded;
+                                                    } elseif (is_array($oldResponse)) {
+                                                        $savedTable = $oldResponse;
+                                                    }
+                                                @endphp
+                                                <div style="overflow-x:auto; margin-top:4px;">
+                                                    <table class="load-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Appliance</th>
+                                                                <th>Qty</th>
+                                                                <th>Power (W)</th>
+                                                                <th>Hrs/Day</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($appliances as $appliance)
+                                                                @php $row = $savedTable[$appliance] ?? []; @endphp
+                                                                <tr>
+                                                                    <td>{{ $appliance }}</td>
+                                                                    <td><input type="number" min="0" name="checklist[{{ $checklistItem->id }}][response][{{ $appliance }}][qty]" value="{{ $row['qty'] ?? '' }}" placeholder="0"></td>
+                                                                    <td><input type="number" min="0" name="checklist[{{ $checklistItem->id }}][response][{{ $appliance }}][power]" value="{{ $row['power'] ?? '' }}" placeholder="0"></td>
+                                                                    <td><input type="number" min="0" step="0.5" name="checklist[{{ $checklistItem->id }}][response][{{ $appliance }}][hours]" value="{{ $row['hours'] ?? '' }}" placeholder="0"></td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             @else
                                                 <textarea name="checklist[{{ $checklistItem->id }}][response]" rows="3">{{ $oldResponse }}</textarea>
                                             @endif
@@ -290,7 +326,29 @@
                                 @endif
                                 <div class="muted">Status: {{ str_replace('_', ' ', \Illuminate\Support\Str::title($checklistItem->status)) }}</div>
                                 @if($checklistItem->response)
-                                    <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                    @if($checklistItem->input_type === 'load_table' && str_starts_with(trim($checklistItem->response), '{') && is_array($tbl = json_decode($checklistItem->response, true)))
+                                        <div style="margin-top:8px; overflow-x:auto;">
+                                            <table class="load-table">
+                                                <thead><tr>
+                                                    <th>Appliance</th><th>Qty</th><th>Power (W)</th><th>Hrs/Day</th>
+                                                </tr></thead>
+                                                <tbody>
+                                                    @foreach($tbl as $appliance => $row)
+                                                        @if(!empty($row['qty']) || !empty($row['power']) || !empty($row['hours']))
+                                                            <tr>
+                                                                <td>{{ $appliance }}</td>
+                                                                <td style="text-align:center;">{{ $row['qty'] ?? '—' }}</td>
+                                                                <td style="text-align:center;">{{ $row['power'] ?? '—' }}</td>
+                                                                <td style="text-align:center;">{{ $row['hours'] ?? '—' }}</td>
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="muted">Response: {{ $checklistItem->response }}</div>
+                                    @endif
                                 @endif
                                 @if($checklistItem->notes)
                                     <div class="muted">Note: {{ $checklistItem->notes }}</div>
