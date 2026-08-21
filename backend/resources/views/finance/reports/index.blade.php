@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-5">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             <!-- Option 1: Project Financials -->
             <a href="{{ route('finance.reports.projects') }}" class="group bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-sky-500 transition-all flex flex-col justify-between">
                 <div>
@@ -54,6 +54,20 @@
                     <p class="text-sm text-slate-500 leading-relaxed">Track money received from clients, payment methods, transaction references, and recording history.</p>
                 </div>
                 <div class="mt-6 text-xs font-bold text-sky-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                    View Report &rarr;
+                </div>
+            </a>
+
+            <!-- Option 4: Procurement & Inventory -->
+            <a href="{{ route('finance.reports.procurements') }}" class="group bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-sky-500 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        📦
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-sky-700 transition-colors">Procurement</h2>
+                    <p class="text-sm text-slate-500 leading-relaxed">Track purchases, monitor total spend with vendors (suppliers), and analyze inventory item volumes.</p>
+                </div>
+                <div class="mt-6 text-xs font-bold text-indigo-700 flex items-center gap-1 group-hover:gap-2 transition-all">
                     View Report &rarr;
                 </div>
             </a>

@@ -353,4 +353,75 @@ class FinanceReportController extends Controller
             'Content-Type' => 'text/csv',
         ]);
     }
+
+    public function procurements(Request $request)
+    {
+        $this->authorizeView();
+
+        $filters = $request->only(['date_from', 'date_to', 'supplier_id', 'inventory_product_id']);
+
+        $query = \App\Models\FinancialProcurement::query()
+            ->with(['supplier', 'product', 'creator', 'documents'])
+            ->when($filters['date_from'] ?? null, fn (Builder $q, $date) => $q->whereDate('purchase_date', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn (Builder $q, $date) => $q->whereDate('purchase_date', '<=', $date))
+            ->when($filters['supplier_id'] ?? null, fn (Builder $q, $id) => $q->where('supplier_id', $id))
+            ->when($filters['inventory_product_id'] ?? null, fn (Builder $q, $id) => $q->where('inventory_product_id', $id));
+
+        $procurements = $query->orderBy('purchase_date', 'desc')->get();
+
+        $totals = [
+            'total_spend' => $procurements->sum('total_cost'),
+            'total_quantity' => $procurements->sum('quantity'),
+            'purchase_count' => $procurements->count(),
+        ];
+
+        $suppliers = \App\Models\Supplier::orderBy('name')->get();
+        $products = \App\Models\InventoryProduct::orderBy('name')->get();
+
+        return view('finance.reports.procurements', array_merge(
+            compact('procurements', 'totals', 'suppliers', 'products', 'filters'),
+            $this->viewHelpers()
+        ));
+    }
+
+    public function exportProcurements(Request $request)
+    {
+        $this->authorizeView();
+
+        $filters = $request->only(['date_from', 'date_to', 'supplier_id', 'inventory_product_id']);
+
+        $query = \App\Models\FinancialProcurement::query()
+            ->with(['supplier', 'product', 'creator'])
+            ->when($filters['date_from'] ?? null, fn (Builder $q, $date) => $q->whereDate('purchase_date', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn (Builder $q, $date) => $q->whereDate('purchase_date', '<=', $date))
+            ->when($filters['supplier_id'] ?? null, fn (Builder $q, $id) => $q->where('supplier_id', $id))
+            ->when($filters['inventory_product_id'] ?? null, fn (Builder $q, $id) => $q->where('inventory_product_id', $id));
+
+        $procurements = $query->orderBy('purchase_date', 'desc')->get();
+
+        $filename = 'procurement_report_' . now()->format('Y-m-d') . '.csv';
+
+        return new StreamedResponse(function () use ($procurements) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Date', 'Supplier', 'Product', 'SKU', 'Quantity', 'Unit Cost', 'Total Cost', 'Recorded By', 'Notes']);
+
+            foreach ($procurements as $proc) {
+                fputcsv($handle, [
+                    $proc->purchase_date->format('Y-m-d'),
+                    $proc->supplier->name,
+                    $proc->product->name,
+                    $proc->product->sku ?? '-',
+                    $proc->quantity,
+                    number_format((float) $proc->unit_cost, 2, '.', ''),
+                    number_format((float) $proc->total_cost, 2, '.', ''),
+                    $proc->creator->name,
+                    $proc->notes ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
 }

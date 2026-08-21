@@ -6,6 +6,7 @@ use App\Http\Controllers\Finance\FinancePosController;
 use App\Http\Controllers\Finance\FinanceQuotationController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceAnalysisController;
+use App\Http\Controllers\Finance\FinanceProcurementController;
 
 Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
@@ -41,6 +42,8 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
     Route::get('/reports/expenses/export', [FinanceReportController::class, 'exportExpenses'])->name('reports.expenses.export');
     Route::get('/reports/payments', [FinanceReportController::class, 'payments'])->name('reports.payments');
     Route::get('/reports/payments/export', [FinanceReportController::class, 'exportPayments'])->name('reports.payments.export');
+    Route::get('/reports/procurements', [FinanceReportController::class, 'procurements'])->name('reports.procurements');
+    Route::get('/reports/procurements/export', [FinanceReportController::class, 'exportProcurements'])->name('reports.procurements.export');
     Route::get('/jobs', [FinanceController::class, 'jobs'])->name('jobs.index');
     Route::get('/jobs/{job}', [FinanceController::class, 'jobShow'])->name('jobs.show');
     Route::post('/jobs/{job}/expenses', [FinanceController::class, 'storeJobExpense'])
@@ -140,4 +143,45 @@ Route::middleware(['auth', 'finance.permission:finance.view'])->prefix('finance'
     Route::delete('/office-expenses/{expense}', [FinanceController::class, 'destroyOfficeExpense'])
         ->middleware('finance.permission:finance.delete')
         ->name('office-expenses.destroy');
+
+    // Procurement & Inventory
+    Route::get('/procurements', [FinanceProcurementController::class, 'index'])->name('procurements.index');
+    Route::get('/procurements/create', [FinanceProcurementController::class, 'create'])
+        ->middleware('finance.permission:finance.create')
+        ->name('procurements.create');
+    Route::post('/procurements', [FinanceProcurementController::class, 'store'])
+        ->middleware('finance.permission:finance.create')
+        ->name('procurements.store');
+    Route::delete('/procurements/{procurement}', [FinanceProcurementController::class, 'destroy'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('procurements.destroy');
+
+    // Suppliers CRUD
+    Route::post('/suppliers', [FinanceProcurementController::class, 'storeSupplier'])
+        ->middleware('finance.permission:finance.create')
+        ->name('suppliers.store');
+    Route::get('/suppliers/{supplier}/edit', [FinanceProcurementController::class, 'editSupplier'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('suppliers.edit');
+    Route::put('/suppliers/{supplier}', [FinanceProcurementController::class, 'updateSupplier'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('suppliers.update');
+    Route::delete('/suppliers/{supplier}', [FinanceProcurementController::class, 'destroySupplier'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('suppliers.destroy');
+
+    // Inventory Products CRUD
+    Route::post('/products', [FinanceProcurementController::class, 'storeProduct'])
+        ->middleware('finance.permission:finance.create')
+        ->name('products.store');
+    Route::get('/products/{product}/edit', [FinanceProcurementController::class, 'editProduct'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('products.edit');
+    Route::put('/products/{product}', [FinanceProcurementController::class, 'updateProduct'])
+        ->middleware('finance.permission:finance.edit')
+        ->name('products.update');
+    Route::delete('/products/{product}', [FinanceProcurementController::class, 'destroyProduct'])
+        ->middleware('finance.permission:finance.delete')
+        ->name('products.destroy');
 });
+

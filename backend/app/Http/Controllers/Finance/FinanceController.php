@@ -1291,6 +1291,8 @@ class FinanceController extends Controller
             ])],
             'notes' => ['nullable', 'string', 'max:5000'],
             'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'supplier_id' => ['nullable', 'exists:finance_suppliers,id'],
+            'inventory_product_id' => ['nullable', 'exists:finance_inventory_products,id'],
         ]);
     }
 
@@ -1309,6 +1311,8 @@ class FinanceController extends Controller
             'total_cost' => $this->calculateTotalCost($validated['quantity'], $validated['unit_cost']),
             'incurred_on' => $validated['incurred_on'] ?? null,
             'notes' => $validated['notes'] ?? null,
+            'supplier_id' => $validated['supplier_id'] ?? null,
+            'inventory_product_id' => $validated['inventory_product_id'] ?? null,
         ];
     }
 

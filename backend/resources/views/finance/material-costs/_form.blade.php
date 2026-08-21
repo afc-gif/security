@@ -1,6 +1,8 @@
 @php
     $editing = isset($materialCost);
     $selectedStatus = old('status', $editing ? $materialCost->status : \App\Models\FinancialMaterialCost::STATUS_PENDING);
+    $products = \App\Models\InventoryProduct::orderBy('name')->get();
+    $suppliers = \App\Models\Supplier::orderBy('name')->get();
 @endphp
 
 @if($errors->any())
@@ -19,8 +21,35 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div class="md:col-span-2">
-            <label for="material_name" class="block text-sm font-medium text-gray-700 mb-1">Material</label>
-            <input id="material_name" type="text" name="material_name" value="{{ old('material_name', $editing ? $materialCost->material_name : '') }}" maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+            <label for="inventory_product_id" class="block text-sm font-medium text-gray-700 mb-1">Catalog Product (Inventory)</label>
+            <select id="inventory_product_id" name="inventory_product_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white" onchange="toggleCustomMaterialInput()">
+                <option value="">-- Select Catalog Product (Optional) --</option>
+                @foreach($products as $prod)
+                    <option value="{{ $prod->id }}" data-name="{{ $prod->name }}" @selected(old('inventory_product_id', $editing ? $materialCost->inventory_product_id : '') == $prod->id)>
+                        {{ $prod->name }} (Stock: {{ number_format($prod->current_stock, 2) }})
+                    </option>
+                @endforeach
+                <option value="custom" @selected(old('inventory_product_id', $editing ? $materialCost->inventory_product_id : '') === 'custom' || ($editing && !$materialCost->inventory_product_id && $materialCost->material_name))>
+                    Other / Custom (Type below)
+                </option>
+            </select>
+        </div>
+
+        <div id="custom-material-wrapper" class="md:col-span-2 {{ ($editing && $materialCost->inventory_product_id) ? 'hidden' : '' }}">
+            <label for="material_name" class="block text-sm font-medium text-gray-700 mb-1">Material Name</label>
+            <input id="material_name" type="text" name="material_name" value="{{ old('material_name', $editing ? $materialCost->material_name : '') }}" maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="supplier_id" class="block text-sm font-medium text-gray-700 mb-1">Supplier (Optional)</label>
+            <select id="supplier_id" name="supplier_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                <option value="">-- Select Supplier --</option>
+                @foreach($suppliers as $sup)
+                    <option value="{{ $sup->id }}" @selected(old('supplier_id', $editing ? $materialCost->supplier_id : '') == $sup->id)>
+                        {{ $sup->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div>
@@ -76,3 +105,25 @@
         <a href="{{ $editing ? route('finance.material-costs.show', $materialCost) : route('finance.projects.show', $project) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-semibold text-center">Cancel</a>
     </div>
 </div>
+
+<script>
+function toggleCustomMaterialInput() {
+    const select = document.getElementById('inventory_product_id');
+    const wrapper = document.getElementById('custom-material-wrapper');
+    const input = document.getElementById('material_name');
+
+    if (!select || !wrapper || !input) return;
+
+    if (select.value === 'custom' || select.value === '') {
+        wrapper.classList.remove('hidden');
+        input.setAttribute('required', 'required');
+    } else {
+        wrapper.classList.add('hidden');
+        input.removeAttribute('required');
+        const selectedOpt = select.options[select.selectedIndex];
+        input.value = selectedOpt.getAttribute('data-name');
+    }
+}
+document.addEventListener('DOMContentLoaded', toggleCustomMaterialInput);
+</script>
+

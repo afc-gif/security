@@ -21,6 +21,7 @@
             ['key' => 'finance-projects', 'label' => 'Projects', 'route' => 'finance.projects.index', 'tab' => null, 'icon' => 'PJ'],
             ['key' => 'finance-pos-sales', 'label' => 'POS Sales', 'route' => 'finance.pos-sales.index', 'tab' => null, 'icon' => 'PS'],
             ['key' => 'finance-office-expenses', 'label' => 'Office Expenses', 'route' => 'finance.office-expenses.index', 'tab' => null, 'icon' => 'OE'],
+            ['key' => 'finance-procurements', 'label' => 'Procurement & Inventory', 'route' => 'finance.procurements.index', 'tab' => null, 'icon' => 'PR'],
             ['key' => 'finance-analysis', 'label' => 'Analysis', 'route' => 'finance.analysis', 'tab' => null, 'icon' => 'AN'],
             ['key' => 'finance-reports', 'label' => 'Reports', 'route' => 'finance.reports.index', 'tab' => null, 'icon' => 'RP'],
         ],
@@ -61,6 +62,7 @@
                 ['key' => 'finance-projects',          'label' => 'Projects',         'route' => 'finance.projects.index',        'tab' => null, 'icon' => 'PJ'],
                 ['key' => 'finance-pos-sales',         'label' => 'POS Sales',        'route' => 'finance.pos-sales.index',       'tab' => null, 'icon' => 'PS'],
                 ['key' => 'finance-office-expenses',   'label' => 'Office Expenses',  'route' => 'finance.office-expenses.index', 'tab' => null, 'icon' => 'OE'],
+                ['key' => 'finance-procurements',      'label' => 'Procurement & Inventory', 'route' => 'finance.procurements.index', 'tab' => null, 'icon' => 'PR'],
                 ['key' => 'finance-analysis',          'label' => 'Analysis',         'route' => 'finance.analysis',              'tab' => null, 'icon' => 'AN'],
                 ['key' => 'finance-reports',           'label' => 'Reports',          'route' => 'finance.reports.index',         'tab' => null, 'icon' => 'RP'],
             ];
@@ -105,6 +107,7 @@
             'finance-analysis' => request()->routeIs('finance.analysis.*') || request()->routeIs('finance.analysis'),
             'finance-pos-sales' => request()->routeIs('finance.pos-sales.*'),
             'finance-office-expenses' => request()->routeIs('finance.office-expenses.*'),
+            'finance-procurements' => request()->routeIs('finance.procurements.*') || request()->routeIs('finance.suppliers.*') || request()->routeIs('finance.products.*'),
             'finance-reports' => request()->routeIs('finance.reports.*'),
             default => false,
         };

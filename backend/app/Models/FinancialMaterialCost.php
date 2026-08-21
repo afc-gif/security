@@ -36,6 +36,8 @@ class FinancialMaterialCost extends Model
         'notes',
         'created_by',
         'updated_by',
+        'supplier_id',
+        'inventory_product_id',
     ];
 
     protected $casts = [
@@ -66,8 +68,53 @@ class FinancialMaterialCost extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function inventoryProduct(): BelongsTo
+    {
+        return $this->belongsTo(InventoryProduct::class, 'inventory_product_id');
+    }
+
     public function documents(): MorphMany
     {
         return $this->morphMany(FinancialDocument::class, 'documentable');
+    }
+
+    protected static function booted()
+    {
+        static::created(function (FinancialMaterialCost $materialCost) {
+            if ($materialCost->inventory_product_id && $materialCost->status === self::STATUS_APPROVED) {
+                $materialCost->inventoryProduct->decrement('current_stock', $materialCost->quantity);
+            }
+        });
+
+        static::updated(function (FinancialMaterialCost $materialCost) {
+            if ($materialCost->inventory_product_id) {
+                $oldStatus = $materialCost->getOriginal('status');
+                $newStatus = $materialCost->status;
+                $oldQty = (float) $materialCost->getOriginal('quantity');
+                $newQty = (float) $materialCost->quantity;
+
+                if ($oldStatus !== self::STATUS_APPROVED && $newStatus === self::STATUS_APPROVED) {
+                    $materialCost->inventoryProduct->decrement('current_stock', $newQty);
+                } elseif ($oldStatus === self::STATUS_APPROVED && $newStatus !== self::STATUS_APPROVED) {
+                    $materialCost->inventoryProduct->increment('current_stock', $oldQty);
+                } elseif ($newStatus === self::STATUS_APPROVED) {
+                    $qtyDiff = $newQty - $oldQty;
+                    if ($qtyDiff != 0) {
+                        $materialCost->inventoryProduct->decrement('current_stock', $qtyDiff);
+                    }
+                }
+            }
+        });
+
+        static::deleted(function (FinancialMaterialCost $materialCost) {
+            if ($materialCost->inventory_product_id && $materialCost->status === self::STATUS_APPROVED) {
+                $materialCost->inventoryProduct->increment('current_stock', $materialCost->quantity);
+            }
+        });
     }
 }
