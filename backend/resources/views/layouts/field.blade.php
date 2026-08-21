@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-50 dark:bg-slate-950">
+<html lang="en" class="min-h-screen bg-slate-50 dark:bg-slate-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -49,10 +49,15 @@
     <style>
         body {
             -webkit-tap-highlight-color: transparent;
+            /* Push entire body below the iOS status bar / notch */
+            padding-top: env(safe-area-inset-top);
         }
+        /* Sticky header's own inner vertical padding */
         .safe-top {
-            padding-top: calc(0.75rem + env(safe-area-inset-top));
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
         }
+        /* Bottom nav clears the iOS home indicator bar */
         .safe-bottom {
             padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
         }
@@ -65,7 +70,7 @@
         }
     </style>
 </head>
-<body class="h-full font-sans antialiased text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 flex flex-col pb-24 transition-colors duration-300">
+<body class="min-h-screen font-sans antialiased text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-300" style="padding-bottom: calc(6rem + env(safe-area-inset-bottom))">
 
     <!-- PWA App Boot/Splash Screen Overlay -->
     <div id="pwa-splash-screen" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-500 ease-out">
@@ -88,7 +93,7 @@
     </div>
 
     <!-- Global App Header -->
-    <header class="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-100 dark:border-slate-800 px-4 py-3 safe-top transition-colors duration-300">
+    <header class="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-100 dark:border-slate-800 px-4 safe-top transition-colors duration-300">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center gap-2.5">
                 <div class="relative">
