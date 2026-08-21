@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(\Illuminate\Console\Scheduling\Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('notify:job-deadlines')->hourly();
     }
 
     protected function commands()

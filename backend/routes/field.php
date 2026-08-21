@@ -7,6 +7,7 @@ use App\Http\Controllers\Field\JobController as FieldJobController;
 use App\Http\Controllers\Field\ProjectController as FieldProjectController;
 use App\Http\Controllers\Field\TaskController as FieldTaskController;
 use App\Http\Controllers\Field\CoordinatorJobAssignmentController;
+use App\Http\Controllers\Field\PushSubscriptionController;
 
 // Field Staff Routes
 Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field')->group(function () {
@@ -28,6 +29,10 @@ Route::middleware(['auth', 'role:field_staff,field_coordinator'])->prefix('field
     Route::get('/tasks', [FieldTaskController::class, 'index'])->name('field.tasks.index');
     Route::get('/tasks/{task}', [FieldTaskController::class, 'show'])->name('field.tasks.show');
     Route::patch('/tasks/{task}/status', [FieldTaskController::class, 'updateStatus'])->name('field.tasks.update-status');
+
+    // Web Push Subscriptions
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('field.push-subscriptions.store');
+    Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('field.push-subscriptions.destroy');
 });
 
 // Field Coordinator Routes

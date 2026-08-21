@@ -337,6 +337,21 @@ class JobItemController extends Controller
             return $project;
         });
 
+        if ($project->assigned_field_staff_id) {
+            try {
+                $project->load('fieldStaff');
+                if ($project->fieldStaff) {
+                    $project->fieldStaff->notify(new \App\Notifications\GenericWebPush(
+                        'New Project Assigned',
+                        "You have been assigned to the new project: {$project->title}.",
+                        route('field.projects.show', $project)
+                    ));
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Push notification failed: ' . $e->getMessage());
+            }
+        }
+
         return redirect()
             ->route('admin.projects.show', $project)
             ->with('success', 'Category item converted to project successfully.');

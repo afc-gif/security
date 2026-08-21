@@ -83,6 +83,18 @@ class CoordinatorJobAssignmentController extends Controller
 
         $assignedStaff = User::findOrFail($validated['assigned_to']);
         $whatsappUrl = $fareNotifications->notifyAssignedJob($assignedJob, $assignedStaff);
+        $jobTitle = $assignedJob->jobRequest?->title ?? 'Untitled Job';
+
+        // Send Push Notification
+        try {
+            $assignedStaff->notify(new \App\Notifications\GenericWebPush(
+                'New Job Assigned',
+                "You have been assigned the job: {$jobTitle}.",
+                route('field.jobs.show', $assignedJob)
+            ));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Push notification failed: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('coordinator.jobs.index')
@@ -273,6 +285,18 @@ class CoordinatorJobAssignmentController extends Controller
                 'notes' => $this->withCoordinatorNote($latestAttempt->notes, $coordinatorNote),
             ]);
         });
+
+        if ($action === 'return' && $jobItem->claimer) {
+            try {
+                $jobItem->claimer->notify(new \App\Notifications\GenericWebPush(
+                    'Job Report Returned',
+                    "Your report for '{$jobItem->jobRequest?->title}' was returned for correction: {$coordinatorNote}",
+                    route('field.jobs.show', $jobItem)
+                ));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Push notification failed: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->route('coordinator.jobs.index')

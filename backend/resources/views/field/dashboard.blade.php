@@ -1,881 +1,262 @@
-@php
-    $fieldUser = auth()->user();
-    $firstName = trim(explode(' ', $fieldUser?->name ?? 'Field Staff')[0]) ?: 'Field Staff';
-
-    $availableJobsCount = $availableJobsCount ?? 0;
-    $myJobsCount = $myJobsCount ?? 0;
-    $overdueJobsCount = $overdueJobsCount ?? 0;
-    $recentJobs = collect($recentJobs ?? []);
-    $recentProjects = collect($recentProjects ?? []);
-    $pendingAssignmentCount = $pendingAssignmentCount ?? 0;
-    $pendingAssignmentJobs = collect($pendingAssignmentJobs ?? []);
-    $isCoordinator = $fieldUser?->isFieldCoordinator() ?? false;
-
-    $formatStatus = fn ($status) => str_replace('_', ' ', \Illuminate\Support\Str::title($status ?? 'Unknown'));
-    $statusClass = fn ($status) => str_replace('_', '-', strtolower((string) ($status ?? 'unknown')));
-    $isUrgentJob = function ($job): bool {
-        $status = strtolower((string) ($job->status ?? ''));
-
-        return in_array($status, ['returned', 'overdue'], true)
-            || ($job->due_date && now()->greaterThan($job->due_date) && in_array($status, ['claimed', 'submitted'], true));
-    };
-    $priorityJobs = $recentJobs->filter($isUrgentJob)->take(3);
-@endphp
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARTSCI Field Dashboard</title>
-    <style>
-        :root {
-            color-scheme: light;
-            --brand: #0b4aa2;
-            --brand-dark: #07316c;
-            --brand-soft: #eaf2ff;
-            --green: #15803d;
-            --green-soft: #dcfce7;
-            --orange: #c2410c;
-            --orange-soft: #ffedd5;
-            --red: #b42318;
-            --red-soft: #fee4e2;
-            --ink: #101828;
-            --muted: #667085;
-            --line: #d9e2ec;
-            --page: #f5f7fb;
-            --card: #ffffff;
-            --shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
-        }
-
-        * { box-sizing: border-box; }
-
-        html { background: var(--page); }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            color: var(--ink);
-            background:
-                linear-gradient(180deg, rgba(11, 74, 162, 0.08) 0, rgba(245, 247, 251, 0) 260px),
-                var(--page);
-        }
-
-        a { color: inherit; }
-        h1, h2, h3, p { margin: 0; }
-
-        .shell {
-            width: min(1080px, 100%);
-            margin: 0 auto;
-            padding: 14px 14px 104px;
-        }
-
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            margin: -14px -14px 18px;
-            padding: 12px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            border-bottom: 1px solid rgba(217, 226, 236, 0.88);
-            background: rgba(245, 247, 251, 0.94);
-            backdrop-filter: blur(16px);
-        }
-
-        .brand {
-            min-width: 0;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-
-        .logo {
-            width: 46px;
-            height: 46px;
-            flex: 0 0 46px;
-            display: grid;
-            place-items: center;
-            border: 1px solid rgba(217, 226, 236, 0.95);
-            border-radius: 8px;
-            background: var(--card);
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-            overflow: hidden;
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 4px;
-        }
-
-        .app-name {
-            font-size: 17px;
-            line-height: 1.1;
-            font-weight: 900;
-        }
-
-        .hello {
-            margin-top: 4px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.2;
-            font-weight: 800;
-        }
-
-        .logout {
-            min-height: 42px;
-            padding: 9px 12px;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--card);
-            color: var(--brand-dark);
-            font: inherit;
-            font-size: 13px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-        }
-
-        .intro {
-            padding: 4px 2px 2px;
-        }
-
-        .eyebrow {
-            color: var(--brand);
-            font-size: 12px;
-            font-weight: 900;
-            line-height: 1.2;
-            text-transform: uppercase;
-            letter-spacing: 0;
-        }
-
-        h1 {
-            margin-top: 7px;
-            font-size: 30px;
-            line-height: 1.08;
-            font-weight: 900;
-        }
-
-        .subtext {
-            margin-top: 8px;
-            max-width: 620px;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.5;
-            font-weight: 650;
-        }
-
-        .section {
-            margin-top: 26px;
-        }
-
-        .section-head {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 14px;
-        }
-
-        h2 {
-            font-size: 19px;
-            line-height: 1.2;
-            font-weight: 900;
-        }
-
-        .section-note {
-            margin-top: 4px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            font-weight: 700;
-        }
-
-        .summary-grid,
-        .actions,
-        .list-grid {
-            display: grid;
-            gap: 12px;
-        }
-
-        .summary-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .summary-card,
-        .action-card,
-        .item-card,
-        .empty-state,
-        .coordinator-alert,
-        .priority-panel {
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .summary-card {
-            min-height: 104px;
-            padding: 14px 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .summary-value {
-            font-size: 31px;
-            line-height: 1;
-            font-weight: 950;
-        }
-
-        .summary-label {
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.2;
-            font-weight: 900;
-        }
-
-        .summary-card.available .summary-value { color: var(--brand); }
-        .summary-card.mine .summary-value { color: var(--green); }
-        .summary-card.overdue .summary-value { color: var(--red); }
-
-        .coordinator-alert {
-            padding: 14px;
-            display: grid;
-            gap: 13px;
-            border-color: rgba(194, 65, 12, 0.3);
-            background: linear-gradient(180deg, #fff 0%, #fff7ed 100%);
-        }
-
-        .coordinator-alert.is-empty {
-            display: none;
-        }
-
-        .alert-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .alert-copy {
-            min-width: 0;
-        }
-
-        .alert-title {
-            color: var(--orange);
-            font-size: 16px;
-            line-height: 1.25;
-            font-weight: 950;
-        }
-
-        .alert-message {
-            margin-top: 5px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            font-weight: 750;
-        }
-
-        .alert-count {
-            min-width: 42px;
-            min-height: 38px;
-            padding: 8px 11px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: var(--orange);
-            color: #fff;
-            font-size: 18px;
-            line-height: 1;
-            font-weight: 950;
-        }
-
-        .assignment-preview {
-            display: grid;
-            gap: 8px;
-        }
-
-        .assignment-preview-item {
-            padding: 10px;
-            border: 1px solid rgba(217, 226, 236, 0.95);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.84);
-        }
-
-        .assignment-preview-item strong {
-            display: block;
-            font-size: 13px;
-            line-height: 1.35;
-            font-weight: 950;
-        }
-
-        .assignment-preview-item span {
-            display: block;
-            margin-top: 3px;
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.35;
-            font-weight: 750;
-        }
-
-        .priority-panel {
-            padding: 14px;
-            display: grid;
-            gap: 10px;
-            border-color: rgba(180, 35, 24, 0.22);
-            background: linear-gradient(180deg, #fff 0%, #fff9f8 100%);
-        }
-
-        .priority-item {
-            padding: 12px;
-            display: grid;
-            gap: 10px;
-            border: 1px solid rgba(217, 226, 236, 0.95);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.88);
-        }
-
-        .priority-row,
-        .card-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .card-title {
-            font-size: 16px;
-            line-height: 1.25;
-            font-weight: 900;
-        }
-
-        .card-subtitle {
-            margin-top: 4px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            font-weight: 700;
-        }
-
-        .badge {
-            min-height: 28px;
-            padding: 6px 9px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: #eef2f6;
-            color: #475467;
-            font-size: 12px;
-            line-height: 1;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .badge.open,
-        .badge.claimed,
-        .badge.submitted,
-        .badge.ongoing,
-        .badge.in-progress,
-        .badge.not-started {
-            background: var(--brand-soft);
-            color: var(--brand-dark);
-        }
-
-        .badge.returned,
-        .badge.reopened {
-            background: var(--orange-soft);
-            color: var(--orange);
-        }
-
-        .badge.overdue {
-            background: var(--red-soft);
-            color: var(--red);
-        }
-
-        .badge.approved,
-        .badge.completed {
-            background: var(--green-soft);
-            color: var(--green);
-        }
-
-        .actions {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .action-card {
-            min-height: 82px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            color: var(--brand-dark);
-            text-decoration: none;
-        }
-
-        .action-card span {
-            font-size: 16px;
-            line-height: 1.2;
-            font-weight: 950;
-        }
-
-        .action-card b {
-            width: 38px;
-            height: 38px;
-            flex: 0 0 38px;
-            display: grid;
-            place-items: center;
-            border-radius: 8px;
-            background: var(--brand);
-            color: #fff;
-            font-size: 12px;
-            font-weight: 950;
-        }
-
-        .item-card {
-            padding: 14px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .meta {
-            display: grid;
-            gap: 7px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            font-weight: 700;
-        }
-
-        .button {
-            width: 100%;
-            min-height: 46px;
-            padding: 11px 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--brand);
-            border-radius: 8px;
-            background: var(--brand);
-            color: #fff;
-            font-size: 14px;
-            font-weight: 950;
-            text-decoration: none;
-        }
-
-        .button.secondary {
-            background: var(--card);
-            color: var(--brand-dark);
-        }
-
-        .progress {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bar {
-            height: 8px;
-            flex: 1;
-            border-radius: 999px;
-            background: #e5e7eb;
-            overflow: hidden;
-        }
-
-        .bar span {
-            display: block;
-            height: 100%;
-            border-radius: inherit;
-            background: var(--brand);
-        }
-
-        .empty-state {
-            padding: 20px;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.45;
-            font-weight: 800;
-            text-align: center;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            left: 50%;
-            bottom: 12px;
-            z-index: 30;
-            width: min(430px, calc(100% - 24px));
-            transform: translateX(-50%);
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 6px;
-            padding: 7px;
-            border: 1px solid rgba(217, 226, 236, 0.95);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.96);
-            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
-            backdrop-filter: blur(16px);
-        }
-
-        .bottom-nav a {
-            min-height: 50px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            border-radius: 8px;
-            color: var(--muted);
-            font-size: 10px;
-            line-height: 1;
-            font-weight: 950;
-            text-decoration: none;
-        }
-
-        .bottom-nav b {
-            display: grid;
-            place-items: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 8px;
-            background: #eef2f6;
-            color: inherit;
-            font-size: 10px;
-            font-weight: 950;
-        }
-
-        .bottom-nav a.active {
-            background: var(--brand);
-            color: #fff;
-        }
-
-        .bottom-nav a[aria-current="page"] {
-            pointer-events: none;
-        }
-
-        .bottom-nav a.active b {
-            background: rgba(255, 255, 255, 0.18);
-        }
-
-        @media (max-width: 359px) {
-            .summary-grid { grid-template-columns: 1fr; }
-            .actions { grid-template-columns: 1fr; }
-            h1 { font-size: 27px; }
-        }
-
-        @media (min-width: 700px) {
-            .shell { padding: 24px 24px 112px; }
-            .topbar { margin: -24px -24px 24px; padding: 16px 24px; }
-            .list-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            h1 { font-size: 36px; }
-        }
-
-        @media (min-width: 980px) {
-            .dashboard-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 22px;
-                align-items: start;
-            }
-
-            .dashboard-grid .section { margin-top: 0; }
-        }
-    </style>
-</head>
-<body>
-    <main class="shell">
-        <header class="topbar">
-            <div class="brand">
-                <div class="logo">
-                    <img src="{{ asset('Artsci Logo REAL 1.webp') }}" alt="ARTSCI logo">
+@extends('layouts.field')
+
+@section('title', 'Field Dashboard | ARTSCI')
+
+@section('content')
+<div class="space-y-6">
+    <!-- Welcome section -->
+    <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-md">
+        <span class="text-xs font-bold tracking-wider opacity-85 uppercase">Welcome Back</span>
+        <h1 class="text-2xl font-extrabold mt-0.5">Hi, {{ explode(' ', auth()->user()->name)[0] }}!</h1>
+        <p class="text-xs mt-1.5 opacity-90 leading-relaxed">Start with urgent returned jobs or claimed actions, then complete your assigned task checklists.</p>
+    </div>
+
+    <!-- Coordinator Alert Section -->
+    @if($isCoordinator)
+        <div id="coordinator-alert" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm transition-all {{ $pendingAssignmentCount > 0 ? 'border-amber-200 bg-amber-50/50' : 'hidden' }}"
+             data-pending-assignment-url="{{ route('field.dashboard.pending-assignments') }}"
+             data-initial-pending-count="{{ $pendingAssignmentCount }}">
+            <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                    <h3 id="coordinator-alert-title" class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">
+                        {{ $pendingAssignmentCount }} {{ \Illuminate\Support\Str::plural('job', $pendingAssignmentCount) }} waiting for assignment
+                    </h3>
+                    <p id="coordinator-alert-message" class="text-xs text-amber-700 leading-relaxed">
+                        New job requests require a field coordinator to assign them to field staff.
+                    </p>
                 </div>
-                <div>
-                    <p class="app-name">ARTSCI Field</p>
-                    <p class="hello">Hi, {{ $firstName }}</p>
-                </div>
+                <span id="coordinator-alert-count" class="h-6 w-6 rounded-full bg-amber-200 text-amber-900 font-bold text-xs flex items-center justify-center shrink-0">
+                    {{ $pendingAssignmentCount }}
+                </span>
             </div>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="logout" type="submit">Logout</button>
-            </form>
-        </header>
-
-        <section class="intro" aria-labelledby="dashboard-title">
-            <p class="eyebrow">Field Dashboard</p>
-            <h1 id="dashboard-title">Your work at a glance</h1>
-            <p class="subtext">Start with urgent jobs, then continue your assigned jobs or project updates.</p>
-        </section>
-
-        @if($isCoordinator)
-            <section
-                class="section coordinator-alert {{ $pendingAssignmentCount > 0 ? '' : 'is-empty' }}"
-                data-pending-assignment-alert
-                data-pending-assignment-url="{{ route('field.dashboard.pending-assignments') }}"
-                data-initial-pending-count="{{ $pendingAssignmentCount }}"
-                aria-live="polite"
-            >
-                <div class="alert-top">
-                    <div class="alert-copy">
-                        <h2 class="alert-title" data-pending-assignment-title>
-                            {{ $pendingAssignmentCount }} {{ \Illuminate\Support\Str::plural('job', $pendingAssignmentCount) }} waiting for assignment
-                        </h2>
-                        <p class="alert-message" data-pending-assignment-message>
-                            New job requests are waiting for a field coordinator to assign them.
-                        </p>
-                    </div>
-                    <span class="alert-count" data-pending-assignment-count>{{ $pendingAssignmentCount }}</span>
-                </div>
-
-                @if($pendingAssignmentJobs->isNotEmpty())
-                    <div class="assignment-preview">
-                        @foreach($pendingAssignmentJobs as $job)
-                            <article class="assignment-preview-item">
-                                <strong>{{ $job->jobRequest?->title ?? $job->title ?? 'Job request unavailable' }}</strong>
-                                <span>{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }} · {{ $job->serviceCategory?->name ?? 'Service category' }}</span>
-                            </article>
-                        @endforeach
-                    </div>
-                @endif
-
-                <a class="button" href="{{ route('coordinator.jobs.index') }}">Assign Jobs</a>
-            </section>
-        @endif
-
-        <section class="section" aria-labelledby="summary-title">
-            <div class="section-head">
-                <h2 id="summary-title">Today</h2>
-            </div>
-
-            <div class="summary-grid">
-                <article class="summary-card available">
-                    <div class="summary-value">{{ $availableJobsCount }}</div>
-                    <div class="summary-label">Available Jobs</div>
-                </article>
-                <article class="summary-card mine">
-                    <div class="summary-value">{{ $myJobsCount }}</div>
-                    <div class="summary-label">My Jobs</div>
-                </article>
-                <article class="summary-card overdue">
-                    <div class="summary-value">{{ $overdueJobsCount }}</div>
-                    <div class="summary-label">Overdue</div>
-                </article>
-            </div>
-        </section>
-
-        <section class="section" aria-labelledby="priority-title">
-            <div class="section-head">
-                <div>
-                    <h2 id="priority-title">Priority</h2>
-                    <p class="section-note">Returned and overdue jobs appear first.</p>
-                </div>
-            </div>
-
-            @if($priorityJobs->isEmpty())
-                <div class="empty-state">No returned or overdue jobs right now.</div>
-            @else
-                <div class="priority-panel">
-                    @foreach($priorityJobs as $job)
-                        <article class="priority-item">
-                            <div class="priority-row">
-                                <div>
-                                    <h3 class="card-title">{{ $job->jobRequest?->title ?? $job->title ?? 'Job request unavailable' }}</h3>
-                                    <p class="card-subtitle">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</p>
-                                </div>
-                                <span class="badge {{ $statusClass($job->status) }}">{{ $formatStatus($job->status) }}</span>
-                            </div>
-                            <div class="meta">
-                                <div>Category: {{ $job->serviceCategory?->name ?? 'Service category' }}</div>
-                                <div>Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}</div>
-                            </div>
-                            <a class="button" href="{{ route('field.jobs.show', $job) }}">Open Job</a>
-                        </article>
+            
+            @if($pendingAssignmentJobs->isNotEmpty())
+                <div class="mt-3.5 space-y-2 border-t border-amber-200/40 pt-3">
+                    @foreach($pendingAssignmentJobs as $job)
+                        <div class="bg-white/80 p-2.5 rounded-xl border border-amber-200/20 text-xs">
+                            <span class="font-bold text-slate-800 block">{{ $job->jobRequest?->title ?? $job->title ?? 'Job Request' }}</span>
+                            <span class="text-slate-500 mt-0.5 block">{{ $job->jobRequest?->client?->client_name ?? 'Client' }} · {{ $job->serviceCategory?->name ?? 'Service category' }}</span>
+                        </div>
                     @endforeach
                 </div>
             @endif
-        </section>
 
-        <section class="section" aria-labelledby="actions-title">
-            <div class="section-head">
-                <h2 id="actions-title">Quick Actions</h2>
-            </div>
-
-            <div class="actions">
-                <a class="action-card" href="{{ route('field.jobs.index') }}">
-                    <span>View Jobs</span>
-                    <b>JB</b>
-                </a>
-                <a class="action-card" href="{{ route('field.projects.index') }}">
-                    <span>View Projects</span>
-                    <b>PR</b>
+            <div class="mt-4">
+                <a href="{{ route('coordinator.jobs.index') }}" class="w-full inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition-all shadow-sm">
+                    Go to Assignment Panel
                 </a>
             </div>
-        </section>
-
-        <div class="dashboard-grid section">
-            <section aria-labelledby="jobs-title">
-                <div class="section-head">
-                    <div>
-                        <h2 id="jobs-title">Recent Jobs</h2>
-                        <p class="section-note">Latest jobs assigned to you.</p>
-                    </div>
-                </div>
-
-                @if($recentJobs->isEmpty())
-                    <div class="empty-state">No recent jobs yet.</div>
-                @else
-                    <div class="list-grid">
-                        @foreach($recentJobs as $job)
-                            <article class="item-card">
-                                <div class="card-top">
-                                    <div>
-                                        <h3 class="card-title">{{ $job->jobRequest?->title ?? $job->title ?? 'Job request unavailable' }}</h3>
-                                        <p class="card-subtitle">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</p>
-                                    </div>
-                                    <span class="badge {{ $statusClass($job->status) }}">{{ $formatStatus($job->status) }}</span>
-                                </div>
-                                <div class="meta">
-                                    <div>Category: {{ $job->serviceCategory?->name ?? 'Service category' }}</div>
-                                    <div>Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}</div>
-                                </div>
-                                <a class="button secondary" href="{{ route('field.jobs.show', $job) }}">Open Job</a>
-                            </article>
-                        @endforeach
-                    </div>
-                @endif
-            </section>
-
-            <section aria-labelledby="projects-title">
-                <div class="section-head">
-                    <div>
-                        <h2 id="projects-title">Recent Projects</h2>
-                        <p class="section-note">Current project work visible to field staff.</p>
-                    </div>
-                </div>
-
-                @if($recentProjects->isEmpty())
-                    <div class="empty-state">No current projects are available right now.</div>
-                @else
-                    <div class="list-grid">
-                        @foreach($recentProjects as $project)
-                            @php
-                                $progress = min(100, max(0, (int) ($project->progress_percentage ?? 0)));
-                                $isLocked = $project->isBeingEdited();
-                                $lockExpired = $project->editingLockExpired();
-                                $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
-                            @endphp
-                            <article class="item-card">
-                                <div class="card-top">
-                                    <div>
-                                        <h3 class="card-title">{{ $project->title ?? $project->project_code ?? 'Project' }}</h3>
-                                        <p class="card-subtitle">{{ $project->client?->client_name ?? 'Client unavailable' }}</p>
-                                    </div>
-                                    <span class="badge {{ $statusClass($project->status) }}">{{ $formatStatus($project->status ?? 'active') }}</span>
-                                </div>
-                                <div class="meta">
-                                    <div class="progress">
-                                        <div class="bar"><span data-progress="{{ $progress }}"></span></div>
-                                        <strong>{{ $progress }}%</strong>
-                                    </div>
-                                    <div>
-                                        @if($lockExpired)
-                                            Previous update session expired.
-                                        @elseif($lockedByMe)
-                                            You are updating this project.
-                                        @elseif($isLocked)
-                                            Being updated by {{ $project->activeEditor?->name ?? 'another field staff member' }}.
-                                        @else
-                                            Available to continue.
-                                        @endif
-                                    </div>
-                                </div>
-                                <a class="button secondary" href="{{ route('field.projects.show', $project) }}">Open Project</a>
-                            </article>
-                        @endforeach
-                    </div>
-                @endif
-            </section>
         </div>
-    </main>
+    @endif
 
-    <nav class="bottom-nav" aria-label="Field navigation">
-        <a class="active" href="{{ route('field.dashboard') }}" aria-current="page" aria-disabled="true" tabindex="-1">
-            <b>DB</b>
-            <span>Dashboard</span>
+    <!-- Summary Stats Row -->
+    <div class="grid grid-cols-3 gap-3">
+        <a href="{{ route('field.jobs.index') }}" class="bg-white border border-slate-100 p-3.5 rounded-2xl text-center shadow-xs hover:border-indigo-100 transition-all">
+            <span class="block text-xl font-extrabold text-slate-900 tabular-nums">{{ $availableJobsCount }}</span>
+            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Available</span>
         </a>
-        <a href="{{ route('field.jobs.index') }}">
-            <b>JB</b>
-            <span>Jobs</span>
+        <a href="{{ route('field.jobs.index') }}" class="bg-white border border-slate-100 p-3.5 rounded-2xl text-center shadow-xs hover:border-indigo-100 transition-all">
+            <span class="block text-xl font-extrabold text-indigo-600 tabular-nums">{{ $myJobsCount }}</span>
+            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">My Jobs</span>
         </a>
-        <a href="{{ route('field.projects.index') }}">
-            <b>PR</b>
-            <span>Projects</span>
+        <a href="{{ route('field.jobs.index') }}" class="bg-white border border-slate-100 p-3.5 rounded-2xl text-center shadow-xs hover:border-indigo-100 transition-all">
+            <span class="block text-xl font-extrabold text-rose-600 tabular-nums">{{ $overdueJobsCount }}</span>
+            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Overdue</span>
         </a>
-    </nav>
-    @if($isCoordinator)
-        <script>
-            (() => {
-                const alert = document.querySelector('[data-pending-assignment-alert]');
+    </div>
 
-                if (!alert) {
-                    return;
-                }
+    <!-- Priority Alerts Section -->
+    <div class="space-y-3">
+        <div class="flex items-center justify-between">
+            <h2 class="text-sm font-extrabold text-slate-950 uppercase tracking-wider">Priority Attention</h2>
+            <span class="text-[10px] text-slate-400 font-bold">Returned &amp; Overdue</span>
+        </div>
 
-                const countEl = alert.querySelector('[data-pending-assignment-count]');
-                const titleEl = alert.querySelector('[data-pending-assignment-title]');
-                const messageEl = alert.querySelector('[data-pending-assignment-message]');
-                const endpoint = alert.dataset.pendingAssignmentUrl;
-                let lastCount = Number(alert.dataset.initialPendingCount || 0);
+        @if($priorityJobs->isEmpty())
+            <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center text-xs text-slate-400 font-semibold shadow-xs">
+                No returned or overdue jobs requiring priority attention.
+            </div>
+        @else
+            <div class="space-y-3">
+                @foreach($priorityJobs as $job)
+                    @php
+                        $isReturned = strtolower($job->status) === 'returned';
+                    @endphp
+                    <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-900">{{ $job->jobRequest?->title ?? $job->title ?? 'Job Request' }}</h3>
+                                <p class="text-[10px] text-slate-400 font-medium mt-0.5">{{ $job->jobRequest?->client?->client_name ?? 'Client' }}</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase {{ $isReturned ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-rose-50 text-rose-700 border border-rose-100' }}">
+                                {{ $formatStatus($job->status) }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-50 pt-2.5">
+                            <span>Category: <strong class="text-slate-700">{{ $job->serviceCategory?->name ?? 'Service Category' }}</strong></span>
+                            <span>Due: <strong class="text-slate-700">{{ $job->due_date?->format('d M, Y H:i') ?? '-' }}</strong></span>
+                        </div>
+                        <a href="{{ route('field.jobs.show', $job) }}" class="w-full inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition-all shadow-sm">
+                            Open &amp; Correct Job
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
 
-                const updateAlert = (count) => {
-                    const label = count === 1 ? 'job' : 'jobs';
+    <!-- Quick Navigation Actions -->
+    <div class="grid grid-cols-2 gap-3">
+        <a href="{{ route('field.jobs.index') }}" class="bg-white border border-slate-100 p-4 rounded-2xl shadow-xs flex items-center justify-between hover:border-indigo-100 transition-all group">
+            <span class="text-xs font-bold text-slate-800">Job Board</span>
+            <span class="h-7 w-7 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">JB</span>
+        </a>
+        <a href="{{ route('field.projects.index') }}" class="bg-white border border-slate-100 p-4 rounded-2xl shadow-xs flex items-center justify-between hover:border-indigo-100 transition-all group">
+            <span class="text-xs font-bold text-slate-800">Projects Log</span>
+            <span class="h-7 w-7 rounded-xl bg-sky-50 text-sky-600 text-xs font-bold flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition-all">PR</span>
+        </a>
+    </div>
 
-                    alert.classList.toggle('is-empty', count < 1);
+    <!-- Lists Tab Grid Section -->
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Recent Jobs -->
+        <div class="space-y-3">
+            <h2 class="text-sm font-extrabold text-slate-950 uppercase tracking-wider">Recent Claims</h2>
+            
+            @if($recentJobs->isEmpty())
+                <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center text-xs text-slate-400 font-semibold shadow-xs">
+                    No recent claims recorded yet.
+                </div>
+            @else
+                <div class="space-y-3">
+                    @foreach($recentJobs as $job)
+                        <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3 hover:shadow transition-all">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-xs font-bold text-slate-900">{{ $job->jobRequest?->title ?? $job->title ?? 'Job Request' }}</h3>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">{{ $job->jobRequest?->client?->client_name ?? 'Client' }}</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase {{ $statusClass($job->status) === 'claimed' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600' }}">
+                                    {{ $formatStatus($job->status) }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-50 pt-2.5">
+                                <span>Due: <strong class="text-slate-700">{{ $job->due_date?->format('d M Y') ?? '-' }}</strong></span>
+                                <a href="{{ route('field.jobs.show', $job) }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold">Open &rarr;</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        <!-- Recent Projects -->
+        <div class="space-y-3">
+            <h2 class="text-sm font-extrabold text-slate-950 uppercase tracking-wider">Active Projects</h2>
+            
+            @if($recentProjects->isEmpty())
+                <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center text-xs text-slate-400 font-semibold shadow-xs">
+                    No active projects to display.
+                </div>
+            @else
+                <div class="space-y-3">
+                    @foreach($recentProjects as $project)
+                        @php
+                            $progress = min(100, max(0, (int) ($project->progress_percentage ?? 0)));
+                            $isLocked = $project->isBeingEdited();
+                            $lockExpired = $project->editingLockExpired();
+                            $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
+                        @endphp
+                        <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3 hover:shadow transition-all">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <h3 class="text-xs font-bold text-slate-900 truncate" title="{{ $project->title }}">{{ $project->title ?? $project->project_code ?? 'Project' }}</h3>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">{{ $project->client?->client_name ?? 'Client' }}</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-sky-50 text-sky-700 whitespace-nowrap">
+                                    {{ $formatStatus($project->status ?? 'active') }}
+                                </span>
+                            </div>
+
+                            <!-- Progress bar -->
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-[9px] font-bold text-slate-500">
+                                    <span>Completion Progress</span>
+                                    <span class="text-slate-800">{{ $progress }}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-indigo-600 h-full rounded-full" style="width: {{ $progress }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-50 pt-2.5">
+                                <span class="text-[9px]">
+                                    @if($lockExpired)
+                                        Lock session expired.
+                                    @elseif($lockedByMe)
+                                        <strong class="text-emerald-600">Editing...</strong>
+                                    @elseif($isLocked)
+                                        Locked by {{ explode(' ', $project->activeEditor?->name)[0] }}
+                                    @else
+                                        Ready for updates.
+                                    @endif
+                                </span>
+                                <a href="{{ route('field.projects.show', $project) }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold">Open &rarr;</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+@if($isCoordinator)
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const alert = document.getElementById('coordinator-alert');
+            if (!alert) return;
+
+            const countEl = document.getElementById('coordinator-alert-count');
+            const titleEl = document.getElementById('coordinator-alert-title');
+            const messageEl = document.getElementById('coordinator-alert-message');
+            const endpoint = alert.dataset.pendingAssignmentUrl;
+            let lastCount = Number(alert.dataset.initialPendingCount || 0);
+
+            const updateAlert = (count) => {
+                const label = count === 1 ? 'job' : 'jobs';
+                if (count < 1) {
+                    alert.classList.add('hidden');
+                } else {
+                    alert.classList.remove('hidden');
                     countEl.textContent = String(count);
                     titleEl.textContent = `${count} ${label} waiting for assignment`;
                     messageEl.textContent = count > lastCount
                         ? 'New job request received. Please assign it to field staff.'
                         : 'New job requests are waiting for a field coordinator to assign them.';
-                    lastCount = count;
-                };
+                }
+                lastCount = count;
+            };
 
-                const refreshPendingAssignments = async () => {
-                    try {
-                        const response = await fetch(endpoint, {
-                            headers: {
-                                Accept: 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        });
-
-                        if (!response.ok) {
-                            return;
-                        }
-
+            const refreshPendingAssignments = async () => {
+                try {
+                    const response = await fetch(endpoint, {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    if (response.ok) {
                         const data = await response.json();
                         updateAlert(Number(data.count || 0));
-                    } catch (error) {
-                        return;
                     }
-                };
+                } catch (error) {
+                    console.error('Failed refreshing pending assignments:', error);
+                }
+            };
 
-                setInterval(refreshPendingAssignments, 30000);
-            })();
-        </script>
-    @endif
-    <script>
-        document.querySelectorAll('[data-progress]').forEach((bar) => {
-            const progress = Math.min(100, Math.max(0, Number(bar.dataset.progress || 0)));
-            bar.style.width = `${progress}%`;
+            setInterval(refreshPendingAssignments, 30000);
         });
     </script>
-</body>
-</html>
+@endif
+@endsection

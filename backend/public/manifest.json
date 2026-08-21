@@ -1,0 +1,24 @@
+{
+  "name": "ARTSCI Field Staff Panel",
+  "short_name": "ARTSCI Field",
+  "description": "ARTSCI operations, job management, project monitoring, and inspections portal for field staff.",
+  "start_url": "/field/dashboard",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/Artsci Logo REAL 1.webp",
+      "type": "image/webp",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

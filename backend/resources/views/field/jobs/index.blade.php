@@ -1,126 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Jobs</title>
-    @include('field.partials.styles')
-</head>
-<body>
-    <main class="app-shell">
-        @include('field.partials.header')
+@extends('layouts.field')
 
-        <section class="section" aria-labelledby="jobs-title">
-            <p class="eyebrow">Jobs</p>
-            <h1 id="jobs-title">Field Jobs</h1>
-            <p class="subtext">Claim available category items and continue active job reports.</p>
-        </section>
+@section('title', 'Field Jobs | ARTSCI')
 
-        @if (session('success'))
-            <div class="notice success">{{ session('success') }}</div>
-        @endif
+@section('content')
+<div class="space-y-6">
+    <!-- Header banner -->
+    <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs">
+        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Jobs Board</span>
+        <h1 class="text-2xl font-extrabold text-slate-900 mt-1">Field Jobs</h1>
+        <p class="text-xs text-slate-500 mt-1">Claim available category items and submit active job reports.</p>
+    </div>
 
-        @if ($errors->any())
-            <div class="notice error">
-                @foreach($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
+    <!-- Available Jobs -->
+    <div class="space-y-3">
+        <h2 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Available Jobs</h2>
+        
+        @if($availableJobs->isEmpty())
+            <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center text-xs text-slate-400 font-semibold shadow-xs">
+                No available jobs right now.
             </div>
-        @endif
-
-        <section class="section" aria-labelledby="available-jobs-title">
-            <div class="section-heading">
-                <h2 id="available-jobs-title">Available Jobs</h2>
-            </div>
-
-            @if($availableJobs->count() === 0)
-                <div class="empty-state">No available jobs right now.</div>
-            @else
-                <div class="job-grid">
-                    @foreach($availableJobs as $job)
-                        <article class="job-card">
-                            <div class="job-top">
-                                <div>
-                                    <h3 class="client-name">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</h3>
-                                    <p class="job-title">{{ $job->jobRequest?->title ?? 'Job request unavailable' }}</p>
-                                </div>
-                                <span class="badge {{ $job->status }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($job->status)) }}</span>
+        @else
+            <div class="space-y-3.5">
+                @foreach($availableJobs as $job)
+                    <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-900">{{ $job->jobRequest?->title ?? 'Job Request' }}</h3>
+                                <p class="text-[10px] text-slate-400 font-medium mt-0.5">{{ $job->jobRequest?->client?->client_name ?? 'Client name unavailable' }}</p>
                             </div>
+                            <span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">
+                                Open
+                            </span>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[9px] font-bold">
+                                {{ $job->serviceCategory?->name ?? 'Service Category' }}
+                            </span>
+                        </div>
 
-                            <span class="category-pill">{{ $job->serviceCategory?->name ?? $job->title ?? 'Service category' }}</span>
-
-                            <div class="job-meta">
-                                <span>Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}</span>
-                            </div>
-
-                            <form method="POST" action="{{ route('field.jobs.claim', $job) }}">
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-50 pt-2.5">
+                            <span>Due: <strong class="text-slate-700">{{ $job->due_date?->format('d M Y H:i') ?? '-' }}</strong></span>
+                            <form method="POST" action="{{ route('field.jobs.claim', $job) }}" onsubmit="return confirm('Do you want to claim this job?');">
                                 @csrf
-                                <button class="card-button" type="submit" @disabled($job->claimed_by !== null)>
-                                    {{ $job->claimed_by ? 'Already Claimed' : 'Claim Job' }}
+                                <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800 font-extrabold">
+                                    Claim Job &rarr;
                                 </button>
                             </form>
-                        </article>
-                    @endforeach
-                </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
 
-                <div class="pagination">
+            @if($availableJobs->hasPages())
+                <div class="mt-4">
                     {{ $availableJobs->links() }}
                 </div>
             @endif
-        </section>
+        @endif
+    </div>
 
-        <section class="section" aria-labelledby="my-jobs-title">
-            <div class="section-heading">
-                <h2 id="my-jobs-title">My Jobs</h2>
+    <!-- My Claims -->
+    <div class="space-y-3">
+        <h2 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">My Claimed Jobs</h2>
+        
+        @if($myJobs->isEmpty())
+            <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center text-xs text-slate-400 font-semibold shadow-xs">
+                You have not claimed any jobs yet.
+            </div>
+        @else
+            <div class="space-y-3.5">
+                @foreach($myJobs as $job)
+                    @php
+                        $latestOwnAttempt = $job->attempts->first();
+                        $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
+                            ? \App\Models\JobItemAttempt::STATUS_REJECTED
+                            : ($job->isOverdue() ? \App\Models\JobRequestItem::STATUS_OVERDUE : $job->status);
+                        $isOverdue = $job->isOverdue();
+                    @endphp
+                    <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-900">{{ $job->jobRequest?->title ?? 'Job Request' }}</h3>
+                                <p class="text-[10px] text-slate-400 font-medium mt-0.5">{{ $job->jobRequest?->client?->client_name ?? 'Client name' }}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase whitespace-nowrap
+                                {{ $isOverdue ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-indigo-50 text-indigo-700 border border-indigo-100' }}">
+                                {{ str_replace('_', ' ', \Illuminate\Support\Str::title($displayStatus)) }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[9px] font-bold">
+                                {{ $job->serviceCategory?->name ?? 'Service Category' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-50 pt-2.5">
+                            <span class="{{ $isOverdue ? 'text-rose-600 font-semibold' : '' }}">
+                                Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}
+                                @if($isOverdue)
+                                    (overdue)
+                                @elseif($job->due_date?->isToday())
+                                    (today)
+                                @endif
+                            </span>
+                            <a href="{{ route('field.jobs.show', $job) }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-extrabold">
+                                Open &rarr;
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            @if($myJobs->count() === 0)
-                <div class="empty-state">You have not claimed any jobs yet.</div>
-            @else
-                <div class="job-grid">
-                    @foreach($myJobs as $job)
-                        @php
-                            $latestOwnAttempt = $job->attempts->first();
-                            $displayStatus = $latestOwnAttempt?->status === \App\Models\JobItemAttempt::STATUS_REJECTED
-                                ? \App\Models\JobItemAttempt::STATUS_REJECTED
-                                : ($job->isOverdue() ? \App\Models\JobRequestItem::STATUS_OVERDUE : $job->status);
-                            $isOverdue = $job->isOverdue();
-                        @endphp
-                        <article class="job-card">
-                            <div class="job-top">
-                                <div>
-                                    <h3 class="client-name">{{ $job->jobRequest?->client?->client_name ?? 'Client unavailable' }}</h3>
-                                    <p class="job-title">{{ $job->jobRequest?->title ?? 'Job request unavailable' }}</p>
-                                </div>
-                                <span class="badge {{ $displayStatus }}">{{ str_replace('_', ' ', \Illuminate\Support\Str::title($displayStatus)) }}</span>
-                            </div>
-
-                            <span class="category-pill">{{ $job->serviceCategory?->name ?? $job->title ?? 'Service category' }}</span>
-
-                            <div class="meta">
-                                <div>Claimed: {{ $job->claimed_at?->format('d M Y H:i') ?? '-' }}</div>
-                                <div class="{{ $isOverdue ? 'due-overdue' : '' }}">
-                                    Due: {{ $job->due_date?->format('d M Y H:i') ?? '-' }}
-                                    @if($isOverdue)
-                                        (overdue)
-                                    @elseif($job->due_date?->isToday())
-                                        (due today)
-                                    @endif
-                                </div>
-                            </div>
-
-                            <a class="card-button secondary" href="{{ route('field.jobs.show', $job) }}">Open Job</a>
-                        </article>
-                    @endforeach
-                </div>
-
-                <div class="pagination">
+            @if($myJobs->hasPages())
+                <div class="mt-4">
                     {{ $myJobs->links() }}
                 </div>
             @endif
-        </section>
-    </main>
-
-    @include('field.partials.bottom-nav')
-</body>
-</html>
+        @endif
+    </div>
+</div>
+@endsection
