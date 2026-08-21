@@ -14,7 +14,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARTSCI Field">
     <link rel="apple-touch-icon" href="/Artsci Logo REAL 1.webp">
-    <meta name="theme-color" content="#f8fafc" id="theme-color-meta">
+    <link rel="apple-touch-startup-image" href="/Artsci Logo REAL 1.webp">
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)">
 
     <!-- Fonts & Tailwind CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,15 +40,9 @@
         if (isDarkTheme) {
             document.documentElement.classList.add('dark');
             document.documentElement.classList.remove('theme-light');
-            document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('theme-color-meta')?.setAttribute('content', '#020617');
-            });
         } else {
             document.documentElement.classList.remove('dark');
             document.documentElement.classList.add('theme-light');
-            document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('theme-color-meta')?.setAttribute('content', '#f8fafc');
-            });
         }
 
         tailwind.config = {
@@ -421,12 +417,12 @@
                 // Toggle theme class on HTML element
                 if (document.documentElement.classList.contains('dark')) {
                     document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('theme-light');
                     localStorage.setItem('color-theme', 'light');
-                    document.getElementById('theme-color-meta')?.setAttribute('content', '#f8fafc');
                 } else {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('theme-light');
                     localStorage.setItem('color-theme', 'dark');
-                    document.getElementById('theme-color-meta')?.setAttribute('content', '#020617');
                 }
             });
         });
