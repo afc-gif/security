@@ -127,9 +127,11 @@
                                     <div class="finance-expense-amount-section">
                                         <div class="finance-payment-amount">{{ $financeMoney($payment->amount) }}</div>
                                         <div class="flex items-center justify-end gap-2 mt-1">
-                                            @can(\App\Models\FinancePermission::EDIT)
-                                                <button type="button" class="text-xs text-sky-700 hover:text-sky-900 font-semibold" data-edit-payment-modal-open="{{ $payment->id }}">Edit</button>
-                                            @endcan
+                                            @if(auth()->user()?->isSuperAdmin())
+                                                @can(\App\Models\FinancePermission::EDIT)
+                                                    <button type="button" class="text-xs text-sky-700 hover:text-sky-900 font-semibold" data-edit-payment-modal-open="{{ $payment->id }}">Edit</button>
+                                                @endcan
+                                            @endif
                                             @can(\App\Models\FinancePermission::DELETE)
                                                 <form method="POST" action="{{ route('finance.projects.payments.destroy', [$project, $payment]) }}" style="display: inline;">
                                                     @csrf

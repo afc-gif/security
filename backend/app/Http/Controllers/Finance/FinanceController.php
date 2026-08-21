@@ -350,7 +350,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureFinanceExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         return view('finance.expenses.edit', array_merge(
             ['expense' => $expense->load($this->expenseRelations())],
@@ -362,7 +362,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureFinanceExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         $validated = $this->validateExpense($request);
         $status = $validated['status'] ?? FinancialExpense::STATUS_PENDING;
@@ -682,7 +682,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureProjectMaterialCost($materialCost);
-        $this->ensurePendingMaterialCost($materialCost);
+        $this->ensureEditableMaterialCost($materialCost);
         $materialCost->load('project.client');
 
         return view('finance.material-costs.edit', array_merge(
@@ -695,7 +695,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureProjectMaterialCost($materialCost);
-        $this->ensurePendingMaterialCost($materialCost);
+        $this->ensureEditableMaterialCost($materialCost);
 
         $validated = $this->validateMaterialCost($request);
         $status = $validated['status'] ?? FinancialMaterialCost::STATUS_PENDING;
@@ -909,7 +909,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureOfficeExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         $categories = FinanceExpenseCategory::query()
             ->where('is_active', true)
@@ -927,7 +927,7 @@ class FinanceController extends Controller
     {
         $this->authorizeFinance(FinancePermission::EDIT);
         $this->ensureOfficeExpense($expense);
-        $this->ensurePending($expense);
+        $this->ensureEditable($expense);
 
         $validated = $this->validateOfficeExpense($request);
         $status = $validated['status'] ?? FinancialExpense::STATUS_PENDING;
@@ -1447,9 +1447,43 @@ class FinanceController extends Controller
         abort_if($expense->status !== FinancialExpense::STATUS_PENDING, 409, 'Only pending expenses can be changed by this action.');
     }
 
+    /**
+     * Like ensurePending, but super admins are allowed to edit any expense regardless of status.
+     */
+    private function ensureEditable(FinancialExpense $expense): void
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user instanceof User && $user->isSuperAdmin()) {
+            return;
+        }
+        abort_if(
+            $expense->status !== FinancialExpense::STATUS_PENDING,
+            403,
+            'Approved expenses can only be edited by a super admin.'
+        );
+    }
+
     private function ensurePendingMaterialCost(FinancialMaterialCost $materialCost): void
     {
         abort_if($materialCost->status !== FinancialMaterialCost::STATUS_PENDING, 409, 'Only pending material costs can be changed by this action.');
+    }
+
+    /**
+     * Like ensurePendingMaterialCost, but super admins are allowed to edit any material cost.
+     */
+    private function ensureEditableMaterialCost(FinancialMaterialCost $materialCost): void
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user instanceof User && $user->isSuperAdmin()) {
+            return;
+        }
+        abort_if(
+            $materialCost->status !== FinancialMaterialCost::STATUS_PENDING,
+            403,
+            'Approved material costs can only be edited by a super admin.'
+        );
     }
 
     private function appendReviewNote(?string $existing, ?string $note, string $label): ?string
@@ -1616,6 +1650,14 @@ class FinanceController extends Controller
     public function updateProjectPayment(Request $request, Project $project, ProjectPayment $payment)
     {
         $this->authorizeFinance(FinancePermission::EDIT);
+
+        /** @var User|null $user */
+        $user = auth()->user();
+        abort_unless(
+            $user instanceof User && $user->isSuperAdmin(),
+            403,
+            'Recorded payments can only be edited by a super admin.'
+        );
 
         abort_unless($payment->project_id === $project->id, 404);
 

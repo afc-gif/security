@@ -151,7 +151,16 @@
                         </form>
                     @endcan
                 @else
-                    <div class="text-gray-600">Approved and rejected records are preserved and cannot be edited.</div>
+                    @if(auth()->user()?->isSuperAdmin())
+                        @can(\App\Models\FinancePermission::EDIT)
+                            <a href="{{ route('finance.office-expenses.edit', $expense) }}"
+                               class="inline-flex items-center justify-center bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg font-semibold transition">
+                                Edit Approved Expense
+                            </a>
+                        @endcan
+                    @else
+                        <div class="text-gray-600">Approved and rejected records are preserved and cannot be edited.</div>
+                    @endif
                 @endif
             </div>
         </div>
