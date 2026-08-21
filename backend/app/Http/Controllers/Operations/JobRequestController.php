@@ -131,6 +131,25 @@ class JobRequestController extends Controller
             return $jobRequest;
         });
 
+        // Notify all coordinators and field staff of new job request
+        try {
+            $staffMembers = \App\Models\User::query()
+                ->where('status', 'approved')
+                ->whereIn('role', ['field_staff', 'field_coordinator'])
+                ->get();
+
+            $jobTitle = $jobRequest->title;
+            foreach ($staffMembers as $staff) {
+                $staff->notify(new \App\Notifications\GenericWebPush(
+                    'New Job Available',
+                    "A new job has been created: {$jobTitle}.",
+                    route('field.dashboard')
+                ));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Job creation push notification failed: ' . $e->getMessage());
+        }
+
         return redirect()
             ->route('admin.job-requests.show', $jobRequest)
             ->with('success', 'Job request created successfully.');

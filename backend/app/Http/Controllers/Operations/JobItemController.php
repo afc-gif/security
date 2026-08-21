@@ -231,6 +231,18 @@ class JobItemController extends Controller
         $assignedStaff = User::findOrFail($validated['assigned_to']);
         $whatsappUrl = $fareNotifications->notifyAssignedJob($assignedJob, $assignedStaff);
 
+        // Send Push Notification
+        try {
+            $jobTitle = $assignedJob->jobRequest?->title ?? 'Untitled Job';
+            $assignedStaff->notify(new \App\Notifications\GenericWebPush(
+                'New Job Assigned',
+                "You have been assigned the job: {$jobTitle}.",
+                route('field.jobs.show', $assignedJob)
+            ));
+        } catch (\Exception $e) {
+            Log::error('Admin Assign push notification failed: ' . $e->getMessage());
+        }
+
         Log::info('Job assigned to field staff', [
             'assigned_by' => $authUser->id,
             'job_item_id' => $jobItem->id,
