@@ -1,8 +1,7 @@
-const CACHE_NAME = 'artsci-field-v1';
+const CACHE_NAME = 'artsci-field-v4';
 const ASSETS = [
-    '/field/dashboard',
     '/Artsci Logo REAL 1.webp',
-    '/logo.png'
+    '/manifest.json'
 ];
 
 // Install Event
@@ -10,7 +9,7 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll(ASSETS);
-        })
+        }).then(() => self.skipWaiting())
     );
 });
 
@@ -21,7 +20,7 @@ self.addEventListener('activate', event => {
             return Promise.all(
                 keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
 

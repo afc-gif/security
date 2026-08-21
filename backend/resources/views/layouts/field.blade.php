@@ -14,6 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARTSCI Field">
     <link rel="apple-touch-icon" href="/Artsci Logo REAL 1.webp">
+    <meta name="theme-color" content="#f8fafc" id="theme-color-meta">
 
     <!-- Fonts & Tailwind CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,8 +25,14 @@
         // Immediate theme initialization to prevent flash
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('theme-color-meta')?.setAttribute('content', '#020617');
+            });
         } else {
             document.documentElement.classList.remove('dark');
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('theme-color-meta')?.setAttribute('content', '#f8fafc');
+            });
         }
 
         tailwind.config = {
@@ -387,9 +394,11 @@
                 if (document.documentElement.classList.contains('dark')) {
                     document.documentElement.classList.remove('dark');
                     localStorage.setItem('color-theme', 'light');
+                    document.getElementById('theme-color-meta')?.setAttribute('content', '#f8fafc');
                 } else {
                     document.documentElement.classList.add('dark');
                     localStorage.setItem('color-theme', 'dark');
+                    document.getElementById('theme-color-meta')?.setAttribute('content', '#020617');
                 }
             });
         });
