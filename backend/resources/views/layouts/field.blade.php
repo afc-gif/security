@@ -21,7 +21,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Immediate theme initialization to prevent flash
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -44,7 +52,7 @@
         }
     </style>
 </head>
-<body class="h-full font-sans antialiased text-slate-900 flex flex-col pb-24">
+<body class="h-full font-sans antialiased text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 flex flex-col pb-24 transition-colors duration-300">
 
     <!-- PWA App Boot/Splash Screen Overlay -->
     <div id="pwa-splash-screen" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-500 ease-out">
@@ -67,7 +75,7 @@
     </div>
 
     <!-- Global App Header -->
-    <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-100 px-4 py-3 safe-top">
+    <header class="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-100 dark:border-slate-800 px-4 py-3 safe-top transition-colors duration-300">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center gap-2.5">
                 <div class="relative">
@@ -75,23 +83,36 @@
                         {{ strtoupper(substr(auth()->user()->name ?? 'FS', 0, 2)) }}
                     </div>
                     <!-- Network status dot -->
-                    <span id="network-dot" class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white" title="Connected"></span>
+                    <span id="network-dot" class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-slate-900" title="Connected"></span>
                 </div>
                 <div>
-                    <h2 class="text-xs text-slate-400 font-medium">ARTSCI Mobile</h2>
-                    <h1 class="text-sm font-bold text-slate-900 truncate max-w-[120px]">{{ explode(' ', auth()->user()->name)[0] }}</h1>
+                    <h2 class="text-xs text-slate-400 dark:text-slate-500 font-medium">ARTSCI Mobile</h2>
+                    <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{{ explode(' ', auth()->user()->name)[0] }}</h1>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" type="button" class="text-slate-450 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-lg transition-colors focus:outline-none">
+                    <!-- Dark (Moon) Icon (visible when light mode) -->
+                    <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                    <!-- Light (Sun) Icon (visible when dark mode) -->
+                    <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.46 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+                    </svg>
+                </button>
+
                 @if(auth()->user()->isFieldCoordinator())
-                    <a href="{{ route('coordinator.jobs.index') }}" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg font-bold hover:bg-indigo-100 transition-colors">
-                        Assign Panel
+                    <a href="{{ route('coordinator.jobs.index') }}" class="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2.5 py-1.5 rounded-lg font-bold hover:bg-indigo-105 transition-colors">
+                        Assign
                     </a>
                 @endif
+
                 <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out?');">
                     @csrf
-                    <button type="submit" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+                    <button type="submit" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                         </svg>
@@ -125,33 +146,33 @@
     </main>
 
     <!-- iOS Add to Home Screen Banner -->
-    <div id="ios-install-prompt" class="hidden fixed bottom-24 left-4 right-4 z-50 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-3.5 max-w-md mx-auto">
+    <div id="ios-install-prompt" class="hidden fixed bottom-24 left-4 right-4 z-50 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl p-4 flex items-start gap-3.5 max-w-md mx-auto">
         <img src="/Artsci Logo REAL 1.webp" class="w-11 h-11 rounded-xl shadow-sm object-cover" alt="logo">
         <div class="flex-1">
-            <h3 class="text-xs font-bold text-slate-800">Install ARTSCI App</h3>
-            <p class="text-[10px] text-slate-500 mt-0.5 leading-relaxed">Tap <span class="font-bold">Share</span> (the box with an up arrow) below, then select <span class="font-bold">Add to Home Screen</span>.</p>
+            <h3 class="text-xs font-bold text-slate-800 dark:text-white">Install ARTSCI App</h3>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Tap <span class="font-bold">Share</span> (the box with an up arrow) below, then select <span class="font-bold">Add to Home Screen</span>.</p>
         </div>
-        <button onclick="document.getElementById('ios-install-prompt').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+        <button onclick="document.getElementById('ios-install-prompt').classList.add('hidden')" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 font-bold">&times;</button>
     </div>
 
     <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-100 py-2 safe-bottom">
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 py-2 safe-bottom transition-colors duration-300">
         <div class="max-w-md mx-auto flex items-center justify-around">
-            <a href="{{ route('field.dashboard') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.dashboard') ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600' }}">
+            <a href="{{ route('field.dashboard') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.dashboard') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
                 <span>Dashboard</span>
             </a>
 
-            <a href="{{ route('field.jobs.index') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.jobs.*') ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600' }}">
+            <a href="{{ route('field.jobs.index') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.jobs.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                 </svg>
                 <span>Jobs</span>
             </a>
 
-            <a href="{{ route('field.projects.index') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.projects.*') ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600' }}">
+            <a href="{{ route('field.projects.index') }}" class="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all {{ request()->routeIs('field.projects.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
@@ -334,6 +355,37 @@
                     }, 1800);
                 }
             }
+        });
+
+        // Theme Toggle Script
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+            if (!themeToggleBtn) return;
+
+            // Toggle icons based on current theme state
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                // Toggle icons inside button
+                themeToggleDarkIcon.classList.toggle('hidden');
+                themeToggleLightIcon.classList.toggle('hidden');
+
+                // Toggle theme class on HTML element
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            });
         });
     </script>
 </body>
