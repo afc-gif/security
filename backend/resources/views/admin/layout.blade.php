@@ -539,7 +539,18 @@
             border: 1px solid #e2e8f0;
             border-radius: 10px;
             box-shadow: 0 1px 3px rgba(15,23,42,0.03);
-            overflow: hidden;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body.finance-shell .finance-panel table {
+            width: 100%;
+        }
+
+        @media (max-width: 960px) {
+            body.finance-shell .finance-panel table {
+                min-width: 650px; /* Prevent columns from shrinking too much on mobile/tablet */
+            }
         }
 
         body.finance-shell .finance-panel-flat {
@@ -1792,7 +1803,7 @@
             }
 
             body.finance-shell .finance-page {
-                padding: 16px 14px 32px;
+                padding: 68px 14px 32px;
             }
 
             body.finance-shell .finance-header {

@@ -26,7 +26,7 @@
         </div>
 
         <!-- Filter-Aware Totals Summary -->
-        <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm min-w-0 overflow-hidden">
                 <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Expenses</div>
                 <div class="text-lg md:text-xl font-bold text-slate-900 tabular-nums mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $financeMoney($totals['total']) }}">{{ $financeMoney($totals['total']) }}</div>
