@@ -26,6 +26,7 @@ class CoordinatorJobAssignmentController extends Controller
         $fieldStaff = User::query()
             ->where('status', 'approved')
             ->whereIn('role', ['field_staff', 'field_coordinator'])
+            ->where('email', '!=', 'coodinator1@example.com')
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
 
@@ -56,7 +57,8 @@ class CoordinatorJobAssignmentController extends Controller
                 'required',
                 Rule::exists('users', 'id')->where(fn ($query) => $query
                     ->where('status', 'approved')
-                    ->whereIn('role', ['field_staff', 'field_coordinator'])),
+                    ->whereIn('role', ['field_staff', 'field_coordinator'])
+                    ->where('email', '!=', 'coodinator1@example.com')),
             ],
         ]);
 

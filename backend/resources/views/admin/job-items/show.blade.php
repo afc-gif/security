@@ -100,6 +100,7 @@
                 $fieldStaffList = \App\Models\User::query()
                     ->where('status', 'approved')
                     ->whereIn('role', ['field_staff', 'field_coordinator'])
+                    ->where('email', '!=', 'coodinator1@example.com')
                     ->orderBy('name')
                     ->get();
             @endphp

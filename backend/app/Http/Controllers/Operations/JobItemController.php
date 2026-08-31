@@ -209,7 +209,8 @@ class JobItemController extends Controller
                 'required',
                 Rule::exists('users', 'id')->where(fn ($query) => $query
                     ->where('status', 'approved')
-                    ->whereIn('role', ['field_staff', 'field_coordinator'])),
+                    ->whereIn('role', ['field_staff', 'field_coordinator'])
+                    ->where('email', '!=', 'coodinator1@example.com')),
             ],
         ]);
 
