@@ -438,6 +438,136 @@
                 }
             }, false);
         }
+
+        // Global Upload Overlay helpers
+        window.showUploadOverlay = function(title = 'Uploading Report', text = 'Compressing images and uploading. Please wait...') {
+            const overlay = document.getElementById('upload-loading-overlay');
+            const titleEl = document.getElementById('upload-overlay-title');
+            const textEl = document.getElementById('upload-overlay-text');
+            if (overlay) {
+                if (titleEl) titleEl.innerText = title;
+                if (textEl) textEl.innerText = text;
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        window.hideUploadOverlay = function() {
+            const overlay = document.getElementById('upload-loading-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Helper to compress an image file in the browser using Canvas
+        async function compressImageFile(file, maxDimension = 1200, quality = 0.75) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = Math.round((height * maxDimension) / width);
+                                width = maxDimension;
+                            } else {
+                                width = Math.round((width * maxDimension) / height);
+                                height = maxDimension;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = function() {
+                        resolve(file);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() {
+                    resolve(file);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Intercept form submissions to automatically compress all attached images
+        document.addEventListener('submit', async function(e) {
+            const form = e.target;
+            const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+            
+            // Bypass if no file inputs or already compressed
+            if (fileInputs.length === 0 || form.dataset.compressed === 'true') {
+                return;
+            }
+
+            // Check if any actual files are selected
+            const hasFiles = fileInputs.some(input => input.files && input.files.length > 0);
+            if (!hasFiles) {
+                return;
+            }
+
+            e.preventDefault();
+            window.showUploadOverlay('Preparing Report', 'Compressing attached images to speed up submission...');
+
+            try {
+                for (const input of fileInputs) {
+                    if (!input.files || input.files.length === 0) continue;
+
+                    const dt = new DataTransfer();
+                    for (let i = 0; i < input.files.length; i++) {
+                        const file = input.files[i];
+                        if (file.type.startsWith('image/')) {
+                            const compressed = await compressImageFile(file);
+                            dt.items.add(compressed);
+                        } else {
+                            dt.items.add(file);
+                        }
+                    }
+                    input.files = dt.files;
+                }
+
+                window.showUploadOverlay('Uploading Report', 'Uploading report documents and photos... Please do not close this page.');
+                form.dataset.compressed = 'true';
+                form.submit();
+            } catch (err) {
+                console.error('Image compression error:', err);
+                form.dataset.compressed = 'true';
+                form.submit();
+            }
+        });
     </script>
+
+    <!-- Global Upload/Submit Overlay -->
+    <div id="upload-loading-overlay" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xs">
+        <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 w-72 text-center space-y-4 shadow-2xl">
+            <div class="relative w-12 h-12 mx-auto">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-100 dark:border-slate-800"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin"></div>
+            </div>
+            <div>
+                <h3 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider" id="upload-overlay-title">Uploading Report</h3>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed" id="upload-overlay-text">Compressing images and uploading. Please do not close or refresh this page.</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
