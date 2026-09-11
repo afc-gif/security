@@ -55,11 +55,11 @@
                 <!-- Customer Auto-Display Card -->
                 <div class="finance-form-group">
                     <label class="finance-form-label">Customer (Auto-linked from Job)</label>
-                    <div id="customerPreviewCard" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 h-[42px] flex flex-col justify-center">
-                        <div id="customerNameDisplay" class="font-bold text-slate-900 truncate">
+                    <div id="customerPreviewCard" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 min-h-[42px] flex flex-col justify-center">
+                        <div id="customerNameDisplay" class="font-bold text-slate-900 leading-snug">
                             {{ $quotation->client?->company_name ?: $quotation->client?->client_name ?: 'Derived from Job' }}
                         </div>
-                        <div id="customerContactDisplay" class="text-[11px] text-slate-500 truncate hidden"></div>
+                        <div id="customerContactDisplay" class="text-[11px] text-slate-600 mt-0.5 hidden leading-snug"></div>
                     </div>
                 </div>
 
