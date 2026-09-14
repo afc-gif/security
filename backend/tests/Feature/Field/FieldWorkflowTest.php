@@ -537,11 +537,11 @@ class FieldWorkflowTest extends TestCase
         $this->assertDatabaseHas('projects', [
             'id' => $project->id,
             'status' => 'ongoing',
-            'progress_percentage' => 50,
+            'progress_percentage' => 0,
         ]);
     }
 
-    public function test_project_waits_for_admin_completion_after_field_staff_finishes_checklist(): void
+    public function test_admin_can_complete_project_and_lock_field_updates(): void
     {
         $admin = $this->createAdmin();
         $fieldStaff = $this->createUser(['role' => 'field_staff']);
@@ -550,7 +550,7 @@ class FieldWorkflowTest extends TestCase
             'project_code' => 'PROJ-TEST-0002',
             'client_id' => $client->id,
             'title' => 'Review Required Project',
-            'status' => 'not_started',
+            'status' => 'ongoing',
             'created_by' => $admin->id,
         ]);
         $requirement = $project->requirements()->create([
@@ -563,10 +563,9 @@ class FieldWorkflowTest extends TestCase
             'is_done' => '1',
         ])->assertRedirect("/field/projects/{$project->id}");
 
-        $this->assertDatabaseHas('projects', [
-            'id' => $project->id,
-            'status' => 'ready_for_review',
-            'progress_percentage' => 100,
+        $this->assertDatabaseHas('project_requirements', [
+            'id' => $requirement->id,
+            'is_done' => true,
         ]);
 
         $this->actingAs($admin)

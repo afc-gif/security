@@ -250,17 +250,6 @@ class ProjectController extends Controller
             'completed_at' => $isDone ? now() : null,
         ]);
 
-        $total = $project->requirements()->count();
-        if ($total > 0) {
-            $done = $project->requirements()->where('is_done', true)->count();
-            $progress = (int) round(($done / $total) * 100);
-
-            $project->update([
-                'progress_percentage' => $progress,
-                'status' => $this->statusForProgress($progress),
-            ]);
-        }
-
         return redirect()
             ->route('field.projects.show', $project)
             ->with('success', 'Checklist updated.');
