@@ -45,9 +45,9 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ((int) $lockedProject->progress_percentage === 100 || in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
+            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => 'This project is 100% complete and locked.',
+                    'project' => 'This project is closed for field updates.',
                 ]);
             }
 
@@ -72,9 +72,9 @@ class ProjectController extends Controller
 
     public function submitUpdate(Request $request, Project $project, CloudinaryImageService $cloudinary)
     {
-        if ((int) $project->progress_percentage === 100 || in_array($project->status, ['completed', 'ready_for_review'], true)) {
+        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
             return back()
-                ->withErrors(['project' => 'This project is 100% complete and locked.'])
+                ->withErrors(['project' => 'This project is closed for field updates.'])
                 ->withInput();
         }
 
@@ -140,9 +140,9 @@ class ProjectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ((int) $lockedProject->progress_percentage === 100 || in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
+            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
                 throw ValidationException::withMessages([
-                    'project' => 'This project is 100% complete and locked.',
+                    'project' => 'This project is closed for field updates.',
                 ]);
             }
 
@@ -234,8 +234,8 @@ class ProjectController extends Controller
             abort(404);
         }
 
-        if ((int) $project->progress_percentage === 100 || in_array($project->status, ['completed', 'ready_for_review'], true)) {
-            return back()->withErrors(['project' => 'This project is 100% complete and locked.']);
+        if (in_array($project->status, ['completed', 'ready_for_review'], true)) {
+            return back()->withErrors(['project' => 'This project is closed for field updates.']);
         }
 
         $validated = $request->validate([
@@ -244,11 +244,28 @@ class ProjectController extends Controller
 
         $isDone = (bool) ($validated['is_done'] ?? false);
 
-        $requirement->update([
-            'is_done' => $isDone,
-            'completed_by' => $isDone ? $request->user()->id : null,
-            'completed_at' => $isDone ? now() : null,
-        ]);
+        DB::transaction(function () use ($project, $requirement, $request, $isDone) {
+            $lockedProject = Project::query()
+                ->where('id', $project->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (in_array($lockedProject->status, ['completed', 'ready_for_review'], true)) {
+                throw ValidationException::withMessages([
+                    'project' => 'This project is closed for field updates.',
+                ]);
+            }
+
+            $requirement->update([
+                'is_done' => $isDone,
+                'completed_by' => $isDone ? $request->user()->id : null,
+                'completed_at' => $isDone ? now() : null,
+            ]);
+
+            if ($isDone && $lockedProject->status === 'not_started') {
+                $lockedProject->update(['status' => 'ongoing']);
+            }
+        });
 
         return redirect()
             ->route('field.projects.show', $project)

@@ -26,8 +26,8 @@
                         $isLocked = $project->isBeingEdited();
                         $lockExpired = $project->editingLockExpired();
                         $lockedByMe = $isLocked && (int) $project->active_editor_id === (int) auth()->id();
-                        $isCompleted = $project->status === 'completed' || (int) $project->progress_percentage === 100;
-                        $isReadyForReview = $project->status === 'ready_for_review' && (int) $project->progress_percentage !== 100;
+                        $isCompleted = $project->status === 'completed';
+                        $isReadyForReview = $project->status === 'ready_for_review';
                         $progress = min(100, max(0, (int) ($project->progress_percentage ?? 0)));
                     @endphp
                     <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
