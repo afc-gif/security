@@ -143,12 +143,12 @@
 
                     <div class="flex items-center justify-between gap-4">
                         <label for="discount_amount" class="text-sm font-medium text-slate-600 whitespace-nowrap">Discount (₦):</label>
-                        <input id="discount_amount" name="discount_amount" value="{{ old('discount_amount', $quotation->discount_amount) }}" type="number" min="0" step="0.01" class="finance-form-input text-right w-36">
+                        <input id="discount_amount" name="discount_amount" value="{{ old('discount_amount', $quotation->discount_amount) }}" type="number" min="0" step="0.01" class="finance-form-input text-right w-32">
                     </div>
 
                     <div class="flex items-center justify-between gap-4">
                         <label for="tax_amount" class="text-sm font-medium text-slate-600 whitespace-nowrap">Tax (₦):</label>
-                        <input id="tax_amount" name="tax_amount" value="{{ old('tax_amount', $quotation->tax_amount) }}" type="number" min="0" step="0.01" class="finance-form-input text-right w-36">
+                        <input id="tax_amount" name="tax_amount" value="{{ old('tax_amount', $quotation->tax_amount) }}" type="number" min="0" step="0.01" class="finance-form-input text-right w-32">
                     </div>
 
                     <hr class="border-slate-300 my-2">
@@ -217,6 +217,15 @@
         return '₦' + Number(num || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function normalizeWholeQuantity(value) {
+        const parsed = Number.parseFloat(value);
+        if (!Number.isFinite(parsed)) {
+            return 1;
+        }
+
+        return Math.max(1, Math.round(parsed));
+    }
+
     function createRow(description = '', qty = 1, price = 0) {
         rowCounter++;
         const index = rowCounter;
@@ -227,10 +236,10 @@
         tr.innerHTML = `
             <td class="p-3 text-center font-bold text-slate-400 row-number">1</td>
             <td class="p-3">
-                <input type="text" name="items[${index}][description]" value="${description.replace(/"/g, '&quot;')}" required placeholder="Item description / service" class="finance-form-input item-desc">
+                <input type="text" name="items[${index}][description]" value="${description.replace(/"/g, '&quot;')}" required placeholder="Item description / service" class="finance-form-input item-description">
             </td>
             <td class="p-3">
-                <input type="number" name="items[${index}][quantity]" value="${qty}" min="0.01" step="0.01" required class="finance-form-input item-qty text-right">
+                <input type="number" name="items[${index}][quantity]" value="${normalizeWholeQuantity(qty)}" min="1" step="1" required class="finance-form-input item-qty text-right">
             </td>
             <td class="p-3">
                 <input type="number" name="items[${index}][unit_price]" value="${price}" min="0" step="0.01" required class="finance-form-input item-price text-right">
@@ -252,7 +261,10 @@
         const priceInput = tr.querySelector('.item-price');
         const removeBtn = tr.querySelector('.remove-row-btn');
 
-        qtyInput.addEventListener('input', recalculateTotals);
+        qtyInput.addEventListener('input', () => {
+            qtyInput.value = normalizeWholeQuantity(qtyInput.value);
+            recalculateTotals();
+        });
         priceInput.addEventListener('input', recalculateTotals);
 
         removeBtn.addEventListener('click', () => {
@@ -278,7 +290,7 @@
         const rows = container.querySelectorAll('.item-row');
 
         rows.forEach((tr) => {
-            const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+            const qty = normalizeWholeQuantity(tr.querySelector('.item-qty').value);
             const price = parseFloat(tr.querySelector('.item-price').value) || 0;
             const total = qty * price;
             subtotal += total;
